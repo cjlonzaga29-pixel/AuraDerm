@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { MenuToggle } from "@/components/site/MenuToggle";
 import { site } from "@/content/site";
+import { useCart } from "@/hooks/useCart";
 
 const NAV_LINKS = [
   { label: "Rituals", href: "#routine" },
@@ -11,6 +15,8 @@ const NAV_LINKS = [
 ];
 
 export function Nav() {
+  const { itemCount, openCart } = useCart();
+
   return (
     <header className="sticky top-4 z-50">
       <Container>
@@ -44,8 +50,18 @@ export function Nav() {
                 <button type="button" aria-label="Account" className="text-cream">
                   Account
                 </button>
-                <button type="button" aria-label="Cart" className="text-cream">
-                  Cart
+                <button
+                  type="button"
+                  aria-label="Cart"
+                  onClick={openCart}
+                  className="relative text-cream transition-colors hover:text-gold"
+                >
+                  <ShoppingBag className="size-5" aria-hidden="true" />
+                  {itemCount > 0 ? (
+                    <span className="absolute -top-2 -right-2 flex size-4 items-center justify-center rounded-full bg-gold text-[0.625rem] font-medium text-forest-deep">
+                      {itemCount}
+                    </span>
+                  ) : null}
                 </button>
               </div>
             ) : null}
