@@ -2,7 +2,7 @@ import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
 

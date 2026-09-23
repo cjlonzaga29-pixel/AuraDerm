@@ -1,6 +1,6 @@
 import { Container } from "@/components/ui/Container";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
 import { LeafDivider } from "@/components/ui/LeafDivider";
