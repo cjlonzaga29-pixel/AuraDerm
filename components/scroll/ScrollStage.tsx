@@ -155,6 +155,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
         />
       ) : (
         <video
+          key={isDesktop ? "desktop" : "mobile"}
           ref={heroVideoRef}
           data-testid="stage-video-a"
           muted
