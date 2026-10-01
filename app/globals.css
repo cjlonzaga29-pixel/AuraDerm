@@ -7,10 +7,11 @@
   --gold-deep: #a3c13a;
   --cream: #f4f1e4;
   --sage-muted: #a8c08a;
-  --glass: rgba(28, 58, 40, 0.92);
+  --glass: rgba(20, 38, 28, 0.2);
   --glass-solid: rgba(15, 35, 24, 0.82);
-  --glass-border: rgba(199, 224, 74, 0.15);
-  --surface-nav: rgba(15, 35, 24, 0.88);
+  --glass-border: rgba(230, 236, 214, 0.18);
+  --glass-highlight: rgba(255, 255, 255, 0.06);
+  --surface-nav: rgba(15, 35, 24, 0.66);
   --radius-panel: 18px;
   --radius-pill: 999px;
   --radius-card: 14px;
@@ -26,6 +27,7 @@
   --color-glass: var(--glass);
   --color-glass-solid: var(--glass-solid);
   --color-glass-border: var(--glass-border);
+  --color-glass-highlight: var(--glass-highlight);
   --color-surface-nav: var(--surface-nav);
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
@@ -59,6 +61,35 @@
 body {
   background: var(--forest-deep);
   color: var(--cream);
+}
+
+/* Transparent smoked-glass surface for content panels (GlassPanel). Blur is
+   panel-scoped only — never applied to the video or a full-bleed backdrop. */
+.glass-surface {
+  background-color: var(--glass);
+  background-image: linear-gradient(
+    135deg,
+    var(--glass-highlight) 0%,
+    rgba(255, 255, 255, 0) 45%
+  );
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+    0 16px 40px -20px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 768px) {
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .glass-surface {
+      -webkit-backdrop-filter: blur(11px);
+      backdrop-filter: blur(11px);
+    }
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-surface {
+    background-color: var(--glass-solid);
+  }
 }
 
 @layer base {

@@ -11,9 +11,11 @@ export const colorTokens: TokenSwatch[] = [
   { name: "gold-deep", cssVar: "--gold-deep", value: "#A3C13A" },
   { name: "cream", cssVar: "--cream", value: "#F4F1E4" },
   { name: "sage-muted", cssVar: "--sage-muted", value: "#A8C08A" },
-  { name: "glass", cssVar: "--glass", value: "rgba(28,58,40,0.45)" },
+  { name: "glass", cssVar: "--glass", value: "rgba(20,38,28,0.20)" },
   { name: "glass-solid", cssVar: "--glass-solid", value: "rgba(15,35,24,0.82)" },
-  { name: "glass-border", cssVar: "--glass-border", value: "rgba(199,224,74,0.15)" },
+  { name: "glass-border", cssVar: "--glass-border", value: "rgba(230,236,214,0.18)" },
+  { name: "glass-highlight", cssVar: "--glass-highlight", value: "rgba(255,255,255,0.06)" },
+  { name: "surface-nav", cssVar: "--surface-nav", value: "rgba(15,35,24,0.66)" },
 ];
 
 export const radiusTokens: TokenSwatch[] = [

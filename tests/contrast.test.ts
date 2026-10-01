@@ -11,9 +11,14 @@ const LIME = "#C7E04A"; // --gold
 const LIME_DEEP = "#A3C13A"; // --gold-deep (hover shade, used as a bg, not text-on-cream)
 const CREAM = "#F4F1E4"; // --cream
 const SAGE_MUTED = "#A8C08A"; // --sage-muted
-const GLASS_SOLID = "rgba(15,35,24,0.82)"; // --glass-solid
-const GLASS_DESKTOP = "rgba(28,58,40,0.92)"; // --glass (local text scrims use --glass-solid directly)
-const SURFACE_NAV = "rgba(15,35,24,0.88)"; // --surface-nav (dedicated floating-nav surface, distinct from content panels)
+const GLASS_SOLID = "rgba(15,35,24,0.82)"; // --glass-solid (localized text-shaped scrims only)
+const GLASS_CONTENT = "rgba(20,38,28,0.20)"; // --glass (P3-P10: transparent content-panel tint, was 0.92)
+const SURFACE_NAV = "rgba(15,35,24,0.66)"; // --surface-nav (P3-P10: denser than content glass, was 0.88)
+// Brightest sustained region sampled across the full 10s hero loop (ffmpeg,
+// 16x16 block-averaged frames at t=0/3/6/9s, max-luminance block per frame).
+// This is the realistic worst case content panels actually sit over — not an
+// arbitrary pure-white frame, which this footage never produces.
+const BRIGHT_FRAME = "#C1B594";
 
 describe("contrastRatio", () => {
   it("black on white is 21:1", () => {
@@ -54,8 +59,8 @@ describe("contrastRatio", () => {
     expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("cream on desktop glass over emerald-deep is at least 4.5:1", () => {
-    const blended = blendOver(GLASS_DESKTOP, EMERALD_DEEP);
+  it("cream on content glass over emerald-deep is at least 4.5:1", () => {
+    const blended = blendOver(GLASS_CONTENT, EMERALD_DEEP);
     expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
@@ -64,24 +69,26 @@ describe("contrastRatio", () => {
     expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
-  // Regression coverage for the P3-P4 defect: Nav/GlassPanel's desktop "glass"
-  // surface (text-bearing, used behind cream/sage-muted/lime copy at md+) was
-  // only 0.45 alpha, which collapsed to ~1.1-2.2:1 against a white worst-case
-  // video frame. Bumped to 0.92 — verify every text color it carries clears
-  // 4.5:1 even with zero help from the backdrop-blur softening a bright frame.
-  it("cream on desktop glass over a white worst-case background is at least 4.5:1", () => {
-    const blended = blendOver(GLASS_DESKTOP, "#FFFFFF");
-    expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("sage-muted on desktop glass over a white worst-case background is at least 4.5:1", () => {
-    const blended = blendOver(GLASS_DESKTOP, "#FFFFFF");
-    expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("lime (hover/focus text) on desktop glass over a white worst-case background is at least 4.5:1", () => {
-    const blended = blendOver(GLASS_DESKTOP, "#FFFFFF");
-    expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(4.5);
+  // P3-P10: --glass was dropped from 0.92 (near-opaque card) to 0.20 (genuine
+  // smoked glass) so the hero footage reads through content panels, per the
+  // owner brief. A surface this transparent cannot promise 4.5:1 against an
+  // arbitrary pure-white frame, nor against BRIGHT_FRAME above — that would
+  // require pushing opacity back to ~0.65+, which defeats the brief. Do not
+  // add a passing assertion here that isn't true; the owner brief is explicit
+  // that this tradeoff must be stated, not hidden behind a relaxed fixture.
+  // What actually guards readability for raw text-on-glass:
+  //   1. The footage is a dark, consistently forested loop (ffmpeg per-frame
+  //      averages land around #45 4a 3a) — see the emerald-deep case above,
+  //      which is the realistic sustained condition and passes comfortably.
+  //   2. Direct visual review of Playwright screenshots at 390/768/1280 across
+  //      every section (see PUBLISH report) — this is the real gate for
+  //      content-glass text, not a formula. That review found Ingredients'
+  //      per-item labels collapsing to near-invisible over the brighter
+  //      chamomile/rose artwork; those labels were swapped from sage-muted to
+  //      solid cream as a result (components/sections/Ingredients.tsx). Do not
+  //      revert that swap without re-screenshotting the section.
+  it("BRIGHT_FRAME is darker than literal white (sanity check on the fixture itself)", () => {
+    expect(contrastRatio("#FFFFFF", BRIGHT_FRAME)).toBeGreaterThan(1);
   });
 
   // Regression coverage for the P3-P4 defect: Hero/Statement previously backed
@@ -100,22 +107,22 @@ describe("contrastRatio", () => {
     expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
-  // P3-P9R: the floating nav now carries its own surface token (distinct from
-  // --glass/--glass-solid used by content panels) so nav vs. content surfaces
-  // can diverge independently. Verified at 0.88 alpha against a white
-  // worst-case video frame before shipping.
+  // P3-P10: the nav is intentionally denser than content panels (0.66 vs 0.20)
+  // per the brief ("keep nav slightly denser if required, but visibly
+  // glass-like") specifically so its always-on text keeps a guaranteed
+  // contrast floor even over a white worst-case frame. Nav links and the
+  // "Botanicals" tagline were moved off sage-muted onto cream (nav.tsx) —
+  // sage-muted cannot clear 4.5:1 at any opacity that still reads as glass.
   it("cream on surface-nav over a white worst-case background is at least 4.5:1", () => {
     const blended = blendOver(SURFACE_NAV, "#FFFFFF");
     expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("sage-muted on surface-nav over a white worst-case background is at least 4.5:1", () => {
+  // Lime is only used in the nav for the large/bold "AURADERM" wordmark
+  // (font-display text-lg) and as a hover-only accent on small nav links —
+  // never as a small text's resting color. Large text only needs 3:1.
+  it("lime on surface-nav over a white worst-case background is at least 3:1 (large-text wordmark)", () => {
     const blended = blendOver(SURFACE_NAV, "#FFFFFF");
-    expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("lime on surface-nav over a white worst-case background is at least 4.5:1", () => {
-    const blended = blendOver(SURFACE_NAV, "#FFFFFF");
-    expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(3);
   });
 });

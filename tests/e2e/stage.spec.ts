@@ -80,18 +80,37 @@ test.describe("pinned video stage", () => {
     }
   });
 
-  test("backdrop-filter applies only to the nav, per breakpoint", async ({ page }, testInfo) => {
+  test("backdrop-filter applies only to glass surfaces (nav + content panels), per breakpoint, never to the stage", async ({
+    page,
+  }, testInfo) => {
     await page.goto("/");
-    const count = await page.evaluate(
-      () =>
-        Array.from(document.querySelectorAll("*")).filter(
-          (el) =>
-            el.tagName !== "SOURCE" &&
-            getComputedStyle(el).display !== "none" &&
-            getComputedStyle(el).backdropFilter !== "none",
+    const result = await page.evaluate(() => {
+      const stage = document.querySelector('[data-testid="scroll-stage"]');
+      const blurred = Array.from(document.querySelectorAll("*")).filter(
+        (el) =>
+          el.tagName !== "SOURCE" &&
+          getComputedStyle(el).display !== "none" &&
+          getComputedStyle(el).backdropFilter !== "none",
+      );
+      return {
+        total: blurred.length,
+        insideStage: stage ? blurred.filter((el) => stage.contains(el)).length : 0,
+        outsideGlassSurface: blurred.filter(
+          (el) => !el.classList.contains("glass-surface") && !el.closest("header"),
         ).length,
-    );
-    expect(count).toBe(testInfo.project.name === "mobile" ? 0 : 1);
+      };
+    });
+    // Blur is panel-scoped: never inside the video stage, never on an element
+    // that isn't the nav shell or a .glass-surface (GlassPanel) instance.
+    expect(result.insideStage).toBe(0);
+    expect(result.outsideGlassSurface).toBe(0);
+    // Below the md breakpoint, blur is skipped entirely for mobile performance.
+    if (testInfo.project.name === "mobile") {
+      expect(result.total).toBe(0);
+    } else {
+      // Nav + at least one content GlassPanel should carry the blur at md+.
+      expect(result.total).toBeGreaterThan(1);
+    }
   });
 
   test("exactly one video on mobile and desktop", async ({ page }) => {

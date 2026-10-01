@@ -24,7 +24,7 @@ export function Nav() {
           <Link href="/" className="flex flex-col leading-none">
             {/* [CONTENT: vector logo] — text lockup placeholder */}
             <span className="font-display text-lg text-gold">AURADERM</span>
-            <span className="font-sans text-[0.625rem] uppercase tracking-[0.24em] text-sage-muted">
+            <span className="font-sans text-[0.625rem] uppercase tracking-[0.24em] text-cream">
               Botanicals
             </span>
           </Link>

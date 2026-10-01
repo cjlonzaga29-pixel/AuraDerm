@@ -39,11 +39,11 @@ export function Ingredients() {
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs uppercase tracking-[0.18em] text-sage-muted">
+                    <span className="font-sans text-xs uppercase tracking-[0.18em] text-cream">
                       {String(ingredient.order).padStart(2, "0")} / {ingredient.word}
                     </span>
                     <span className="font-display text-lg text-cream">{ingredient.name}</span>
-                    <span className="font-sans text-sm text-sage-muted">
+                    <span className="font-sans text-sm text-cream">
                       {ingredient.benefit}
                     </span>
                   </div>

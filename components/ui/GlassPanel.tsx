@@ -8,7 +8,7 @@ type GlassPanelProps = {
 export function GlassPanel({ children, className }: GlassPanelProps) {
   return (
     <div
-      className={`rounded-panel border border-glass-border bg-glass-solid md:bg-glass ${className ?? ""}`}
+      className={`glass-surface rounded-panel border border-glass-border ${className ?? ""}`}
     >
       {children}
     </div>
