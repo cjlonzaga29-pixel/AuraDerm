@@ -115,8 +115,7 @@ test.describe("pinned video stage", () => {
 
   test("exactly one video on mobile and desktop", async ({ page }) => {
     await page.goto("/");
-    const videoCount = await page.locator('[data-testid="scroll-stage"] video').count();
-    expect(videoCount).toBe(1);
+    await expect(page.locator('[data-testid="scroll-stage"] video')).toHaveCount(1);
   });
 
   test("reduced motion: no video, sharp poster shown, opacity unchanged after scroll", async ({

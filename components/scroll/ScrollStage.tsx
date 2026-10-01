@@ -59,8 +59,32 @@ function getMotionServerSnapshot() {
   return false;
 }
 
+function subscribeOnce() {
+  return () => {};
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getHydratedServerSnapshot() {
+  return false;
+}
+
 export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageProps) {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
+
+  // The real viewport width is unknown to the server, so the hydration-matching
+  // render always has to guess "mobile" first. Gate the <video> mount on this
+  // flag so that guess never becomes a real DOM element — the keyed remount
+  // below (added to force a reload on genuine breakpoint changes) would
+  // otherwise fire during every hydration, fetching the wrong source variant
+  // and resetting playback position on first load.
+  const hydrated = useSyncExternalStore(
+    subscribeOnce,
+    getHydratedSnapshot,
+    getHydratedServerSnapshot,
+  );
 
   const isDesktop = useSyncExternalStore(
     subscribeToViewport,
@@ -138,7 +162,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
         window.removeEventListener("scroll", retryOnInteraction);
       }
     };
-  }, [disableMotion, isDesktop]);
+  }, [disableMotion, isDesktop, hydrated]);
 
   return (
     <div
@@ -146,7 +170,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10"
     >
-      {disableMotion ? (
+      {disableMotion || !hydrated ? (
         <img
           data-testid="stage-poster"
           src={posterSrc}

@@ -24,6 +24,41 @@ describe("stage media", () => {
     }
   });
 
+  it("hero-1280/hero-720 decode at their named widths (skips if ffprobe unavailable)", () => {
+    let ffprobeAvailable = true;
+    try {
+      execFileSync("ffprobe", ["-version"], { stdio: "ignore" });
+    } catch {
+      ffprobeAvailable = false;
+    }
+    if (!ffprobeAvailable) {
+      console.warn(
+        "[stage-media.test] ffprobe not found on PATH in this test environment — skipping decoded-resolution check",
+      );
+      return;
+    }
+    const expectedWidths: Record<string, number> = {
+      "hero-1280.mp4": 1280,
+      "hero-720.mp4": 720,
+    };
+    for (const [name, expectedWidth] of Object.entries(expectedWidths)) {
+      const output = execFileSync(
+        "ffprobe",
+        [
+          "-v", "error",
+          "-select_streams", "v:0",
+          "-show_entries", "stream=width,height",
+          "-of", "csv=p=0",
+          join(STAGE_DIR, name),
+        ],
+        { encoding: "utf-8" },
+      ).trim();
+      const [width, height] = output.split(",").map(Number);
+      expect(width).toBe(expectedWidth);
+      expect(height).toBeGreaterThan(0);
+    }
+  });
+
   it("no audio stream in any of the 3 stage videos (skips if ffprobe unavailable)", () => {
     let ffprobeAvailable = true;
     try {
