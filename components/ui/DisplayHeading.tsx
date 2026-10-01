@@ -8,9 +8,9 @@ type DisplayHeadingProps = {
 };
 
 const sizeClasses: Record<HeadingLevel, string> = {
-  h1: "text-[clamp(2.25rem,5vw,4rem)]",
-  h2: "text-[clamp(1.75rem,3.2vw,2.75rem)]",
-  h3: "text-[clamp(1.25rem,2vw,1.625rem)]",
+  h1: "text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.95] tracking-[0.01em]",
+  h2: "text-[clamp(2rem,4.5vw,3.5rem)] leading-[1] tracking-[0.015em]",
+  h3: "text-[clamp(1.25rem,2.5vw,1.75rem)] leading-[1.05] tracking-[0.02em]",
 };
 
 function renderWithAccent(text: string, accent?: string) {
@@ -32,7 +32,7 @@ export function DisplayHeading({ children, accent, level, className }: DisplayHe
   const Tag = level;
   return (
     <Tag
-      className={`font-display font-medium leading-tight text-cream ${sizeClasses[level]} ${className ?? ""}`}
+      className={`font-display font-normal uppercase text-cream min-w-0 break-words ${sizeClasses[level]} ${className ?? ""}`}
     >
       {renderWithAccent(children, accent)}
     </Tag>

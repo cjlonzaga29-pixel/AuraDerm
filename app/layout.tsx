@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Jost } from "next/font/google";
+import { Bebas_Neue, Jost } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/site/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { CartSheet } from "@/components/store/CartSheet";
 
-const displayFont = Cormorant_Garamond({
+const displayFont = Bebas_Neue({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400"],
+  display: "swap",
 });
 
 const sansFont = Jost({
