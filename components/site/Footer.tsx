@@ -76,6 +76,8 @@ export function Footer() {
           ) : null}
         </div>
 
+        <p className="font-sans text-xs text-sage-muted">{site.previewNotice}</p>
+
         <p className="font-sans text-xs text-sage-muted">
           &copy; {year} AuraDerm Botanicals
         </p>

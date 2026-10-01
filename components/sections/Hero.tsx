@@ -56,16 +56,14 @@ export function Hero() {
             ))}
           </div>
 
-          <GlassPanel className="flex max-w-xs flex-col gap-2 p-6">
-            <Eyebrow>Featured</Eyebrow>
-            <span className="font-display text-lg text-cream">
-              {featuredProduct?.name ?? "[CONTENT: product name]"}
-            </span>
-            <span className="font-sans text-sm text-sage-muted">
-              {featuredProduct?.size ?? "[CONTENT: size]"}
-            </span>
-            {priceLabel ? <span className="font-sans text-sm text-gold">{priceLabel}</span> : null}
-          </GlassPanel>
+          {featuredProduct ? (
+            <GlassPanel className="flex max-w-xs flex-col gap-2 p-6">
+              <Eyebrow>Concept product</Eyebrow>
+              <span className="font-display text-lg text-cream">{featuredProduct.name}</span>
+              <span className="font-sans text-sm text-sage-muted">{featuredProduct.size}</span>
+              {priceLabel ? <span className="font-sans text-sm text-gold">{priceLabel}</span> : null}
+            </GlassPanel>
+          ) : null}
         </div>
 
         <GlassPanel className="hidden flex-col gap-6 self-stretch p-6 lg:flex">

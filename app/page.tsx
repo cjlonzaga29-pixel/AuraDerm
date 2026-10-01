@@ -6,10 +6,9 @@ import { Ingredients } from "@/components/sections/Ingredients";
 import { Benefits } from "@/components/sections/Benefits";
 import { Actives } from "@/components/sections/Actives";
 import { Routine } from "@/components/sections/Routine";
-import { GivesBack } from "@/components/sections/GivesBack";
+import { Closing } from "@/components/sections/Closing";
 import { LeafDivider } from "@/components/ui/LeafDivider";
 import { Container } from "@/components/ui/Container";
-import { site } from "@/content/site";
 
 export default function Home() {
   return (
@@ -30,7 +29,7 @@ export default function Home() {
         <Benefits />
         <Actives />
         <Routine />
-        <GivesBack headline={site.givesBackHeadline} items={site.sustainability} />
+        <Closing />
       </main>
     </>
   );

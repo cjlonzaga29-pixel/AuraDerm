@@ -90,83 +90,139 @@ export type Site = {
   };
   sustainability: SustainabilityItem[] | null;
   givesBackHeadline: string;
+  closing: {
+    line1: string;
+    line2: string;
+    subcopy: string;
+    cta: { label: string; href: string };
+  };
+  previewNotice: string;
   social: SocialLink[];
 };
-
-const CONTENT = (what: string) => `[CONTENT: ${what}]`;
 
 export const site: Site = {
   brand: "AuraDerm Botanicals",
   commerce: false,
   hero: {
-    eyebrow: CONTENT("eyebrow line, e.g. brand tagline"),
-    headlineLine1: CONTENT("headline copy line 1"),
-    headlineLine2: CONTENT("headline copy line 2"),
-    accentWord: CONTENT("the one gold accent word"),
-    subcopy: CONTENT("subcopy"),
+    eyebrow: "BOTANICAL SKINCARE, REIMAGINED",
+    headlineLine1: "RETURN TO",
+    headlineLine2: "YOUR RITUAL.",
+    accentWord: "RITUAL.",
+    subcopy:
+      "A quieter moment for your skin. Explore botanical-inspired textures and a simple routine designed around everyday care.",
     primaryCta: {
-      label: CONTENT("CTA label, e.g. Shop the routine"),
-      href: CONTENT("primary CTA destination"),
+      label: "EXPLORE THE COLLECTION",
+      href: "#ingredients",
     },
     secondaryCta: {
-      label: CONTENT("secondary link label"),
-      href: CONTENT("secondary CTA destination"),
+      label: "FIND YOUR RITUAL",
+      href: "#routine",
     },
     trustBadges: [
-      { label: CONTENT("trust badge 1") },
-      { label: CONTENT("trust badge 2") },
-      { label: CONTENT("trust badge 3") },
+      { label: "Concept collection" },
+      { label: "Illustrative routine" },
+      { label: "Design preview" },
     ],
-    featuredProductSlug: CONTENT("featured product slug"),
+    featuredProductSlug: "radiance-barrier-serum",
   },
   statement: {
-    line1: CONTENT("statement copy line 1"),
-    line2: CONTENT("statement copy line 2"),
-    accentWord: CONTENT("statement accent word"),
-    subcopy: CONTENT("statement subcopy"),
+    line1: "ROOTED IN NATURE.",
+    line2: "MADE FOR YOUR EVERYDAY.",
+    accentWord: "NATURE.",
+    subcopy: "Thoughtful textures. Simple steps. A little space to slow down.",
   },
   ingredientsPanel: {
-    title: CONTENT("panel title, e.g. The botanicals"),
-    sideLabelLeft: CONTENT("side label left"),
-    sideLabelRight: CONTENT("side label right"),
+    title: "A BOTANICAL PALETTE",
+    sideLabelLeft: "CONCEPT",
+    sideLabelRight: "FIVE NOTES",
   },
-  products: [],
+  products: [
+    {
+      slug: "radiance-barrier-serum",
+      name: "Radiance Barrier Serum",
+      size: "30 ml / 1.0 fl. oz.",
+      priceMinor: null,
+      currency: null,
+      shopifyHandle: null,
+      shortDescription: "Concept serum — illustrative, not a confirmed formulation.",
+    },
+    {
+      slug: "night-renewal-nectar",
+      name: "Night Renewal Nectar",
+      size: "50 ml / 1.7 fl. oz.",
+      priceMinor: null,
+      currency: null,
+      shopifyHandle: null,
+      shortDescription: "Concept evening elixir — illustrative, not a confirmed formulation.",
+    },
+    {
+      slug: "botanical-cleansing-elixir",
+      name: "Botanical Cleansing Elixir",
+      size: "120 ml / 4.0 fl. oz.",
+      priceMinor: null,
+      currency: null,
+      shopifyHandle: null,
+      shortDescription: "Concept cleanser — illustrative, not a confirmed formulation.",
+    },
+  ],
   ingredients: [
-    { order: 1, word: CONTENT("ingredient 1 short-name"), name: CONTENT("botanical name 1"), benefit: CONTENT("benefit line 1"), image: null },
-    { order: 2, word: CONTENT("ingredient 2 short-name"), name: CONTENT("botanical name 2"), benefit: CONTENT("benefit line 2"), image: null },
-    { order: 3, word: CONTENT("ingredient 3 short-name"), name: CONTENT("botanical name 3"), benefit: CONTENT("benefit line 3"), image: null },
-    { order: 4, word: CONTENT("ingredient 4 short-name"), name: CONTENT("botanical name 4"), benefit: CONTENT("benefit line 4"), image: null },
-    { order: 5, word: CONTENT("ingredient 5 short-name"), name: CONTENT("botanical name 5"), benefit: CONTENT("benefit line 5"), image: null },
+    { order: 1, word: "GREEN TEA", name: "Green Tea", benefit: "A fresh botanical note.", image: null },
+    { order: 2, word: "ALOE", name: "Aloe", benefit: "A familiar face in everyday skincare.", image: null },
+    { order: 3, word: "OAT", name: "Oat", benefit: "A soft, comforting inspiration.", image: null },
+    { order: 4, word: "CHAMOMILE", name: "Chamomile", benefit: "A gentle floral touch.", image: null },
+    { order: 5, word: "ROSE", name: "Rose", benefit: "A classic botanical finish.", image: null },
   ],
   benefits: [
-    { title: CONTENT("benefit title 1"), body: CONTENT("benefit description 1"), linkLabel: CONTENT("link label 1"), href: CONTENT("link destination 1") },
-    { title: CONTENT("benefit title 2"), body: CONTENT("benefit description 2"), linkLabel: CONTENT("link label 2"), href: CONTENT("link destination 2") },
-    { title: CONTENT("benefit title 3"), body: CONTENT("benefit description 3"), linkLabel: CONTENT("link label 3"), href: CONTENT("link destination 3") },
+    {
+      title: "LESS, BUT THOUGHTFUL",
+      body: "A focused collection that keeps your daily ritual simple.",
+      linkLabel: "See the collection",
+      href: "#ingredients",
+    },
+    {
+      title: "TEXTURES TO ENJOY",
+      body: "Imagine lightweight layers and a comfortable finish.",
+      linkLabel: "Meet the essentials",
+      href: "#actives",
+    },
+    {
+      title: "YOUR MOMENT OF CALM",
+      body: "Turn everyday skincare into a small pause in your day.",
+      linkLabel: "See the ritual",
+      href: "#routine",
+    },
   ],
   actives: [
-    { badge: CONTENT("active 1 short-name"), name: CONTENT("active 1 full name"), oneLiner: CONTENT("active 1 one-liner"), image: null },
-    { badge: CONTENT("active 2 short-name"), name: CONTENT("active 2 full name"), oneLiner: CONTENT("active 2 one-liner"), image: null },
-    { badge: CONTENT("active 3 short-name"), name: CONTENT("active 3 full name"), oneLiner: CONTENT("active 3 one-liner"), image: null },
-    { badge: CONTENT("active 4 short-name"), name: CONTENT("active 4 full name"), oneLiner: CONTENT("active 4 one-liner"), image: null },
+    { badge: "CLN", name: "Cleanse", oneLiner: "The first step of the ritual.", image: null },
+    { badge: "PRP", name: "Prepare", oneLiner: "A moment to ready the skin.", image: null },
+    { badge: "HYD", name: "Hydrate", oneLiner: "A lightweight layer of moisture.", image: null },
+    { badge: "FIN", name: "Finish", oneLiner: "The final step, every day.", image: null },
   ],
   activesIntro: {
-    eyebrow: CONTENT("actives eyebrow"),
-    headline: CONTENT("actives headline, up to 4 lines"),
-    accentWord: CONTENT("actives accent word"),
-    body: CONTENT("actives paragraph — claims-reviewed"),
-    cta: { label: CONTENT("actives CTA label"), href: CONTENT("actives CTA destination") },
+    eyebrow: "CONCEPT ESSENTIALS",
+    headline: "MEET YOUR\nDAILY ESSENTIALS.",
+    accentWord: "ESSENTIALS.",
+    body: "An illustrative collection, from the first cleanse to the final layer.",
+    cta: { label: "EXPLORE THE COLLECTION", href: "#ingredients" },
   },
   routine: [
-    { slot: "AM", title: CONTENT("AM step title"), body: CONTENT("AM step copy") },
-    { slot: "SPF REAPPLY", title: CONTENT("SPF reapply step title"), body: CONTENT("SPF reapply step copy") },
-    { slot: "PM", title: CONTENT("PM step title"), body: CONTENT("PM step copy") },
+    { slot: "AM", title: "CLEANSE", body: "Begin with a gentle cleanse." },
+    { slot: "SPF REAPPLY", title: "LAYER", body: "Apply your preferred skincare layers." },
+    { slot: "PM", title: "COMPLETE", body: "Finish your routine; use sun protection during the day." },
   ],
   routineIntro: {
-    eyebrow: CONTENT("routine eyebrow"),
-    headline: CONTENT("routine headline, 3 lines"),
-    body: CONTENT("routine paragraph"),
+    eyebrow: "THE RITUAL",
+    headline: "THREE STEPS.\nONE SIMPLE RITUAL.",
+    body: "A simple, illustrative routine designed around everyday care.",
   },
   sustainability: null,
-  givesBackHeadline: CONTENT("gives back headline, up to 4 lines"),
+  givesBackHeadline: "",
+  closing: {
+    line1: "MAKE SPACE",
+    line2: "FOR YOURSELF.",
+    subcopy: "Discover a botanical-inspired approach to your everyday routine.",
+    cta: { label: "BACK TO THE COLLECTION", href: "#ingredients" },
+  },
+  previewNotice: "Design preview — products, ingredients and copy are illustrative.",
   social: [],
 };
