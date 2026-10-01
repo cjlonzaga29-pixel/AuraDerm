@@ -2,16 +2,14 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function scrollPastHero(page: Page) {
   await page.evaluate(() => window.scrollTo(0, 1.2 * window.innerHeight));
-  await page.waitForFunction(() => {
-    const stage = document.querySelector('[data-testid="scroll-stage"]') as HTMLElement | null;
-    return stage ? stage.style.getPropertyValue("--stage-p").trim() === "1" : false;
-  });
+  await page.waitForFunction(
+    () => window.scrollY >= 1.2 * window.innerHeight,
+  );
 }
 
 test.describe("pinned video stage", () => {
-  test("scrollY 0: Layer B hidden, Layer A video has required attributes", async ({ page }) => {
+  test("scrollY 0: hero video has required attributes", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("stage-layer-b")).toHaveCSS("opacity", "0");
 
     const videoA = page.getByTestId("stage-video-a");
     await expect(videoA).toHaveCount(1);
@@ -36,19 +34,35 @@ test.describe("pinned video stage", () => {
     expect(paused).toBe(false);
   });
 
-  test("scrolling to 1.2x viewport height: Layer B fully visible, Layer A keeps playing", async ({
+  test("scrolling past the hero: same sharp video stays visible and keeps playing", async ({
     page,
   }) => {
     await page.goto("/");
-    await scrollPastHero(page);
-    await expect(page.getByTestId("stage-layer-b")).toHaveCSS("opacity", "1");
     const videoA = page.getByTestId("stage-video-a");
+    const srcBefore = await videoA.evaluate(
+      (el: HTMLVideoElement) => el.currentSrc,
+    );
+
+    await scrollPastHero(page);
+
+    await expect(page.getByTestId("stage-video-a")).toHaveCount(1);
+    await expect(page.locator('[data-testid="scroll-stage"] video')).toHaveCount(1);
+    const srcAfter = await videoA.evaluate((el: HTMLVideoElement) => el.currentSrc);
+    expect(srcAfter).toBe(srcBefore);
+    await expect(page.getByTestId("scroll-stage")).toHaveCSS("opacity", "1");
+
     const paused = await videoA.evaluate((el: HTMLVideoElement) => el.paused);
     expect(paused).toBe(false);
     const timeBefore = await videoA.evaluate((el: HTMLVideoElement) => el.currentTime);
     await page.waitForTimeout(500);
     const timeAfter = await videoA.evaluate((el: HTMLVideoElement) => el.currentTime);
     expect(timeAfter).toBeGreaterThan(timeBefore);
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const timeAtTop = await videoA.evaluate((el: HTMLVideoElement) => el.currentTime);
+    await page.waitForTimeout(500);
+    const timeAfterTop = await videoA.evaluate((el: HTMLVideoElement) => el.currentTime);
+    expect(timeAfterTop).toBeGreaterThan(timeAtTop);
   });
 
   test("computed filter is none for every stage layer", async ({ page }) => {
@@ -80,13 +94,13 @@ test.describe("pinned video stage", () => {
     expect(count).toBe(testInfo.project.name === "mobile" ? 0 : 1);
   });
 
-  test("exactly one video on mobile, two on desktop", async ({ page }, testInfo) => {
+  test("exactly one video on mobile and desktop", async ({ page }) => {
     await page.goto("/");
     const videoCount = await page.locator('[data-testid="scroll-stage"] video').count();
-    expect(videoCount).toBe(testInfo.project.name === "mobile" ? 1 : 2);
+    expect(videoCount).toBe(1);
   });
 
-  test("reduced motion: no videos, posters shown, opacity unchanged after scroll", async ({
+  test("reduced motion: no video, sharp poster shown, opacity unchanged after scroll", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -95,12 +109,12 @@ test.describe("pinned video stage", () => {
     await expect(page.getByTestId("stage-poster")).toBeVisible();
 
     const before = await page
-      .getByTestId("stage-layer-b")
+      .getByTestId("scroll-stage")
       .evaluate((el) => getComputedStyle(el).opacity);
     await page.evaluate(() => window.scrollTo(0, 1.2 * window.innerHeight));
     await page.waitForTimeout(200);
     const after = await page
-      .getByTestId("stage-layer-b")
+      .getByTestId("scroll-stage")
       .evaluate((el) => getComputedStyle(el).opacity);
     expect(after).toBe(before);
   });

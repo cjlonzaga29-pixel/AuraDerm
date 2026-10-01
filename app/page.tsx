@@ -17,9 +17,7 @@ export default function Home() {
       <ScrollStage
         hero1280Src="/stage/hero-1280.mp4"
         hero720Src="/stage/hero-720.mp4"
-        heroBlurSrc="/stage/hero-blur.mp4"
         posterSrc="/stage/poster.webp"
-        posterBlurSrc="/stage/poster-blur.webp"
       />
       <Nav />
       <main className="relative">

@@ -4,20 +4,16 @@ import {
   useEffect,
   useRef,
   useSyncExternalStore,
-  type CSSProperties,
   type SyntheticEvent,
 } from "react";
 
 type ScrollStageProps = {
   hero1280Src: string;
   hero720Src: string;
-  heroBlurSrc: string;
   posterSrc: string;
-  posterBlurSrc: string;
 };
 
 const DESKTOP_BREAKPOINT = 768;
-const STAGE_P_VIEWPORT_MULTIPLIER = 1.2;
 
 function logPlayRejection() {
   console.debug("[ScrollStage] video play() rejected — leaving poster visible");
@@ -63,16 +59,8 @@ function getMotionServerSnapshot() {
   return false;
 }
 
-export function ScrollStage({
-  hero1280Src,
-  hero720Src,
-  heroBlurSrc,
-  posterSrc,
-  posterBlurSrc,
-}: ScrollStageProps) {
-  const stageRef = useRef<HTMLDivElement>(null);
+export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageProps) {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
-  const blurVideoRef = useRef<HTMLVideoElement>(null);
 
   const isDesktop = useSyncExternalStore(
     subscribeToViewport,
@@ -87,26 +75,16 @@ export function ScrollStage({
 
   useEffect(() => {
     if (disableMotion) return;
-    const stage = stageRef.current;
-    if (!stage) return;
     const heroVideo = heroVideoRef.current;
-    const blurVideo = blurVideoRef.current;
+    if (!heroVideo) return;
 
     // The `muted` attribute only seeds the native `muted` property when an
-    // element is parsed from HTML. Layer A/B videos can instead be created
-    // by React on the client (e.g. swapped in for the poster <img> after
-    // the reduced-motion check resolves post-hydration), so autoplay
-    // policies see `muted` as false unless we set the property explicitly.
-    if (heroVideo) {
-      heroVideo.defaultMuted = true;
-      heroVideo.muted = true;
-    }
-    if (blurVideo) {
-      blurVideo.defaultMuted = true;
-      blurVideo.muted = true;
-    }
-
-    let ticking = false;
+    // element is parsed from HTML. The hero video can instead be created by
+    // React on the client (e.g. swapped in for the poster <img> after the
+    // reduced-motion check resolves post-hydration), so autoplay policies
+    // see `muted` as false unless we set the property explicitly.
+    heroVideo.defaultMuted = true;
+    heroVideo.muted = true;
 
     // Some browsers (notably Safari under stricter autoplay heuristics) can
     // still reject play() even with muted set. Once that happens, arm a
@@ -118,8 +96,7 @@ export function ScrollStage({
       if (fallbackArmed) return;
       fallbackArmed = true;
       retryOnInteraction = () => {
-        heroVideo?.play().catch(logPlayRejection);
-        blurVideo?.play().catch(logPlayRejection);
+        heroVideo.play().catch(logPlayRejection);
       };
       window.addEventListener("click", retryOnInteraction, { once: true });
       window.addEventListener("touchstart", retryOnInteraction, { once: true });
@@ -132,36 +109,11 @@ export function ScrollStage({
       });
     };
 
-    // Scroll only drives the Layer A/B crossfade opacity via --stage-p; it
-    // never pauses playback. Both videos free-run continuously from mount
-    // regardless of scroll position (visibility/tab-hidden is the only
-    // thing allowed to pause them, handled separately below).
-    const applyStageP = () => {
-      const p = Math.min(
-        1,
-        Math.max(0, window.scrollY / (STAGE_P_VIEWPORT_MULTIPLIER * window.innerHeight)),
-      );
-      stage.style.setProperty("--stage-p", String(p));
-
-      if (heroVideo) attemptPlay(heroVideo);
-      if (blurVideo) attemptPlay(blurVideo);
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
-        applyStageP();
-      });
-    };
-
     const onVisibility = () => {
       if (document.hidden) {
-        heroVideo?.pause();
-        blurVideo?.pause();
+        heroVideo.pause();
       } else {
-        applyStageP();
+        attemptPlay(heroVideo);
       }
     };
 
@@ -169,23 +121,17 @@ export function ScrollStage({
     // (observed under low-power/battery-saver modes), leaving the video
     // paused on its final frame after one cycle. Force a restart on `ended`
     // as a fallback so playback never stalls.
-    const restartOnEnded = (video: HTMLVideoElement) => {
-      video.currentTime = 0;
-      attemptPlay(video);
+    const onHeroEnded = () => {
+      heroVideo.currentTime = 0;
+      attemptPlay(heroVideo);
     };
-    const onHeroEnded = () => restartOnEnded(heroVideo!);
-    const onBlurEnded = () => restartOnEnded(blurVideo!);
 
-    applyStageP();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    attemptPlay(heroVideo);
     document.addEventListener("visibilitychange", onVisibility);
-    heroVideo?.addEventListener("ended", onHeroEnded);
-    blurVideo?.addEventListener("ended", onBlurEnded);
+    heroVideo.addEventListener("ended", onHeroEnded);
     return () => {
-      window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVisibility);
-      heroVideo?.removeEventListener("ended", onHeroEnded);
-      blurVideo?.removeEventListener("ended", onBlurEnded);
+      heroVideo.removeEventListener("ended", onHeroEnded);
       if (retryOnInteraction) {
         window.removeEventListener("click", retryOnInteraction);
         window.removeEventListener("touchstart", retryOnInteraction);
@@ -194,71 +140,35 @@ export function ScrollStage({
     };
   }, [disableMotion, isDesktop]);
 
-  const showLayerBVideo = !disableMotion && isDesktop;
-
   return (
     <div
-      ref={stageRef}
       data-testid="scroll-stage"
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10"
-      style={{ "--stage-p": 0 } as CSSProperties}
     >
-      <div data-testid="stage-layer-a" className="absolute inset-0">
-        {disableMotion ? (
-          <img
-            data-testid="stage-poster"
-            src={posterSrc}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <video
-            ref={heroVideoRef}
-            data-testid="stage-video-a"
-            muted
-            playsInline
-            autoPlay
-            loop
-            preload="auto"
-            poster={posterSrc}
-            className="h-full w-full object-cover"
-            onError={logVideoError("hero")}
-          >
-            <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />
-          </video>
-        )}
-      </div>
-
-      <div
-        data-testid="stage-layer-b"
-        className="absolute inset-0"
-        style={{ opacity: "var(--stage-p)" }}
-      >
-        {showLayerBVideo ? (
-          <video
-            ref={blurVideoRef}
-            data-testid="stage-video-b"
-            muted
-            playsInline
-            autoPlay
-            loop
-            preload="auto"
-            poster={posterBlurSrc}
-            className="h-full w-full object-cover"
-            onError={logVideoError("blur")}
-          >
-            <source src={heroBlurSrc} type="video/mp4" />
-          </video>
-        ) : (
-          <img
-            data-testid="stage-poster-blur"
-            src={posterBlurSrc}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        )}
-      </div>
+      {disableMotion ? (
+        <img
+          data-testid="stage-poster"
+          src={posterSrc}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <video
+          ref={heroVideoRef}
+          data-testid="stage-video-a"
+          muted
+          playsInline
+          autoPlay
+          loop
+          preload="auto"
+          poster={posterSrc}
+          className="h-full w-full object-cover"
+          onError={logVideoError("hero")}
+        >
+          <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />
+        </video>
+      )}
     </div>
   );
 }
