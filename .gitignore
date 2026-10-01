@@ -67,3 +67,6 @@ test-results/
 
 .vercel
 .env*
+
+# supabase CLI local cache
+/supabase/.temp
