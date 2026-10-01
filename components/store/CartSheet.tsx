@@ -104,7 +104,7 @@ export function CartSheet() {
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge className="bg-gold text-cream">Cash on Delivery</Badge>
+                <Badge className="bg-gold text-forest-deep">Cash on Delivery</Badge>
                 <span className="font-sans text-xs text-muted-foreground">
                   Nationwide delivery
                 </span>

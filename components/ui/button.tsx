@@ -13,15 +13,15 @@ const buttonVariants = cva(
         primary:
           "bg-forest text-cream hover:bg-forest-deep shadow-sm tracking-wide uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
         secondary:
-          "bg-gold text-cream hover:bg-gold-deep shadow-sm tracking-wide uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
+          "bg-gold text-forest-deep hover:bg-gold-deep shadow-sm tracking-wide uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
         botanical:
           "bg-forest text-cream hover:bg-forest-deep border border-forest/30 tracking-wider uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
         gold:
-          "bg-gold text-cream hover:bg-gold-deep tracking-wider uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
+          "bg-gold text-forest-deep hover:bg-gold-deep tracking-wider uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
         glass:
           "bg-white/10 backdrop-blur-md text-forest-deep border border-white/20 hover:bg-white/20 font-jost rounded-full px-6 py-3 transition-all",
         text:
-          "text-forest underline-offset-4 hover:underline font-jost tracking-wide uppercase text-xs font-semibold p-0",
+          "text-cream underline-offset-4 hover:text-gold hover:underline font-jost tracking-wide uppercase text-xs font-semibold p-0",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:

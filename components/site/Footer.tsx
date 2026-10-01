@@ -13,7 +13,10 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gold bg-forest-deep">
+    <footer
+      className="border-t border-glass-border"
+      style={{ background: "color-mix(in srgb, var(--forest-deep) 92%, transparent)" }}
+    >
       <Container className="flex flex-col gap-10 py-16">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="flex flex-col leading-none">

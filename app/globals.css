@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --forest-deep: #15231a;
-  --forest: #2f4a2a;
-  --gold: #c39e3a;
-  --gold-deep: #8a6d1f;
-  --cream: #fbf8ee;
-  --sage-muted: #a8b59c;
-  --glass: rgba(47, 74, 42, 0.35);
-  --glass-solid: rgba(21, 35, 26, 0.78);
-  --glass-border: rgba(195, 158, 58, 0.15);
+  --forest-deep: #0f2318;
+  --forest: #1c3a28;
+  --gold: #c7e04a;
+  --gold-deep: #a3c13a;
+  --cream: #f4f1e4;
+  --sage-muted: #a8c08a;
+  --glass: rgba(28, 58, 40, 0.45);
+  --glass-solid: rgba(15, 35, 24, 0.82);
+  --glass-border: rgba(199, 224, 74, 0.15);
   --radius-panel: 20px;
   --radius-pill: 999px;
   --radius-card: 14px;
