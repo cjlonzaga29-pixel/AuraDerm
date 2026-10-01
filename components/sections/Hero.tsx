@@ -21,17 +21,13 @@ export function Hero() {
 
   return (
     <section className="relative flex min-h-[100svh] items-center overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to right, color-mix(in srgb, var(--forest-deep) 75%, transparent), transparent)",
-        }}
-      />
-
       <Container className="relative flex flex-col gap-10 py-32 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex max-w-xl flex-col gap-6">
+        <div className="relative z-0 flex max-w-xl flex-col gap-6">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-6 -inset-y-8 -z-10 rounded-4xl"
+            style={{ background: "var(--glass-solid)" }}
+          />
           <Eyebrow withRule>{hero.eyebrow}</Eyebrow>
 
           <DisplayHeading level="h1" accent={hero.accentWord} className="whitespace-pre-line">
