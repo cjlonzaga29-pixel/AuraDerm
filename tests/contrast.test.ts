@@ -13,6 +13,7 @@ const CREAM = "#F4F1E4"; // --cream
 const SAGE_MUTED = "#A8C08A"; // --sage-muted
 const GLASS_SOLID = "rgba(15,35,24,0.82)"; // --glass-solid
 const GLASS_DESKTOP = "rgba(28,58,40,0.92)"; // --glass (local text scrims use --glass-solid directly)
+const SURFACE_NAV = "rgba(15,35,24,0.88)"; // --surface-nav (dedicated floating-nav surface, distinct from content panels)
 
 describe("contrastRatio", () => {
   it("black on white is 21:1", () => {
@@ -96,6 +97,25 @@ describe("contrastRatio", () => {
 
   it("lime (hover/focus text) on glass-solid over a white worst-case background is at least 4.5:1", () => {
     const blended = blendOver(GLASS_SOLID, "#FFFFFF");
+    expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // P3-P9R: the floating nav now carries its own surface token (distinct from
+  // --glass/--glass-solid used by content panels) so nav vs. content surfaces
+  // can diverge independently. Verified at 0.88 alpha against a white
+  // worst-case video frame before shipping.
+  it("cream on surface-nav over a white worst-case background is at least 4.5:1", () => {
+    const blended = blendOver(SURFACE_NAV, "#FFFFFF");
+    expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("sage-muted on surface-nav over a white worst-case background is at least 4.5:1", () => {
+    const blended = blendOver(SURFACE_NAV, "#FFFFFF");
+    expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("lime on surface-nav over a white worst-case background is at least 4.5:1", () => {
+    const blended = blendOver(SURFACE_NAV, "#FFFFFF");
     expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(4.5);
   });
 });

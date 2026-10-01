@@ -5,6 +5,7 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
+import { ACTIVE_CONCEPTS } from "@/components/illustrations";
 
 export function Actives() {
   const { actives, activesIntro } = site;
@@ -30,13 +31,20 @@ export function Actives() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 lg:w-3/5 lg:grid-cols-4">
-              {actives.map((active) => (
+              {actives.map((active) => {
+                const Concept = ACTIVE_CONCEPTS[active.badge];
+                return (
                 <div
                   key={active.badge}
                   className="relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-card border border-glass-border bg-glass-solid"
                 >
-                  <div className="absolute inset-0 flex items-center justify-center text-center font-sans text-[0.625rem] text-sage-muted">
-                    {active.image ?? "[Active image]"}
+                  <div className="absolute inset-0">
+                    {Concept ? (
+                      <Concept
+                        title={`${active.name} concept illustration`}
+                        className="h-full w-full"
+                      />
+                    ) : null}
                   </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest-deep from-10% via-forest-deep/80 via-40% to-transparent p-4">
                     <span className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-full border border-gold bg-forest-deep font-sans text-[0.625rem] font-medium text-cream">
@@ -46,7 +54,8 @@ export function Actives() {
                     <p className="font-sans text-xs text-sage-muted">{active.oneLiner}</p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </GlassPanel>
         </Reveal>

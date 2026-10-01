@@ -4,6 +4,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
+import { INGREDIENT_ILLUSTRATIONS } from "@/components/illustrations";
 
 export function Ingredients() {
   const { ingredientsPanel, ingredients } = site;
@@ -22,13 +23,20 @@ export function Ingredients() {
             </div>
 
             <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:gap-6">
-              {ingredients.map((ingredient) => (
+              {ingredients.map((ingredient) => {
+                const Illustration = INGREDIENT_ILLUSTRATIONS[ingredient.word];
+                return (
                 <div
                   key={ingredient.order}
                   className="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3"
                 >
-                  <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-card border border-glass-border bg-glass-solid text-center font-sans text-[0.625rem] text-sage-muted lg:h-24 lg:w-full">
-                    {ingredient.image ?? "[Ingredient image]"}
+                  <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-card border border-glass-border bg-glass-solid lg:h-24 lg:w-full">
+                    {Illustration ? (
+                      <Illustration
+                        title={`${ingredient.name} botanical illustration`}
+                        className="h-full w-full p-1.5"
+                      />
+                    ) : null}
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="font-sans text-xs uppercase tracking-[0.18em] text-sage-muted">
@@ -40,7 +48,8 @@ export function Ingredients() {
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </GlassPanel>
         </Reveal>

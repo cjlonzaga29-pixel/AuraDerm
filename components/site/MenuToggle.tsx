@@ -45,7 +45,7 @@ export function MenuToggle({ links }: { links: NavLink[] }) {
           id="mobile-menu-sheet"
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 bg-glass-solid"
+          className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 bg-surface-nav"
         >
           {links.map((link) => (
             <a

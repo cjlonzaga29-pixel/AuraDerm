@@ -4,6 +4,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
+import { RoutineVesselIllustration } from "@/components/illustrations";
 
 function StepIcon() {
   return (
@@ -46,8 +47,11 @@ export function Routine() {
             </GlassPanel>
 
             <GlassPanel className="flex flex-col gap-8 p-8 lg:p-12">
-              <div className="flex h-40 items-center justify-center rounded-card border border-glass-border bg-glass-solid text-center font-sans text-xs text-sage-muted">
-                [Product image]
+              <div className="flex h-40 items-center justify-center rounded-card border border-glass-border bg-glass-solid">
+                <RoutineVesselIllustration
+                  title="Illustrative skincare vessel concept"
+                  className="h-28 w-28"
+                />
               </div>
 
               <ol className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-4">

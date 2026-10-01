@@ -10,7 +10,8 @@
   --glass: rgba(28, 58, 40, 0.92);
   --glass-solid: rgba(15, 35, 24, 0.82);
   --glass-border: rgba(199, 224, 74, 0.15);
-  --radius-panel: 20px;
+  --surface-nav: rgba(15, 35, 24, 0.88);
+  --radius-panel: 18px;
   --radius-pill: 999px;
   --radius-card: 14px;
 }
@@ -25,6 +26,7 @@
   --color-glass: var(--glass);
   --color-glass-solid: var(--glass-solid);
   --color-glass-border: var(--glass-border);
+  --color-surface-nav: var(--surface-nav);
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
   --radius-card: var(--radius-card);

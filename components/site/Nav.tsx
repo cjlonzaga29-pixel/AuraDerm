@@ -20,7 +20,7 @@ export function Nav() {
   return (
     <header className="sticky top-4 z-50">
       <Container>
-        <div className="flex items-center justify-between rounded-pill border border-glass-border bg-glass-solid px-6 py-3 md:bg-glass md:backdrop-blur-[12px]">
+        <div className="flex items-center justify-between rounded-pill border border-glass-border bg-surface-nav px-5 py-2.5 md:backdrop-blur-[12px]">
           <Link href="/" className="flex flex-col leading-none">
             {/* [CONTENT: vector logo] — text lockup placeholder */}
             <span className="font-display text-lg text-gold">AURADERM</span>
