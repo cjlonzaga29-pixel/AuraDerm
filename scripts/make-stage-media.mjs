@@ -111,7 +111,7 @@ encodeVideo({
 encodeVideo({
   name: "hero-blur.mp4",
   width: 960,
-  extra: "gblur=sigma=24,eq=brightness=-0.45",
+  extra: "gblur=sigma=24,eq=brightness=-0.08",
   startCrf: 28,
   capBytes: 0.6 * 1_000_000,
 });
