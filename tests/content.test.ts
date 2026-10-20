@@ -7,7 +7,6 @@ describe("content model", () => {
   it("has the expected fixed-length collections", () => {
     expect(site.ingredients.length).toBe(5);
     expect(site.benefits.length).toBe(3);
-    expect(site.actives.length).toBe(4);
     expect(site.routine.length).toBe(3);
   });
 

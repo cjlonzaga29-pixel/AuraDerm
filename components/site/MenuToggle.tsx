@@ -40,7 +40,7 @@ export function MenuToggle({ links }: { links: NavLink[] }) {
             <SheetClose asChild key={link.href}>
               <a
                 href={link.href}
-                className="rounded-card px-3 py-3 font-display text-3xl tracking-[0.02em] text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="rounded-card px-3 py-3 font-sans text-2xl font-light text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {link.label}
               </a>

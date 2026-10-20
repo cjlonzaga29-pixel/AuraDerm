@@ -19,19 +19,9 @@ export type Ingredient = {
 export type Benefit = {
   title: string;
   body: string;
-  linkLabel: string;
-  href: string;
-};
-
-export type Active = {
-  badge: string;
-  name: string;
-  oneLiner: string;
-  image: string | null;
 };
 
 export type RoutineStep = {
-  slot: "AM" | "SPF REAPPLY" | "PM";
   title: string;
   body: string;
 };
@@ -50,49 +40,38 @@ export type Site = {
   brand: string;
   commerce: boolean;
   hero: {
-    eyebrow: string;
-    headlineLine1: string;
-    headlineLine2: string;
+    headline: string;
     accentWord: string;
     subcopy: string;
     primaryCta: { label: string; href: string };
     secondaryCta: { label: string; href: string };
-    trustBadges: { label: string }[];
-    featuredProductSlug: string;
   };
   statement: {
-    line1: string;
-    line2: string;
+    headline: string;
     accentWord: string;
     subcopy: string;
   };
-  ingredientsPanel: {
-    title: string;
-    sideLabelLeft: string;
-    sideLabelRight: string;
+  collectionIntro: {
+    headline: string;
+    body: string;
+    label: string;
+  };
+  ingredientsIntro: {
+    headline: string;
+    body: string;
   };
   products: Product[];
   ingredients: Ingredient[];
   benefits: Benefit[];
-  actives: Active[];
-  activesIntro: {
-    eyebrow: string;
-    headline: string;
-    accentWord: string;
-    body: string;
-    cta: { label: string; href: string };
-  };
   routine: RoutineStep[];
   routineIntro: {
-    eyebrow: string;
     headline: string;
     body: string;
   };
   sustainability: SustainabilityItem[] | null;
   givesBackHeadline: string;
   closing: {
-    line1: string;
-    line2: string;
+    headline: string;
     subcopy: string;
     cta: { label: string; href: string };
   };
@@ -104,39 +83,43 @@ export const site: Site = {
   brand: "AuraDerm Botanicals",
   commerce: false,
   hero: {
-    eyebrow: "BOTANICAL SKINCARE, REIMAGINED",
-    headlineLine1: "RETURN TO",
-    headlineLine2: "YOUR RITUAL.",
-    accentWord: "RITUAL.",
+    headline: "Return to your ritual.",
+    accentWord: "ritual.",
     subcopy:
-      "A quieter moment for your skin. Explore botanical-inspired textures and a simple routine designed around everyday care.",
+      "A quieter moment for your skin — botanical-inspired textures and a simple routine designed around everyday care.",
     primaryCta: {
-      label: "EXPLORE THE COLLECTION",
-      href: "#ingredients",
+      label: "Explore the collection",
+      href: "#collection",
     },
     secondaryCta: {
-      label: "FIND YOUR RITUAL",
+      label: "Find your ritual",
       href: "#routine",
     },
-    trustBadges: [
-      { label: "Concept collection" },
-      { label: "Illustrative routine" },
-      { label: "Design preview" },
-    ],
-    featuredProductSlug: "radiance-barrier-serum",
   },
   statement: {
-    line1: "ROOTED IN NATURE.",
-    line2: "MADE FOR YOUR EVERYDAY.",
-    accentWord: "NATURE.",
+    headline: "Rooted in nature,\nmade for your everyday.",
+    accentWord: "nature,",
     subcopy: "Thoughtful textures. Simple steps. A little space to slow down.",
   },
-  ingredientsPanel: {
-    title: "A BOTANICAL PALETTE",
-    sideLabelLeft: "CONCEPT",
-    sideLabelRight: "FIVE NOTES",
+  collectionIntro: {
+    headline: "The collection",
+    body: "Three concept formulas, from the first cleanse to the last layer of the evening.",
+    label: "Concept · not for sale",
+  },
+  ingredientsIntro: {
+    headline: "A botanical palette",
+    body: "Five familiar plants that inspire the textures and scents of the collection.",
   },
   products: [
+    {
+      slug: "botanical-cleansing-elixir",
+      name: "Botanical Cleansing Elixir",
+      size: "120 ml / 4.0 fl. oz.",
+      priceMinor: null,
+      currency: null,
+      shopifyHandle: null,
+      shortDescription: "Concept cleanser — illustrative, not a confirmed formulation.",
+    },
     {
       slug: "radiance-barrier-serum",
       name: "Radiance Barrier Serum",
@@ -155,15 +138,6 @@ export const site: Site = {
       shopifyHandle: null,
       shortDescription: "Concept evening elixir — illustrative, not a confirmed formulation.",
     },
-    {
-      slug: "botanical-cleansing-elixir",
-      name: "Botanical Cleansing Elixir",
-      size: "120 ml / 4.0 fl. oz.",
-      priceMinor: null,
-      currency: null,
-      shopifyHandle: null,
-      shortDescription: "Concept cleanser — illustrative, not a confirmed formulation.",
-    },
   ],
   ingredients: [
     { order: 1, word: "GREEN TEA", name: "Green Tea", benefit: "A fresh botanical note.", image: null },
@@ -172,56 +146,36 @@ export const site: Site = {
     { order: 4, word: "CHAMOMILE", name: "Chamomile", benefit: "A gentle floral touch.", image: null },
     { order: 5, word: "ROSE", name: "Rose", benefit: "A classic botanical finish.", image: null },
   ],
+  // Folded into the brand statement (P3-P15) rather than a separate card row.
   benefits: [
     {
-      title: "LESS, BUT THOUGHTFUL",
+      title: "Less, but thoughtful",
       body: "A focused collection that keeps your daily ritual simple.",
-      linkLabel: "See the collection",
-      href: "#ingredients",
     },
     {
-      title: "TEXTURES TO ENJOY",
+      title: "Textures to enjoy",
       body: "Imagine lightweight layers and a comfortable finish.",
-      linkLabel: "Meet the essentials",
-      href: "#actives",
     },
     {
-      title: "YOUR MOMENT OF CALM",
+      title: "Your moment of calm",
       body: "Turn everyday skincare into a small pause in your day.",
-      linkLabel: "See the ritual",
-      href: "#routine",
     },
   ],
-  actives: [
-    { badge: "CLN", name: "Cleanse", oneLiner: "The first step of the ritual.", image: null },
-    { badge: "PRP", name: "Prepare", oneLiner: "A moment to ready the skin.", image: null },
-    { badge: "HYD", name: "Hydrate", oneLiner: "A lightweight layer of moisture.", image: null },
-    { badge: "FIN", name: "Finish", oneLiner: "The final step, every day.", image: null },
-  ],
-  activesIntro: {
-    eyebrow: "CONCEPT ESSENTIALS",
-    headline: "MEET YOUR\nDAILY ESSENTIALS.",
-    accentWord: "ESSENTIALS.",
-    body: "An illustrative collection, from the first cleanse to the final layer.",
-    cta: { label: "EXPLORE THE COLLECTION", href: "#ingredients" },
-  },
   routine: [
-    { slot: "AM", title: "CLEANSE", body: "Begin with a gentle cleanse." },
-    { slot: "SPF REAPPLY", title: "LAYER", body: "Apply your preferred skincare layers." },
-    { slot: "PM", title: "COMPLETE", body: "Finish your routine; use sun protection during the day." },
+    { title: "Cleanse", body: "Begin with a gentle cleanse." },
+    { title: "Layer", body: "Apply your preferred skincare layers." },
+    { title: "Complete", body: "Finish your routine; use sun protection during the day." },
   ],
   routineIntro: {
-    eyebrow: "THE RITUAL",
-    headline: "THREE STEPS.\nONE SIMPLE RITUAL.",
-    body: "A simple, illustrative routine designed around everyday care.",
+    headline: "Three steps, one simple ritual.",
+    body: "An illustrative routine designed around everyday care.",
   },
   sustainability: null,
   givesBackHeadline: "",
   closing: {
-    line1: "MAKE SPACE",
-    line2: "FOR YOURSELF.",
+    headline: "Make space for yourself.",
     subcopy: "Discover a botanical-inspired approach to your everyday routine.",
-    cta: { label: "BACK TO THE COLLECTION", href: "#ingredients" },
+    cta: { label: "Back to the collection", href: "#collection" },
   },
   previewNotice: "Design preview — products, ingredients and copy are illustrative.",
   social: [],

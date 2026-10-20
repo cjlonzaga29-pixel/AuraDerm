@@ -9,15 +9,21 @@ import { blendOver, contrastRatio } from "@/lib/contrast";
 // in sync whenever the tokens change.
 const EMERALD_DEEP = "#0D1C16"; // --forest-deep
 const EMERALD_MID = "#1D3A2F"; // --forest
-const LIME = "#E3C585"; // --gold (sun-gold accent; was lime #C7E04A)
-const LIME_DEEP = "#C9A660"; // --gold-deep (hover shade, used as a bg, not text-on-cream)
+const LIME = "#DDC9A3"; // --gold (P3-P15 champagne; was sun-gold #E3C585, lime #C7E04A before that)
+const LIME_DEEP = "#C4AD83"; // --gold-deep (hover shade, used as a bg, not text-on-cream)
 const CREAM = "#FBF7EE"; // --cream
 const SAGE_MUTED = "#DBE5D9"; // --sage-muted
 const GLASS_SOLID = "rgba(9,22,17,0.84)"; // --glass-solid (backdrop-filter fallback)
-const GLASS_CONTENT = "rgba(10,26,20,0.58)"; // --glass (md+, with 18px panel blur)
+const GLASS_CONTENT = "rgba(10,26,20,0.64)"; // --glass (md+, with 18px panel blur; P3-P15 0.58 -> 0.64)
 const GLASS_VEIL = "rgba(9,22,17,0.60)"; // --glass-veil (md+, hero/statement/closing backing)
-const GLASS_MOBILE = "rgba(9,22,17,0.64)"; // .glass-surface below md (no blur)
-const SURFACE_NAV = "rgba(10,24,19,0.72)"; // --surface-nav
+const GLASS_MOBILE = "rgba(9,22,17,0.70)"; // .glass-surface below md (no blur; P3-P15 0.64 -> 0.70 after per-pixel audit at 390px)
+const SURFACE_NAV = "rgba(9,22,17,0.70)"; // --surface-nav (mobile sheet / legacy)
+// P3-P15: the header is no longer a pill; .site-header is a top-down fade
+// whose density at the vertical centre of the link row is >= 0.60.
+const HEADER_AT_LINKS = "rgba(9,22,17,0.62)";
+// P3-P15: .text-scrim, the feathered localized backing behind copy that sits
+// directly on the footage (hero, statement, routine, closing).
+const SCRIM = "rgba(9,22,17,0.66)"; // --scrim
 // Brightest sustained region sampled across the full 10s hero loop (ffmpeg,
 // 16x16 block-averaged frames at t=0/3/6/9s, max-luminance block per frame).
 // This is the realistic worst case content panels actually sit over — not an
@@ -77,12 +83,11 @@ describe("contrastRatio", () => {
   // panels, and stated that cream text could not then hold 4.5:1 over
   // BRIGHT_FRAME. P3-P14 measured contrast at the real text locations across
   // four frames of the loop (Playwright: text hidden, p95 background luminance
-  // under each text run) and found 180 sub-threshold runs at 0.20. Content
-  // glass is now 0.58 at md+ (with 18px blur; still visibly transparent) and
-  // 0.64 below md (no blur), so cream body copy clears 4.5:1 even unblurred
-  // over the brightest sampled region. Sage-muted is NOT guaranteed there at
-  // md+ — it is reserved for eyebrows/metadata and was verified per location
-  // by the same screenshot audit (see PUBLISH report).
+  // under each text run) and found 180 sub-threshold runs at 0.20. P3-P14 set
+  // content glass to 0.58 at md+; P3-P15 raised it to 0.64 at every width
+  // (blur only at md+; still visibly transparent) after the same audit found
+  // sage-muted metadata at 4.14:1, so both cream and sage-muted now clear
+  // 4.5:1 even unblurred over the brightest sampled region.
   it("cream on content glass over BRIGHT_FRAME (unblurred worst case) is at least 4.5:1", () => {
     expect(contrastRatio(CREAM, blendOver(GLASS_CONTENT, BRIGHT_FRAME))).toBeGreaterThanOrEqual(4.5);
   });
@@ -132,5 +137,29 @@ describe("contrastRatio", () => {
   it("lime on surface-nav over a white worst-case background is at least 3:1 (large-text wordmark)", () => {
     const blended = blendOver(SURFACE_NAV, "#FFFFFF");
     expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("cream and sage-muted on the header fade over BRIGHT_FRAME are at least 4.5:1", () => {
+    const blended = blendOver(HEADER_AT_LINKS, BRIGHT_FRAME);
+    expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(LIME, blended)).toBeGreaterThanOrEqual(3);
+  });
+
+  // P3-P15 screenshot audit measured sage-muted metadata at 4.14:1 on 0.58
+  // content glass over the falls at 1024px; 0.64 restores the floor.
+  it("sage-muted on content glass over BRIGHT_FRAME is at least 4.5:1", () => {
+    expect(contrastRatio(SAGE_MUTED, blendOver(GLASS_CONTENT, BRIGHT_FRAME))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("cream and sage-muted on the text scrim over BRIGHT_FRAME are at least 4.5:1", () => {
+    const blended = blendOver(SCRIM, BRIGHT_FRAME);
+    expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // Champagne is reserved for large heading accents (h1/h2, >= 30px) and
+  // fills; it is never small text over footage, where it cannot reach 4.5:1.
+  it("champagne accent on the text scrim over BRIGHT_FRAME is at least 3:1 (large text only)", () => {
+    expect(contrastRatio(LIME, blendOver(SCRIM, BRIGHT_FRAME))).toBeGreaterThanOrEqual(3);
   });
 });

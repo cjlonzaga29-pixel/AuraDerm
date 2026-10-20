@@ -1,58 +1,45 @@
 import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
 import { INGREDIENT_ILLUSTRATIONS } from "@/components/illustrations";
 
+// The one wide panel on the page: five botanicals need the width. Items are
+// plain columns divided by whitespace — no nested inset cards.
 export function Ingredients() {
-  const { ingredientsPanel, ingredients } = site;
+  const { ingredientsIntro, ingredients } = site;
 
   return (
-    <section id="ingredients" className="py-20 lg:py-28">
+    <section id="ingredients" className="py-24 lg:py-36">
       <Container>
-        <Reveal>
-          <GlassPanel className="flex flex-col gap-10 p-8 lg:p-12">
-            <div className="flex flex-col items-center gap-3 lg:flex-row lg:justify-center lg:gap-8">
-              <Eyebrow className="hidden lg:block">{ingredientsPanel.sideLabelLeft}</Eyebrow>
-              <DisplayHeading level="h2" className="text-center">
-                {ingredientsPanel.title}
-              </DisplayHeading>
-              <Eyebrow className="hidden lg:block">{ingredientsPanel.sideLabelRight}</Eyebrow>
-            </div>
+        <GlassPanel className="flex flex-col gap-10 p-7 lg:p-12">
+          <div className="flex max-w-lg flex-col gap-3">
+            <DisplayHeading level="h2">{ingredientsIntro.headline}</DisplayHeading>
+            <p className="font-sans text-base leading-relaxed text-cream">{ingredientsIntro.body}</p>
+          </div>
 
-            <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:gap-6">
-              {ingredients.map((ingredient) => {
-                const Illustration = INGREDIENT_ILLUSTRATIONS[ingredient.word];
-                return (
-                <div
-                  key={ingredient.order}
-                  className="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3"
-                >
-                  <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-card border border-glass-border bg-glass-inset lg:h-24 lg:w-full">
-                    {Illustration ? (
-                      <Illustration
-                        title={`${ingredient.name} botanical illustration`}
-                        className="h-full w-full p-1.5"
-                      />
-                    ) : null}
-                  </div>
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+            {ingredients.map((ingredient) => {
+              const Illustration = INGREDIENT_ILLUSTRATIONS[ingredient.word];
+              return (
+                <li key={ingredient.order} className="flex items-center gap-4 lg:flex-col lg:items-start">
+                  {Illustration ? (
+                    <Illustration
+                      title={`${ingredient.name} botanical illustration`}
+                      className="size-14 shrink-0 lg:size-16"
+                    />
+                  ) : null}
                   <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs uppercase tracking-[0.18em] text-cream">
-                      {String(ingredient.order).padStart(2, "0")} / {ingredient.word}
-                    </span>
-                    <span className="font-display text-lg text-cream">{ingredient.name}</span>
-                    <span className="font-sans text-sm text-cream">
+                    <h3 className="font-sans text-base font-medium text-cream">{ingredient.name}</h3>
+                    <p className="font-sans text-sm leading-relaxed text-sage-muted">
                       {ingredient.benefit}
-                    </span>
+                    </p>
                   </div>
-                </div>
-                );
-              })}
-            </div>
-          </GlassPanel>
-        </Reveal>
+                </li>
+              );
+            })}
+          </ul>
+        </GlassPanel>
       </Container>
     </section>
   );

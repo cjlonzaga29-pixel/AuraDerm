@@ -3,9 +3,11 @@
 import {
   useEffect,
   useRef,
+  useState,
   useSyncExternalStore,
   type SyntheticEvent,
 } from "react";
+import { Pause, Play } from "lucide-react";
 
 type ScrollStageProps = {
   hero1280Src: string;
@@ -73,6 +75,10 @@ function getHydratedServerSnapshot() {
 
 export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageProps) {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
+  // A viewer-initiated pause must win over every automatic resume path below
+  // (tab visibility, loop fallback, autoplay retry, breakpoint remount).
+  const [userPaused, setUserPaused] = useState(false);
+  const userPausedRef = useRef(false);
 
   // The real viewport width is unknown to the server, so the hydration-matching
   // render always has to guess "mobile" first. Gate the <video> mount on this
@@ -120,6 +126,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
       if (fallbackArmed) return;
       fallbackArmed = true;
       retryOnInteraction = () => {
+        if (userPausedRef.current) return;
         heroVideo.play().catch(logPlayRejection);
       };
       window.addEventListener("click", retryOnInteraction, { once: true });
@@ -136,7 +143,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
     const onVisibility = () => {
       if (document.hidden) {
         heroVideo.pause();
-      } else {
+      } else if (!userPausedRef.current) {
         attemptPlay(heroVideo);
       }
     };
@@ -147,10 +154,10 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
     // as a fallback so playback never stalls.
     const onHeroEnded = () => {
       heroVideo.currentTime = 0;
-      attemptPlay(heroVideo);
+      if (!userPausedRef.current) attemptPlay(heroVideo);
     };
 
-    attemptPlay(heroVideo);
+    if (!userPausedRef.current) attemptPlay(heroVideo);
     document.addEventListener("visibilitychange", onVisibility);
     heroVideo.addEventListener("ended", onHeroEnded);
     return () => {
@@ -164,38 +171,72 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
     };
   }, [disableMotion, isDesktop, hydrated]);
 
+  const showVideo = hydrated && !disableMotion;
+
+  const togglePlayback = () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    const nextPaused = !userPausedRef.current;
+    userPausedRef.current = nextPaused;
+    setUserPaused(nextPaused);
+    if (nextPaused) {
+      video.pause();
+    } else {
+      video.play().catch(logPlayRejection);
+    }
+  };
+
   return (
-    <div
-      data-testid="scroll-stage"
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10"
-    >
-      {/* Phones crop the 16:9 loop to a narrow slice; 72% keeps the serum
-          bottle centred between the hero's headline and CTA panels. */}
-      {disableMotion || !hydrated ? (
-        <img
-          data-testid="stage-poster"
-          src={posterSrc}
-          alt=""
-          className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
-        />
-      ) : (
-        <video
-          key={isDesktop ? "desktop" : "mobile"}
-          ref={heroVideoRef}
-          data-testid="stage-video-a"
-          muted
-          playsInline
-          autoPlay
-          loop
-          preload="auto"
-          poster={posterSrc}
-          className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
-          onError={logVideoError("hero")}
+    <>
+      <div
+        data-testid="scroll-stage"
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10"
+      >
+        {/* Phones crop the 16:9 loop to a narrow slice; 72% keeps the serum
+            bottle centred between the hero's headline and its copy/CTAs. */}
+        {!showVideo ? (
+          <img
+            data-testid="stage-poster"
+            src={posterSrc}
+            alt=""
+            className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
+          />
+        ) : (
+          <video
+            key={isDesktop ? "desktop" : "mobile"}
+            ref={heroVideoRef}
+            data-testid="stage-video-a"
+            muted
+            playsInline
+            autoPlay={!userPaused}
+            loop
+            preload="auto"
+            poster={posterSrc}
+            className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
+            onError={logVideoError("hero")}
+          >
+            <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />
+          </video>
+        )}
+      </div>
+      {showVideo ? (
+        // Outside the aria-hidden, pointer-events-none stage so it stays
+        // reachable by keyboard and assistive tech (WCAG 2.2.2 pause control).
+        <button
+          type="button"
+          data-testid="stage-playback"
+          onClick={togglePlayback}
+          aria-label={userPaused ? "Play background video" : "Pause background video"}
+          className="fixed right-4 bottom-4 z-40 flex size-10 items-center justify-center rounded-full border border-glass-border bg-forest-deep/70 text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:right-6 md:bottom-6"
         >
-          <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />
-        </video>
-      )}
-    </div>
+          {userPaused ? (
+            <Play className="size-4" aria-hidden="true" />
+          ) : (
+            <Pause className="size-4" aria-hidden="true" />
+          )}
+        </button>
+      ) : null}
+    </>
   );
 }

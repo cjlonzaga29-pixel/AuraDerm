@@ -1,33 +1,33 @@
 import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
-import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
 
+// Brand statement with the three former benefit cards folded in as a quiet
+// hairline-ruled list — one message, said once, with no boxes.
 export function Statement() {
-  const { statement } = site;
+  const { statement, benefits } = site;
 
   return (
-    // Left canopy column from lg, matching the hero, so the bottle and falls
-    // stay in view between the hero and the full-width ingredient panel.
-    <section className="py-20 lg:py-28">
-      <Reveal>
-        <Container>
-          <GlassPanel
-            tone="veil"
-            className="flex flex-col items-center gap-6 px-6 py-8 text-center md:mx-auto md:max-w-xl lg:mx-0 lg:max-w-120 lg:items-start lg:px-8 lg:text-left"
-          >
-            <DisplayHeading
-              level="h2"
-              accent={statement.accentWord}
-              className="whitespace-pre-line"
-            >
-              {`${statement.line1}\n${statement.line2}`}
+    <section id="statement" className="py-24 lg:py-36">
+      <Container>
+        <div className="text-scrim flex max-w-xl flex-col gap-10 lg:max-w-120">
+          <div className="flex flex-col gap-5">
+            <DisplayHeading level="h2" accent={statement.accentWord} className="whitespace-pre-line">
+              {statement.headline}
             </DisplayHeading>
-            <p className="max-w-[56ch] font-sans text-base text-cream">{statement.subcopy}</p>
-          </GlassPanel>
-        </Container>
-      </Reveal>
+            <p className="font-sans text-base leading-relaxed text-cream">{statement.subcopy}</p>
+          </div>
+
+          <ul className="flex flex-col">
+            {benefits.map((benefit) => (
+              <li key={benefit.title} className="flex flex-col gap-1 border-t border-hairline py-4">
+                <h3 className="font-sans text-base font-medium text-cream">{benefit.title}</h3>
+                <p className="font-sans text-sm leading-relaxed text-sage-muted">{benefit.body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Container>
     </section>
   );
 }

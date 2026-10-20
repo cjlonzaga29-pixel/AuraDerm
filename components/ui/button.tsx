@@ -11,7 +11,7 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         primary:
-          "bg-gold text-forest-deep hover:bg-gold-deep shadow-[0_10px_30px_-12px_var(--gold-deep)] tracking-wide uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
+          "bg-gold text-forest-deep hover:bg-gold-deep font-sans text-sm font-medium rounded-full transition-colors",
         secondary:
           "bg-gold text-forest-deep hover:bg-gold-deep shadow-sm tracking-wide uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
         botanical:
@@ -21,9 +21,9 @@ const buttonVariants = cva(
         glass:
           "bg-white/10 backdrop-blur-md text-forest-deep border border-white/20 hover:bg-white/20 font-jost rounded-full px-6 py-3 transition-all",
         text:
-          "text-cream underline-offset-4 hover:text-gold hover:underline font-jost tracking-wide uppercase text-xs font-semibold p-0",
+          "text-cream underline underline-offset-[6px] decoration-gold/60 hover:text-gold hover:decoration-gold font-sans text-sm font-medium rounded-sm",
         quiet:
-          "border border-glass-border bg-glass-inset text-cream hover:border-gold hover:text-gold tracking-wide uppercase font-jost text-xs font-semibold px-6 py-3 rounded-full transition-all",
+          "border border-glass-border text-cream hover:border-gold hover:text-gold font-sans text-sm font-medium rounded-full transition-colors",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
@@ -38,6 +38,8 @@ const buttonVariants = cva(
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-10 rounded-md px-8",
         icon: "h-9 w-9",
+        cta: "h-11 px-6",
+        inline: "h-11 px-1",
       },
     },
     defaultVariants: {

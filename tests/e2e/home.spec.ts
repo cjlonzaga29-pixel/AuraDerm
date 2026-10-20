@@ -1,21 +1,30 @@
 import { test, expect, request } from "@playwright/test";
 
 test.describe("home P1-P5", () => {
-  test("#actives shows 4 badges; #routine shows 3 steps in order AM, SPF REAPPLY, PM", async ({
+  // P3-P15: #actives (four concept badges) was consolidated into #collection,
+  // and the routine dropped its AM/SPF REAPPLY/PM slot labels (the middle
+  // label contradicted its "Layer" step) for plain numbered steps.
+  test("#collection lists 3 concept products, each labelled not for sale; #routine shows 3 ordered steps", async ({
     page,
   }) => {
     await page.goto("/");
-    const actives = page.locator("#actives");
-    await expect(actives).toHaveCount(1);
-    await expect(actives.locator("span.rounded-full")).toHaveCount(4);
+    const collection = page.locator("#collection");
+    await expect(collection).toHaveCount(1);
+    await expect(collection.locator("li h3")).toHaveCount(3);
+    await expect(collection.getByText("Concept · not for sale")).toHaveCount(3);
+    await expect(page.locator("#actives")).toHaveCount(0);
 
-    const routine = page.locator("#routine");
-    await expect(routine).toHaveCount(1);
-    const slots = routine.locator("ol li span.text-gold");
-    await expect(slots).toHaveCount(3);
-    await expect(slots.nth(0)).toHaveText("AM");
-    await expect(slots.nth(1)).toHaveText("SPF REAPPLY");
-    await expect(slots.nth(2)).toHaveText("PM");
+    const steps = page.locator("#routine ol li h3");
+    await expect(steps).toHaveCount(3);
+    await expect(steps.nth(0)).toHaveText("Cleanse");
+    await expect(steps.nth(1)).toHaveText("Layer");
+    await expect(steps.nth(2)).toHaveText("Complete");
+  });
+
+  test("commerce disabled: no prices or add-to-cart actions on the homepage", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /add to (cart|bag)/i })).toHaveCount(0);
+    await expect(page.locator("main")).not.toContainText(/[₱$]\s?\d/);
   });
 
   test("with site.sustainability null: no GivesBack element in the DOM", async ({ page }) => {

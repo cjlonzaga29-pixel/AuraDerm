@@ -2,13 +2,10 @@ import { ScrollStage } from "@/components/scroll/ScrollStage";
 import { Nav } from "@/components/site/Nav";
 import { Hero } from "@/components/sections/Hero";
 import { Statement } from "@/components/sections/Statement";
+import { Collection } from "@/components/sections/Collection";
 import { Ingredients } from "@/components/sections/Ingredients";
-import { Benefits } from "@/components/sections/Benefits";
-import { Actives } from "@/components/sections/Actives";
 import { Routine } from "@/components/sections/Routine";
 import { Closing } from "@/components/sections/Closing";
-import { LeafDivider } from "@/components/ui/LeafDivider";
-import { Container } from "@/components/ui/Container";
 
 export default function Home() {
   return (
@@ -19,15 +16,11 @@ export default function Home() {
         posterSrc="/stage/poster.webp"
       />
       <Nav />
-      <main className="relative">
+      <main className="relative overflow-x-clip">
         <Hero />
         <Statement />
+        <Collection />
         <Ingredients />
-        <Container>
-          <LeafDivider />
-        </Container>
-        <Benefits />
-        <Actives />
         <Routine />
         <Closing />
       </main>

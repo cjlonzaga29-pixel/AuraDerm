@@ -1,24 +1,28 @@
 @import "tailwindcss";
 
-/* Palette derived from the waterfall/serum background loop (ffmpeg block
-   averages, t=0/3/6/9s): deep canopy shadow on the left, jade pool water at
-   the base, warm sun-shafts and mist around the falls, and the gilded serum
-   cap. The earlier cool lime accent was retuned to the scene's sun-gold. */
+/* Palette derived from the waterfall/serum background loop (ffmpeg frames at
+   t=0..9s): deep canopy shadow on the left, jade pool at the base, mist and
+   sun-shafts around the falls, and the gilded serum cap. P3-P15 retunes the
+   accent from saturated sun-gold to a restrained champagne so it supports the
+   bottle's own gold instead of competing with it. The Tailwind name stays
+   `gold` (text-gold / bg-gold) so every consumer picks the new value up. */
 :root {
   --forest-deep: #0d1c16;
   --forest: #1d3a2f;
-  --gold: #e3c585;
-  --gold-deep: #c9a660;
-  --cream: #fbf7ee;
-  --sage-muted: #dbe5d9;
-  --glass: rgba(10, 26, 20, 0.58);
+  --gold: #ddc9a3; /* champagne accent */
+  --gold-deep: #c4ad83; /* champagne hover */
+  --cream: #fbf7ee; /* soft white, primary text */
+  --sage-muted: #dbe5d9; /* secondary text */
+  --hairline: rgba(247, 240, 226, 0.16);
+  --scrim: rgba(9, 22, 17, 0.66);
+  --glass: rgba(10, 26, 20, 0.64);
   --glass-veil: rgba(9, 22, 17, 0.6);
   --glass-inset: rgba(9, 22, 17, 0.34);
   --glass-solid: rgba(9, 22, 17, 0.84);
-  --glass-border: rgba(247, 236, 212, 0.22);
-  --glass-highlight: rgba(255, 244, 222, 0.09);
-  --surface-nav: rgba(10, 24, 19, 0.72);
-  --radius-panel: 22px;
+  --glass-border: rgba(247, 236, 212, 0.18);
+  --glass-highlight: rgba(255, 244, 222, 0.07);
+  --surface-nav: rgba(9, 22, 17, 0.7);
+  --radius-panel: 20px;
   --radius-pill: 999px;
   --radius-card: 14px;
 }
@@ -37,6 +41,7 @@
   --color-glass-border: var(--glass-border);
   --color-glass-highlight: var(--glass-highlight);
   --color-surface-nav: var(--surface-nav);
+  --color-hairline: var(--hairline);
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
   --radius-card: var(--radius-card);
@@ -66,9 +71,64 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
+html {
+  /* Fixed header: anchored sections land below it. */
+  scroll-padding-top: 5.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   background: var(--forest-deep);
   color: var(--cream);
+}
+
+/* Transparent header: no box, only a top-down smoked fade so the links keep
+   contrast over the bright blossoms and sun-shafts at the top of the frame.
+   The fade runs 60% past the header box, so the whole wordmark/link row sits
+   on its dense part (>= 0.62) and the falloff happens below the text. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -60% 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(9, 22, 17, 0.74) 0%,
+    rgba(9, 22, 17, 0.62) 60%,
+    rgba(9, 22, 17, 0) 100%
+  );
+}
+
+.site-header[data-scrolled="true"]::before {
+  opacity: 0;
+}
+
+/* Localized text backing for copy that sits directly on the footage (hero,
+   statement, routine, closing): a soft pool of shade behind the text block
+   only — no panel edge, scenery stays visible around it. The pseudo-element
+   is a solid --scrim fill feathered with a blur on itself (content layer, not
+   the video), extending 2.5rem past the text so every glyph, corners
+   included, sits on the full-density centre. */
+.text-scrim {
+  position: relative;
+  isolation: isolate;
+}
+
+.text-scrim::before {
+  content: "";
+  position: absolute;
+  inset: -2.5rem -2.5rem;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 3rem;
+  background-color: var(--scrim);
+  filter: blur(28px);
 }
 
 /* Transparent smoked-glass surface for content panels (GlassPanel). Blur is
@@ -80,15 +140,15 @@ body {
    Below md there is no blur (mobile performance), so the tint alone carries
    readability over the sharp footage and is raised accordingly. */
 .glass-surface {
-  background-color: rgba(9, 22, 17, 0.64);
+  background-color: rgba(9, 22, 17, 0.7);
   background-image: linear-gradient(
     160deg,
     var(--glass-highlight) 0%,
     rgba(255, 255, 255, 0) 38%
   );
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 246, 228, 0.14),
-    0 24px 48px -28px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 0 rgba(255, 246, 228, 0.12),
+    0 20px 40px -30px rgba(0, 0, 0, 0.45);
 }
 
 .glass-surface.glass-veil {
