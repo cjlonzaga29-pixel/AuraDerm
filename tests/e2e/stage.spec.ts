@@ -113,37 +113,19 @@ test.describe("pinned video stage", () => {
     }
   });
 
-  test("pause control: keyboard toggles playback and the pause survives tab visibility changes", async ({
-    page,
-  }) => {
+  test("no visible playback control and no native video controls", async ({ page }) => {
     await page.goto("/");
     const video = page.getByTestId("stage-video-a");
-    const control = page.getByTestId("stage-playback");
-    await expect(control).toHaveAccessibleName("Pause background video");
-    await page.waitForFunction(() => {
-      const el = document.querySelector('[data-testid="stage-video-a"]') as HTMLVideoElement | null;
-      return el ? !el.paused : false;
-    });
-
-    await control.focus();
-    await page.keyboard.press("Enter");
-    await expect(control).toHaveAccessibleName("Play background video");
-    expect(await video.evaluate((el: HTMLVideoElement) => el.paused)).toBe(true);
-
-    // A visibility change must not override the viewer's pause.
-    await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-    await page.waitForTimeout(200);
-    expect(await video.evaluate((el: HTMLVideoElement) => el.paused)).toBe(true);
-
-    await page.keyboard.press("Space");
-    await expect(control).toHaveAccessibleName("Pause background video");
+    await expect(video).toHaveJSProperty("controls", false);
+    await expect(page.getByTestId("stage-playback")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /background video/i })).toHaveCount(0);
     await page.waitForFunction(() => {
       const el = document.querySelector('[data-testid="stage-video-a"]') as HTMLVideoElement | null;
       return el ? !el.paused : false;
     });
   });
 
-  test("reduced motion: no pause control is rendered with the static poster", async ({ page }) => {
+  test("reduced motion: no playback control is rendered with the static poster", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await expect(page.getByTestId("stage-playback")).toHaveCount(0);

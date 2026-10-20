@@ -3,11 +3,9 @@
 import {
   useEffect,
   useRef,
-  useState,
   useSyncExternalStore,
   type SyntheticEvent,
 } from "react";
-import { Pause, Play } from "lucide-react";
 
 type ScrollStageProps = {
   hero1280Src: string;
@@ -16,6 +14,14 @@ type ScrollStageProps = {
 };
 
 const DESKTOP_BREAKPOINT = 768;
+// Any first gesture retries a blocked autoplay; no visible play control.
+const INTERACTION_EVENTS = [
+  "pointerdown",
+  "touchstart",
+  "keydown",
+  "scroll",
+  "wheel",
+] as const;
 
 function logPlayRejection() {
   console.debug("[ScrollStage] video play() rejected — leaving poster visible");
@@ -50,10 +56,12 @@ function subscribeToMotionPreference(callback: () => void) {
 }
 
 function getMotionSnapshot() {
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
   const saveData =
-    (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ===
-    true;
+    (navigator as Navigator & { connection?: { saveData?: boolean } })
+      .connection?.saveData === true;
   return reducedMotion || saveData;
 }
 
@@ -73,12 +81,12 @@ function getHydratedServerSnapshot() {
   return false;
 }
 
-export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageProps) {
+export function ScrollStage({
+  hero1280Src,
+  hero720Src,
+  posterSrc,
+}: ScrollStageProps) {
   const heroVideoRef = useRef<HTMLVideoElement>(null);
-  // A viewer-initiated pause must win over every automatic resume path below
-  // (tab visibility, loop fallback, autoplay retry, breakpoint remount).
-  const [userPaused, setUserPaused] = useState(false);
-  const userPausedRef = useRef(false);
 
   // The real viewport width is unknown to the server, so the hydration-matching
   // render always has to guess "mobile" first. Gate the <video> mount on this
@@ -126,12 +134,14 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
       if (fallbackArmed) return;
       fallbackArmed = true;
       retryOnInteraction = () => {
-        if (userPausedRef.current) return;
         heroVideo.play().catch(logPlayRejection);
       };
-      window.addEventListener("click", retryOnInteraction, { once: true });
-      window.addEventListener("touchstart", retryOnInteraction, { once: true });
-      window.addEventListener("scroll", retryOnInteraction, { once: true });
+      for (const type of INTERACTION_EVENTS) {
+        window.addEventListener(type, retryOnInteraction, {
+          once: true,
+          passive: true,
+        });
+      }
     };
     const attemptPlay = (video: HTMLVideoElement) => {
       video.play().catch(() => {
@@ -143,7 +153,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
     const onVisibility = () => {
       if (document.hidden) {
         heroVideo.pause();
-      } else if (!userPausedRef.current) {
+      } else {
         attemptPlay(heroVideo);
       }
     };
@@ -154,89 +164,59 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
     // as a fallback so playback never stalls.
     const onHeroEnded = () => {
       heroVideo.currentTime = 0;
-      if (!userPausedRef.current) attemptPlay(heroVideo);
+      attemptPlay(heroVideo);
     };
 
-    if (!userPausedRef.current) attemptPlay(heroVideo);
+    attemptPlay(heroVideo);
     document.addEventListener("visibilitychange", onVisibility);
     heroVideo.addEventListener("ended", onHeroEnded);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
       heroVideo.removeEventListener("ended", onHeroEnded);
       if (retryOnInteraction) {
-        window.removeEventListener("click", retryOnInteraction);
-        window.removeEventListener("touchstart", retryOnInteraction);
-        window.removeEventListener("scroll", retryOnInteraction);
+        for (const type of INTERACTION_EVENTS) {
+          window.removeEventListener(type, retryOnInteraction);
+        }
       }
     };
   }, [disableMotion, isDesktop, hydrated]);
 
   const showVideo = hydrated && !disableMotion;
 
-  const togglePlayback = () => {
-    const video = heroVideoRef.current;
-    if (!video) return;
-    const nextPaused = !userPausedRef.current;
-    userPausedRef.current = nextPaused;
-    setUserPaused(nextPaused);
-    if (nextPaused) {
-      video.pause();
-    } else {
-      video.play().catch(logPlayRejection);
-    }
-  };
-
   return (
-    <>
-      <div
-        data-testid="scroll-stage"
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10"
-      >
-        {/* Phones crop the 16:9 loop to a narrow slice; 72% keeps the serum
+    <div
+      data-testid="scroll-stage"
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 -z-10"
+    >
+      {/* Phones crop the 16:9 loop to a narrow slice; 72% keeps the serum
             bottle centred between the hero's headline and its copy/CTAs. */}
-        {!showVideo ? (
-          <img
-            data-testid="stage-poster"
-            src={posterSrc}
-            alt=""
-            className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
-          />
-        ) : (
-          <video
-            key={isDesktop ? "desktop" : "mobile"}
-            ref={heroVideoRef}
-            data-testid="stage-video-a"
-            muted
-            playsInline
-            autoPlay={!userPaused}
-            loop
-            preload="auto"
-            poster={posterSrc}
-            className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
-            onError={logVideoError("hero")}
-          >
-            <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />
-          </video>
-        )}
-      </div>
-      {showVideo ? (
-        // Outside the aria-hidden, pointer-events-none stage so it stays
-        // reachable by keyboard and assistive tech (WCAG 2.2.2 pause control).
-        <button
-          type="button"
-          data-testid="stage-playback"
-          onClick={togglePlayback}
-          aria-label={userPaused ? "Play background video" : "Pause background video"}
-          className="fixed right-4 bottom-4 z-40 flex size-10 items-center justify-center rounded-full border border-glass-border bg-forest-deep/70 text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:right-6 md:bottom-6"
+      {!showVideo ? (
+        <img
+          data-testid="stage-poster"
+          src={posterSrc}
+          alt=""
+          className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
+        />
+      ) : (
+        <video
+          key={isDesktop ? "desktop" : "mobile"}
+          ref={heroVideoRef}
+          data-testid="stage-video-a"
+          muted
+          playsInline
+          autoPlay
+          loop
+          controls={false}
+          disablePictureInPicture
+          preload="auto"
+          poster={posterSrc}
+          className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
+          onError={logVideoError("hero")}
         >
-          {userPaused ? (
-            <Play className="size-4" aria-hidden="true" />
-          ) : (
-            <Pause className="size-4" aria-hidden="true" />
-          )}
-        </button>
-      ) : null}
-    </>
+          <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />
+        </video>
+      )}
+    </div>
   );
 }
