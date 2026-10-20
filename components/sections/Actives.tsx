@@ -16,7 +16,10 @@ export function Actives() {
         <Reveal>
           <GlassPanel className="flex flex-col gap-10 p-8 lg:flex-row lg:gap-10 lg:p-12">
             <div className="flex flex-col gap-6 lg:w-2/5">
-              <Eyebrow>{activesIntro.eyebrow}</Eyebrow>
+              {/* Cream, not sage-muted: on mobile this eyebrow sits over the
+                  bright serum bottle with no backdrop blur and collapsed to
+                  near-invisible (P3-P12 screenshot review at 390px). */}
+              <Eyebrow className="[&>span]:text-cream">{activesIntro.eyebrow}</Eyebrow>
               <DisplayHeading
                 level="h2"
                 accent={activesIntro.accentWord}

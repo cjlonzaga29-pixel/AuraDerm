@@ -175,7 +175,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
           data-testid="stage-poster"
           src={posterSrc}
           alt=""
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-[78%_50%]"
         />
       ) : (
         <video
@@ -188,7 +188,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
           loop
           preload="auto"
           poster={posterSrc}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-[78%_50%]"
           onError={logVideoError("hero")}
         >
           <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />

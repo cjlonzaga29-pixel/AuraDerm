@@ -18,7 +18,7 @@ const SURFACE_NAV = "rgba(15,35,24,0.66)"; // --surface-nav (P3-P10: denser than
 // 16x16 block-averaged frames at t=0/3/6/9s, max-luminance block per frame).
 // This is the realistic worst case content panels actually sit over — not an
 // arbitrary pure-white frame, which this footage never produces.
-const BRIGHT_FRAME = "#C1B594";
+const BRIGHT_FRAME = "#EDDCC7"; // P3-P12: resampled for the waterfall/serum footage (was #C1B594)
 
 describe("contrastRatio", () => {
   it("black on white is 21:1", () => {
@@ -77,9 +77,10 @@ describe("contrastRatio", () => {
   // add a passing assertion here that isn't true; the owner brief is explicit
   // that this tradeoff must be stated, not hidden behind a relaxed fixture.
   // What actually guards readability for raw text-on-glass:
-  //   1. The footage is a dark, consistently forested loop (ffmpeg per-frame
-  //      averages land around #45 4a 3a) — see the emerald-deep case above,
-  //      which is the realistic sustained condition and passes comfortably.
+  //   1. P3-P12: the waterfall/serum footage is markedly brighter than the
+  //      old forest loop (misty falls and sunlit sky reach BRIGHT_FRAME), so
+  //      the emerald-deep case above is no longer the sustained condition
+  //      behind every panel — item 2 below carries the readability gate.
   //   2. Direct visual review of Playwright screenshots at 390/768/1280 across
   //      every section (see PUBLISH report) — this is the real gate for
   //      content-glass text, not a formula. That review found Ingredients'
