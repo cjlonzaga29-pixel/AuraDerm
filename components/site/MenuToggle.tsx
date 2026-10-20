@@ -1,64 +1,53 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { Menu } from "lucide-react";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 type NavLink = { label: string; href: string };
 
+// Built on the shadcn Sheet (Radix Dialog) for the focus trap, Escape-to-close
+// and focus return to the toggle; only the visual treatment is customised to
+// the smoked-glass system.
 export function MenuToggle({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const wasOpenRef = useRef(false);
-
-  useEffect(() => {
-    if (wasOpenRef.current && !open) {
-      buttonRef.current?.focus();
-    }
-    wasOpenRef.current = open;
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
 
   return (
-    <>
-      <button
-        ref={buttonRef}
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
         data-testid="menu-toggle"
-        type="button"
-        aria-expanded={open}
-        aria-controls="mobile-menu-sheet"
         aria-label={open ? "Close menu" : "Open menu"}
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex h-10 w-10 items-center justify-center text-cream lg:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-full text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
       >
-        <span aria-hidden="true">{open ? "✕" : "☰"}</span>
-      </button>
+        <Menu className="size-5" aria-hidden="true" />
+      </SheetTrigger>
 
-      {open ? (
-        <div
-          id="mobile-menu-sheet"
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 bg-surface-nav"
-        >
+      <SheetContent
+        id="mobile-menu-sheet"
+        side="right"
+        aria-describedby={undefined}
+        className="glass-surface glass-veil w-[min(20rem,85vw)] gap-2 border-glass-border px-8 pt-24 text-cream [&>button]:text-cream [&>button]:focus:ring-ring [&>button]:focus:ring-offset-forest-deep [&>button>svg]:size-5"
+      >
+        <SheetTitle className="sr-only">Menu</SheetTitle>
+        <nav aria-label="Mobile" className="flex flex-col gap-1">
           {links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="font-display text-2xl text-cream"
-            >
-              {link.label}
-            </a>
+            <SheetClose asChild key={link.href}>
+              <a
+                href={link.href}
+                className="rounded-card px-3 py-3 font-display text-3xl tracking-[0.02em] text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {link.label}
+              </a>
+            </SheetClose>
           ))}
-        </div>
-      ) : null}
-    </>
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }

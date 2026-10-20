@@ -11,7 +11,7 @@ export function Actives() {
   const { actives, activesIntro } = site;
 
   return (
-    <section id="actives" className="py-24">
+    <section id="actives" className="py-20 lg:py-28">
       <Container>
         <Reveal>
           <GlassPanel className="flex flex-col gap-10 p-8 lg:flex-row lg:gap-10 lg:p-12">
@@ -39,7 +39,7 @@ export function Actives() {
                 return (
                 <div
                   key={active.badge}
-                  className="relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-card border border-glass-border bg-glass-solid"
+                  className="relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-card border border-glass-border bg-glass-inset"
                 >
                   <div className="absolute inset-0">
                     {Concept ? (

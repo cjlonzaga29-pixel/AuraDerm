@@ -2,18 +2,22 @@ import { describe, expect, it } from "vitest";
 import { blendOver, contrastRatio } from "@/lib/contrast";
 
 // Current production token values (app/globals.css / lib/tokens.ts).
-// Updated for the emerald/lime botanical palette — these constants mirror
-// the live CSS vars, not an arbitrary fixture set, so keep them in sync
-// whenever the tokens change.
-const EMERALD_DEEP = "#0F2318"; // --forest-deep
-const EMERALD_MID = "#1C3A28"; // --forest
-const LIME = "#C7E04A"; // --gold
-const LIME_DEEP = "#A3C13A"; // --gold-deep (hover shade, used as a bg, not text-on-cream)
-const CREAM = "#F4F1E4"; // --cream
-const SAGE_MUTED = "#A8C08A"; // --sage-muted
-const GLASS_SOLID = "rgba(15,35,24,0.82)"; // --glass-solid (localized text-shaped scrims only)
-const GLASS_CONTENT = "rgba(20,38,28,0.20)"; // --glass (P3-P10: transparent content-panel tint, was 0.92)
-const SURFACE_NAV = "rgba(15,35,24,0.66)"; // --surface-nav (P3-P10: denser than content glass, was 0.88)
+// P3-P14: retuned to the waterfall/serum footage — the cool lime accent became
+// the scene's sun-gold, emerald shifted toward the jade pool and canopy shade.
+// Variable names keep their historical lime/emerald labels only where the
+// CSS var name is unchanged; the values mirror the live CSS vars, so keep them
+// in sync whenever the tokens change.
+const EMERALD_DEEP = "#0D1C16"; // --forest-deep
+const EMERALD_MID = "#1D3A2F"; // --forest
+const LIME = "#E3C585"; // --gold (sun-gold accent; was lime #C7E04A)
+const LIME_DEEP = "#C9A660"; // --gold-deep (hover shade, used as a bg, not text-on-cream)
+const CREAM = "#FBF7EE"; // --cream
+const SAGE_MUTED = "#DBE5D9"; // --sage-muted
+const GLASS_SOLID = "rgba(9,22,17,0.84)"; // --glass-solid (backdrop-filter fallback)
+const GLASS_CONTENT = "rgba(10,26,20,0.58)"; // --glass (md+, with 18px panel blur)
+const GLASS_VEIL = "rgba(9,22,17,0.60)"; // --glass-veil (md+, hero/statement/closing backing)
+const GLASS_MOBILE = "rgba(9,22,17,0.64)"; // .glass-surface below md (no blur)
+const SURFACE_NAV = "rgba(10,24,19,0.72)"; // --surface-nav
 // Brightest sustained region sampled across the full 10s hero loop (ffmpeg,
 // 16x16 block-averaged frames at t=0/3/6/9s, max-luminance block per frame).
 // This is the realistic worst case content panels actually sit over — not an
@@ -65,39 +69,42 @@ describe("contrastRatio", () => {
   });
 
   it("cream on footer surface (emerald-deep at 92%) over a white worst-case is at least 4.5:1", () => {
-    const blended = blendOver("rgba(15,35,24,0.92)", "#FFFFFF");
+    const blended = blendOver("rgba(13,28,22,0.92)", "#FFFFFF");
     expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
-  // P3-P10: --glass was dropped from 0.92 (near-opaque card) to 0.20 (genuine
-  // smoked glass) so the hero footage reads through content panels, per the
-  // owner brief. A surface this transparent cannot promise 4.5:1 against an
-  // arbitrary pure-white frame, nor against BRIGHT_FRAME above — that would
-  // require pushing opacity back to ~0.65+, which defeats the brief. Do not
-  // add a passing assertion here that isn't true; the owner brief is explicit
-  // that this tradeoff must be stated, not hidden behind a relaxed fixture.
-  // What actually guards readability for raw text-on-glass:
-  //   1. P3-P12: the waterfall/serum footage is markedly brighter than the
-  //      old forest loop (misty falls and sunlit sky reach BRIGHT_FRAME), so
-  //      the emerald-deep case above is no longer the sustained condition
-  //      behind every panel — item 2 below carries the readability gate.
-  //   2. Direct visual review of Playwright screenshots at 390/768/1280 across
-  //      every section (see PUBLISH report) — this is the real gate for
-  //      content-glass text, not a formula. That review found Ingredients'
-  //      per-item labels collapsing to near-invisible over the brighter
-  //      chamomile/rose artwork; those labels were swapped from sage-muted to
-  //      solid cream as a result (components/sections/Ingredients.tsx). Do not
-  //      revert that swap without re-screenshotting the section.
+  // P3-P10 dropped --glass from 0.92 to 0.20 so the footage reads through
+  // panels, and stated that cream text could not then hold 4.5:1 over
+  // BRIGHT_FRAME. P3-P14 measured contrast at the real text locations across
+  // four frames of the loop (Playwright: text hidden, p95 background luminance
+  // under each text run) and found 180 sub-threshold runs at 0.20. Content
+  // glass is now 0.58 at md+ (with 18px blur; still visibly transparent) and
+  // 0.64 below md (no blur), so cream body copy clears 4.5:1 even unblurred
+  // over the brightest sampled region. Sage-muted is NOT guaranteed there at
+  // md+ — it is reserved for eyebrows/metadata and was verified per location
+  // by the same screenshot audit (see PUBLISH report).
+  it("cream on content glass over BRIGHT_FRAME (unblurred worst case) is at least 4.5:1", () => {
+    expect(contrastRatio(CREAM, blendOver(GLASS_CONTENT, BRIGHT_FRAME))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("cream on veil glass over BRIGHT_FRAME is at least 4.5:1", () => {
+    expect(contrastRatio(CREAM, blendOver(GLASS_VEIL, BRIGHT_FRAME))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("cream and sage-muted on mobile (no-blur) glass over BRIGHT_FRAME are at least 4.5:1", () => {
+    const blended = blendOver(GLASS_MOBILE, BRIGHT_FRAME);
+    expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("BRIGHT_FRAME is darker than literal white (sanity check on the fixture itself)", () => {
     expect(contrastRatio("#FFFFFF", BRIGHT_FRAME)).toBeGreaterThan(1);
   });
 
-  // Regression coverage for the P3-P4 defect: Hero/Statement previously backed
-  // headline/body/muted text with a gradient that faded to fully transparent
-  // *inside* the actual text bounds (proven via Playwright pixel sampling —
-  // contrast collapsed to ~1.0-1.1:1 against a bright/white frame). Both
-  // sections now use a flat, text-shaped --glass-solid patch with no internal
-  // fade, so every text color they carry must clear 4.5:1 against white.
+  // Regression coverage for the P3-P4 defect (a scrim that faded to fully
+  // transparent inside the text bounds). --glass-solid is now the fallback
+  // fill when backdrop-filter is unsupported, so every text colour must still
+  // clear 4.5:1 on it against a white worst case.
   it("sage-muted on glass-solid over a white worst-case background is at least 4.5:1", () => {
     const blended = blendOver(GLASS_SOLID, "#FFFFFF");
     expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);

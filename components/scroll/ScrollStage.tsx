@@ -170,12 +170,14 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10"
     >
+      {/* Phones crop the 16:9 loop to a narrow slice; 72% keeps the serum
+          bottle centred between the hero's headline and CTA panels. */}
       {disableMotion || !hydrated ? (
         <img
           data-testid="stage-poster"
           src={posterSrc}
           alt=""
-          className="h-full w-full object-cover object-[78%_50%]"
+          className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
         />
       ) : (
         <video
@@ -188,7 +190,7 @@ export function ScrollStage({ hero1280Src, hero720Src, posterSrc }: ScrollStageP
           loop
           preload="auto"
           poster={posterSrc}
-          className="h-full w-full object-cover object-[78%_50%]"
+          className="h-full w-full object-cover object-[72%_50%] md:object-[78%_50%]"
           onError={logVideoError("hero")}
         >
           <source src={isDesktop ? hero1280Src : hero720Src} type="video/mp4" />

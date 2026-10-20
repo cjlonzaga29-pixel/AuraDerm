@@ -11,20 +11,17 @@ export function Benefits() {
   const { benefits } = site;
 
   return (
-    <section id="benefits" className="py-24">
+    <section id="benefits" className="py-20 lg:py-28">
       <Container>
         <Reveal>
           <div className="flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-6">
             {benefits.map((benefit, index) => {
               const Icon = BENEFIT_ICONS[index % BENEFIT_ICONS.length];
               return (
-              // Text shadow + cream index (not sage-muted): on mobile the third
-              // card sits over the bright waterfall with no backdrop blur and the
-              // copy washed out (P3-P13 screenshot review at 390px).
-              <GlassPanel
-                key={benefit.title}
-                className="flex flex-col gap-4 p-8 text-shadow-md text-shadow-forest-deep"
-              >
+              // Cream index (not sage-muted): on mobile the third card sits over
+              // the bright waterfall with no backdrop blur (P3-P13 review at
+              // 390px). The text halo now comes from GlassPanel's glass-text.
+              <GlassPanel key={benefit.title} className="flex flex-col gap-4 p-8">
                 <Icon className="text-gold" />
                 <span className="font-sans text-xs uppercase tracking-[0.18em] text-cream">
                   {String(index + 1).padStart(2, "0")}

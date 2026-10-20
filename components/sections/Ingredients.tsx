@@ -10,7 +10,7 @@ export function Ingredients() {
   const { ingredientsPanel, ingredients } = site;
 
   return (
-    <section id="ingredients" className="py-24">
+    <section id="ingredients" className="py-20 lg:py-28">
       <Container>
         <Reveal>
           <GlassPanel className="flex flex-col gap-10 p-8 lg:p-12">
@@ -30,7 +30,7 @@ export function Ingredients() {
                   key={ingredient.order}
                   className="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3"
                 >
-                  <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-card border border-glass-border bg-glass-solid lg:h-24 lg:w-full">
+                  <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-card border border-glass-border bg-glass-inset lg:h-24 lg:w-full">
                     {Illustration ? (
                       <Illustration
                         title={`${ingredient.name} botanical illustration`}

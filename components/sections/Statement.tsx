@@ -1,5 +1,6 @@
 import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
+import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Reveal } from "@/components/motion/Reveal";
 import { site } from "@/content/site";
 
@@ -7,15 +8,15 @@ export function Statement() {
   const { statement } = site;
 
   return (
-    <section className="flex min-h-[40vh] items-center justify-center py-24">
+    // Left canopy column from lg, matching the hero, so the bottle and falls
+    // stay in view between the hero and the full-width ingredient panel.
+    <section className="py-20 lg:py-28">
       <Reveal>
-        <Container className="flex flex-col items-center text-center">
-          <div className="relative z-0 flex w-fit max-w-full flex-col items-center gap-6">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -inset-x-6 -inset-y-8 -z-10 rounded-4xl"
-              style={{ background: "var(--glass-solid)" }}
-            />
+        <Container>
+          <GlassPanel
+            tone="veil"
+            className="flex flex-col items-center gap-6 px-6 py-8 text-center md:mx-auto md:max-w-xl lg:mx-0 lg:max-w-120 lg:items-start lg:px-8 lg:text-left"
+          >
             <DisplayHeading
               level="h2"
               accent={statement.accentWord}
@@ -24,7 +25,7 @@ export function Statement() {
               {`${statement.line1}\n${statement.line2}`}
             </DisplayHeading>
             <p className="max-w-[56ch] font-sans text-base text-cream">{statement.subcopy}</p>
-          </div>
+          </GlassPanel>
         </Container>
       </Reveal>
     </section>

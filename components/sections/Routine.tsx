@@ -26,7 +26,7 @@ export function Routine() {
   const { routine, routineIntro } = site;
 
   return (
-    <section id="routine" className="py-24">
+    <section id="routine" className="py-20 lg:py-28">
       <Container>
         <Reveal>
           <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-6">
@@ -47,7 +47,7 @@ export function Routine() {
             </GlassPanel>
 
             <GlassPanel className="flex flex-col gap-8 p-8 lg:p-12">
-              <div className="flex h-40 items-center justify-center rounded-card border border-glass-border bg-glass-solid">
+              <div className="flex h-40 items-center justify-center rounded-card border border-glass-border bg-glass-inset">
                 <RoutineVesselIllustration
                   title="Illustrative skincare vessel concept"
                   className="h-28 w-28"
@@ -66,7 +66,7 @@ export function Routine() {
                         className="mt-1 w-px flex-1 bg-glass-border lg:mt-2 lg:h-px lg:w-full lg:flex-none"
                       />
                     </div>
-                    <div className="flex flex-col gap-1 rounded-card border border-glass-border bg-glass-solid p-4">
+                    <div className="flex flex-col gap-1 rounded-card border border-glass-border bg-glass-inset p-4">
                       <span className="font-sans text-xs uppercase tracking-[0.18em] text-gold">
                         {step.slot}
                       </span>
