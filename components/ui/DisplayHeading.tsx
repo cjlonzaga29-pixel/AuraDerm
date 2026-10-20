@@ -7,16 +7,17 @@ type DisplayHeadingProps = {
   className?: string;
 };
 
-// P3-P15: headings moved from condensed all-caps Bebas to light Jost in
-// sentence case so type sits quietly over the footage. Bebas is kept only for
-// the AURADERM wordmark.
+// P3-P16: headings set in Cormorant Garamond 500 (font-heading) for a more
+// distinctive editorial voice; body, nav and buttons stay in Jost. Bebas is
+// kept only for the AURADERM wordmark. The h1 scale steps up at lg, where the
+// hero copy moves into the canopy column beside the bottle.
 const sizeClasses: Record<HeadingLevel, string> = {
-  h1: "text-[clamp(2.5rem,5.4vw,4.5rem)] font-light leading-[1.04] tracking-[-0.02em]",
-  h2: "text-[clamp(1.875rem,3.4vw,2.75rem)] font-light leading-[1.12] tracking-[-0.015em]",
-  h3: "text-lg font-normal leading-snug tracking-[-0.005em]",
+  h1: "text-[clamp(2.75rem,11vw,3.75rem)] lg:text-[clamp(3.5rem,6.5vw,6.5rem)] leading-[1.02] tracking-[-0.025em]",
+  h2: "text-[clamp(2.25rem,4vw,4rem)] leading-[1.05] tracking-[-0.02em]",
+  h3: "text-2xl leading-tight tracking-[-0.01em]",
 };
 
-function renderWithAccent(text: string, accent?: string) {
+function renderWithAccent(text: string, accent: string | undefined, italic: boolean) {
   if (!accent) return text;
   const index = text.indexOf(accent);
   if (index === -1) return text;
@@ -25,7 +26,7 @@ function renderWithAccent(text: string, accent?: string) {
   return (
     <>
       {before}
-      <span className="text-gold">{accent}</span>
+      <span className={italic ? "text-gold italic" : "text-gold"}>{accent}</span>
       {after}
     </>
   );
@@ -35,9 +36,10 @@ export function DisplayHeading({ children, accent, level, className }: DisplayHe
   const Tag = level;
   return (
     <Tag
-      className={`font-sans text-cream min-w-0 text-balance break-words ${sizeClasses[level]} ${className ?? ""}`}
+      className={`font-heading font-medium text-cream min-w-0 text-balance break-words ${sizeClasses[level]} ${className ?? ""}`}
     >
-      {renderWithAccent(children, accent)}
+      {/* Italic is reserved for the single h1 accent phrase. */}
+      {renderWithAccent(children, accent, level === "h1")}
     </Tag>
   );
 }

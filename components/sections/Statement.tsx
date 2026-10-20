@@ -12,7 +12,7 @@ export function Statement() {
       <Container>
         <div className="text-scrim flex max-w-xl flex-col gap-10 lg:max-w-120">
           <div className="flex flex-col gap-5">
-            <DisplayHeading level="h2" accent={statement.accentWord} className="whitespace-pre-line">
+            <DisplayHeading level="h2" accent={statement.accentWord} className="whitespace-pre-line lg:w-max">
               {statement.headline}
             </DisplayHeading>
             <p className="font-sans text-base leading-relaxed text-cream">{statement.subcopy}</p>

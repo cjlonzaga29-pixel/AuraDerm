@@ -46,6 +46,7 @@
   --radius-pill: var(--radius-pill);
   --radius-card: var(--radius-card);
   --font-display: var(--font-display);
+  --font-heading: var(--font-heading);
   --font-sans: var(--font-sans);
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
