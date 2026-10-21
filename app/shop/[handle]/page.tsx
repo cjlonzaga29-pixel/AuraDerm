@@ -192,31 +192,27 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
             </ol>
           </nav>
 
-          {/* Purchase area: a ~400px gallery beside a matching purchase
-              column. data-magnifier-bounds: the hover preview may cover the
+          {/* Purchase area: two equal flexible columns across the 1200px
+              container from lg, stacked below. The gallery frame is square
+              at every width; the bottle is contained inside it on the linen
+              surface. data-magnifier-bounds: the hover preview may cover the
               area right of the gallery, never spill past the container; its
               gap follows this grid's column gap. */}
           <div
             data-testid="product-detail"
             data-magnifier-bounds
-            className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,25rem)_minmax(0,31rem)] lg:gap-10"
+            className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10"
           >
-            {/* The width cap sits on the wrapper so the overlaid controls
-                stay on the image at tablet widths. */}
-            <div className={product.images.length > 0 ? "mx-auto w-full sm:max-w-sm lg:max-w-none" : "w-full"}>
+            <div className="w-full min-w-0">
               <ProductGallery
                 name={product.name}
                 category={product.category}
                 images={product.images}
-                className={
-                  product.images.length > 0
-                    ? "aspect-[4/5] w-full bg-linen"
-                    : "aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]"
-                }
+                className={product.images.length > 0 ? "aspect-square w-full bg-linen" : "aspect-square w-full"}
               />
             </div>
 
-            <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col gap-4 lg:mx-0 lg:max-w-none">
+            <div className="flex w-full min-w-0 flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <p className="font-sans text-xs uppercase tracking-[0.2em] text-gold">
                   {BRAND_LABEL} · {product.category}
@@ -224,7 +220,7 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                 <h1 className="font-heading text-[1.75rem] leading-[1.1] font-medium tracking-[-0.015em] text-balance text-cream sm:text-[1.875rem] lg:text-[2.125rem]">
                   {product.displayName}
                 </h1>
-                <p className="font-sans text-base leading-snug text-sage-muted lg:text-[1.0625rem]">{product.summary}</p>
+                <p className="max-w-[60ch] font-sans text-base leading-snug text-sage-muted lg:text-[1.0625rem]">{product.summary}</p>
               </div>
 
               <Separator className="bg-hairline" />

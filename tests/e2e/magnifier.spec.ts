@@ -51,6 +51,12 @@ test.describe("hover magnifier (desktop)", () => {
       const pv = await box(preview);
       expect(pv.x).toBeGreaterThanOrEqual(gallery.x + gallery.width);
       expect(pv.x + pv.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+      // Square frame: the lens and preview follow the painted bottle, not the
+      // pillarbox bands, and the preview stays inside the purchase grid.
+      expect(Math.abs(gallery.width - gallery.height)).toBeLessThanOrEqual(1);
+      expect(Math.abs(pv.height - p.height)).toBeLessThan(1.5);
+      const grid = await box(page.getByTestId("product-detail"));
+      expect(pv.x + pv.width).toBeLessThanOrEqual(grid.x + grid.width + 0.5);
       const centre = await box(lens);
       expect(Math.abs(centre.x + centre.width / 2 - (p.x + p.width / 2))).toBeLessThan(2);
       expect(Math.abs(centre.y + centre.height / 2 - (p.y + p.height / 2))).toBeLessThan(2);

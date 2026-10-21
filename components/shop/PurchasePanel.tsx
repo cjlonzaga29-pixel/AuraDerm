@@ -137,18 +137,18 @@ export function PurchasePanel({
             </button>
           </div>
 
-          <Button variant="primary" size="cta" className="flex-1 sm:min-w-56 sm:flex-none" onClick={addToBag}>
+          <Button variant="primary" size="cta" className="min-w-0 flex-1" onClick={addToBag}>
             Add to bag
           </Button>
         </div>
 
-        <Button variant="quiet" size="cta" className="w-full sm:w-auto sm:self-start" onClick={buyNow}>
+        <Button variant="quiet" size="cta" className="w-full" onClick={buyNow}>
           Buy now
         </Button>
       </div>
 
       {price.kind === "sample" ? (
-        <p className="font-sans text-base leading-relaxed text-sage-muted">{SAMPLE_PRICE_NOTE}</p>
+        <p className="max-w-[60ch] font-sans text-base leading-relaxed text-sage-muted">{SAMPLE_PRICE_NOTE}</p>
       ) : null}
 
       {showStickyBar ? (

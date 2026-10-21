@@ -511,7 +511,7 @@ test.describe("shop", () => {
   });
 });
 
-// P4-P20: compact shop cards and a ~400px gallery beside a matching purchase column.
+// P4-P20: compact shop cards and a compact purchase area.
 test.describe("compact shop and purchase area", () => {
   test.beforeEach(({ page }, testInfo) => {
     void page;
@@ -552,13 +552,10 @@ test.describe("compact shop and purchase area", () => {
     }
   });
 
-  test("product page: ~400px gallery, compact title and details 24–32px below", async ({ page }) => {
+  test("product page: compact title and details 24–32px below", async ({ page }) => {
     for (const { handle } of PRODUCTS) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto(`/shop/${handle}`);
-      const gallery = (await page.getByTestId("product-gallery").getByTestId("product-image").boundingBox())!;
-      expect(gallery.width, handle).toBeGreaterThanOrEqual(380);
-      expect(gallery.width, handle).toBeLessThanOrEqual(420);
       const h1 = parseFloat(await page.getByRole("heading", { level: 1 }).evaluate((el) => getComputedStyle(el).fontSize));
       expect(h1).toBeGreaterThanOrEqual(30);
       expect(h1).toBeLessThanOrEqual(36);
@@ -577,4 +574,84 @@ test.describe("compact shop and purchase area", () => {
       expect(mobile).toBeLessThanOrEqual(30);
     }
   });
+});
+
+// P4-P21: a square gallery frame beside an equal purchase column, centred in
+// the 1200px container.
+test.describe("square gallery and balanced purchase grid", () => {
+  test.beforeEach(({ page }, testInfo) => {
+    void page;
+    test.skip(testInfo.project.name !== "desktop", "sets its own viewports");
+  });
+
+  for (const { handle } of PRODUCTS) {
+    test(`${handle}: square contained gallery, columns fill the grid at every width`, async ({ page }) => {
+      for (const width of [390, 768, 1280, 1440, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`/shop/${handle}`);
+        const frame = page.getByTestId("product-gallery").getByTestId("product-image");
+        const img = frame.locator("img");
+        await expect(img).toHaveJSProperty("complete", true);
+        const m = await page.evaluate(() => {
+          const r = (el: Element) => el.getBoundingClientRect();
+          const detail = document.querySelector('[data-testid="product-detail"]')!;
+          const [left, right] = Array.from(detail.children).map(r);
+          const fig = document.querySelector('[data-testid="product-gallery"] [data-testid="product-image"]')!;
+          const img = fig.querySelector("img")!;
+          const panel = document.querySelector('[data-testid="purchase-panel"]')!;
+          const scale = Math.min(r(img).width / img.naturalWidth, r(img).height / img.naturalHeight);
+          return {
+            vw: document.documentElement.clientWidth,
+            overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+            detail: r(detail).toJSON(),
+            left: left.toJSON(),
+            right: right.toJSON(),
+            frame: r(fig).toJSON(),
+            img: r(img).toJSON(),
+            fit: getComputedStyle(img).objectFit,
+            painted: { width: img.naturalWidth * scale, height: img.naturalHeight * scale },
+            panel: r(panel).toJSON(),
+          };
+        });
+        const at = `${handle} @${width}`;
+        expect(m.overflow, at).toBeLessThanOrEqual(0);
+
+        // 1:1 frame; the whole bottle contained at its own ratio, undistorted.
+        expect(Math.abs(m.frame.width - m.frame.height), at).toBeLessThanOrEqual(1);
+        expect(m.fit, at).toBe("contain");
+        expect(Math.abs(m.img.width - m.frame.width), at).toBeLessThanOrEqual(1);
+        expect(Math.abs(m.img.height - m.frame.height), at).toBeLessThanOrEqual(1);
+        expect(m.painted.width, at).toBeLessThanOrEqual(m.frame.width + 0.5);
+        expect(m.painted.height, at).toBeLessThanOrEqual(m.frame.height + 0.5);
+
+        // Gallery fills its track; balanced outer margins.
+        expect(Math.abs(m.frame.width - m.left.width), at).toBeLessThanOrEqual(1);
+        const outerLeft = m.detail.left;
+        const outerRight = m.vw - m.detail.right;
+        expect(Math.abs(outerLeft - outerRight), at).toBeLessThanOrEqual(1);
+        // The purchase panel uses its whole column.
+        expect(Math.abs(m.panel.width - m.right.width), at).toBeLessThanOrEqual(1);
+
+        if (width >= 1024) {
+          // Two equal columns, top-aligned, 32–40px apart, filling the container.
+          expect(Math.abs(m.left.width - m.right.width), at).toBeLessThanOrEqual(1);
+          expect(Math.abs(m.left.top - m.right.top), at).toBeLessThanOrEqual(1);
+          const gap = m.right.left - m.left.right;
+          expect(gap, at).toBeGreaterThanOrEqual(32);
+          expect(gap, at).toBeLessThanOrEqual(40);
+          expect(Math.abs(m.right.right - m.detail.right), at).toBeLessThanOrEqual(1);
+          expect(m.detail.width, at).toBeGreaterThanOrEqual(Math.min(1104, width - 96) - 1);
+        } else {
+          // Stacked: the square gallery spans the content width.
+          expect(m.right.top, at).toBeGreaterThan(m.left.bottom);
+          expect(Math.abs(m.left.width - m.detail.width), at).toBeLessThanOrEqual(1);
+        }
+        await expect(frame.getByText("Illustrative packaging")).toBeVisible();
+        await expect(page.getByRole("button", { name: /^Enlarge image/ })).toBeVisible();
+        for (const name of ["Add to bag", "Buy now"]) {
+          expect((await page.getByRole("button", { name }).boundingBox())!.height, at).toBeGreaterThanOrEqual(44);
+        }
+      }
+    });
+  }
 });
