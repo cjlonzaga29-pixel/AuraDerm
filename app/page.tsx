@@ -14,7 +14,7 @@ export default function Home() {
     <>
       <ScrollStage
         hero1280Src="/stage/hero-1280.mp4"
-        hero720Src="/stage/hero-720.mp4"
+        heroMobileSrc="/stage/hero-mobile.mp4"
         posterSrc="/stage/poster.webp"
       />
       <Nav />

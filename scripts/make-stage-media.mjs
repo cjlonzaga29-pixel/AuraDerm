@@ -67,7 +67,29 @@ function buildFilter(width, extra) {
   return parts.join(",");
 }
 
-function encodeVideo({ name, width, extra, startCrf, capBytes }) {
+// Phones show the stage with object-cover at object-position 72% (see
+// ScrollStage.tsx), which on a 16:9 frame leaves only a ~333px-wide slice of
+// the 1280x720 source visible. Encoding that whole frame at 720px wide threw
+// away 44% of the height before the browser magnified it ~6x at DPR 3. The
+// mobile variant is instead a native-resolution (no scaling at 1280w) portrait
+// crop. Its left edge satisfies x + 0.72 * w = 0.72 * 1280, so the same 72%
+// object-position frames it exactly as it frames the full landscape poster at
+// every viewport narrower than the crop (anything up to ~767x1024), keeping
+// both the serum bottle and the waterfall in view.
+const MOBILE_POSITION = 0.72;
+const MOBILE_CROP_WIDTH = 640;
+const MOBILE_CROP_X =
+  Math.round((MOBILE_POSITION * (1280 - MOBILE_CROP_WIDTH)) / 2) * 2;
+
+function encodeVideo({
+  name,
+  width,
+  extra,
+  startCrf,
+  capBytes,
+  preset = "medium",
+  tune,
+}) {
   const outPath = path.join(OUT_DIR, name);
   let crf = startCrf;
   let size;
@@ -80,7 +102,8 @@ function encodeVideo({ name, width, extra, startCrf, capBytes }) {
       "-an",
       "-c:v", "libx264",
       "-crf", String(crf),
-      "-preset", "medium",
+      "-preset", preset,
+      ...(tune ? ["-tune", tune] : []),
       "-movflags", "+faststart",
       outPath,
     ]);
@@ -101,10 +124,15 @@ encodeVideo({
   capBytes: 2.5 * 1_000_000,
 });
 
+// CRF 25.5/veryslow chosen by VMAF against the lossless source crop (88.4 vs
+// 89.4 at CRF 24, visually indistinguishable at 3x zoom) to fit the 1.2MB cap.
 encodeVideo({
-  name: "hero-720.mp4",
-  width: 720,
-  startCrf: 26,
+  name: "hero-mobile.mp4",
+  width: 1280,
+  extra: `crop=${MOBILE_CROP_WIDTH}:ih:${MOBILE_CROP_X}:0`,
+  startCrf: 25.5,
+  preset: "veryslow",
+  tune: "film",
   capBytes: 1.2 * 1_000_000,
 });
 

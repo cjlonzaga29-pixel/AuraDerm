@@ -131,6 +131,29 @@ test.describe("pinned video stage", () => {
     await expect(page.getByTestId("stage-playback")).toHaveCount(0);
   });
 
+  test("loads only its own variant, decoded at full source height", async ({ page }, testInfo) => {
+    const videoRequests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().endsWith(".mp4")) videoRequests.push(new URL(request.url()).pathname);
+    });
+    await page.goto("/");
+    await page.waitForFunction(() => {
+      const el = document.querySelector('[data-testid="stage-video-a"]') as HTMLVideoElement | null;
+      return el ? el.readyState >= 1 : false;
+    });
+    const decoded = await page.getByTestId("stage-video-a").evaluate((el: HTMLVideoElement) => ({
+      src: new URL(el.currentSrc).pathname,
+      width: el.videoWidth,
+      height: el.videoHeight,
+    }));
+    const expected =
+      testInfo.project.name === "mobile"
+        ? { src: "/stage/hero-mobile.mp4", width: 640, height: 720 }
+        : { src: "/stage/hero-1280.mp4", width: 1280, height: 720 };
+    expect(decoded).toEqual(expected);
+    expect([...new Set(videoRequests)]).toEqual([expected.src]);
+  });
+
   test("exactly one video on mobile and desktop", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator('[data-testid="scroll-stage"] video')).toHaveCount(1);

@@ -7,7 +7,7 @@ const STAGE_DIR = join(process.cwd(), "public/stage");
 
 const VIDEO_BUDGETS = [
   { name: "hero-1280.mp4", capBytes: 2.5 * 1_000_000 },
-  { name: "hero-720.mp4", capBytes: 1.2 * 1_000_000 },
+  { name: "hero-mobile.mp4", capBytes: 1.2 * 1_000_000 },
   { name: "hero-blur.mp4", capBytes: 0.6 * 1_000_000 },
 ];
 const IMAGE_FILES = ["poster.webp", "poster-blur.webp"];
@@ -24,7 +24,7 @@ describe("stage media", () => {
     }
   });
 
-  it("hero-1280/hero-720 decode at their named widths (skips if ffprobe unavailable)", () => {
+  it("hero-1280 is 1280x720 and hero-mobile is a full-height portrait crop (skips if ffprobe unavailable)", () => {
     let ffprobeAvailable = true;
     try {
       execFileSync("ffprobe", ["-version"], { stdio: "ignore" });
@@ -37,11 +37,7 @@ describe("stage media", () => {
       );
       return;
     }
-    const expectedWidths: Record<string, number> = {
-      "hero-1280.mp4": 1280,
-      "hero-720.mp4": 720,
-    };
-    for (const [name, expectedWidth] of Object.entries(expectedWidths)) {
+    const dimensions = (name: string) => {
       const output = execFileSync(
         "ffprobe",
         [
@@ -54,9 +50,19 @@ describe("stage media", () => {
         { encoding: "utf-8" },
       ).trim();
       const [width, height] = output.split(",").map(Number);
-      expect(width).toBe(expectedWidth);
-      expect(height).toBeGreaterThan(0);
-    }
+      return { width, height };
+    };
+    expect(dimensions("hero-1280.mp4")).toEqual({ width: 1280, height: 720 });
+    // Regression: the old mobile file was the whole 16:9 frame at 720px WIDE
+    // (720x406), so phones magnified a 188x406 slice ~6x at DPR 3. The mobile
+    // variant must keep the desktop file's full 720px height, and be wide
+    // enough to cover every sub-768px portrait viewport (up to 767x1024 needs
+    // 539px at 72% object-position) without upscaling.
+    const mobile = dimensions("hero-mobile.mp4");
+    expect(mobile.height).toBe(720);
+    expect(mobile.width).toBeGreaterThanOrEqual(540);
+    expect(mobile.width).toBeLessThan(mobile.height);
+    expect(existsSync(join(STAGE_DIR, "hero-720.mp4"))).toBe(false);
   });
 
   it("no audio stream in any of the 3 stage videos (skips if ffprobe unavailable)", () => {
