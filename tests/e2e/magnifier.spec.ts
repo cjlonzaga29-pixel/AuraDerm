@@ -196,12 +196,12 @@ test.describe("touch (phone)", () => {
     test.skip(testInfo.project.name !== "mobile", "phone viewport only");
   });
 
-  test("no lens; a swipe does not enlarge, a tap does", async ({ browser }) => {
+  test("no lens; a swipe does not enlarge, a tap does", async ({ browser, baseURL }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       hasTouch: true,
       isMobile: true,
-      baseURL: "http://localhost:3000",
+      baseURL,
     });
     const page = await context.newPage();
     await page.goto(`/shop/${PRODUCTS[0]}`);
