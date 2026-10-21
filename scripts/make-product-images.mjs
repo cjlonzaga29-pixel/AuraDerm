@@ -3,8 +3,8 @@
 // PRODUCT_IMAGES); filenames are not trusted for identity. Each supplied
 // mockup is a styled front view (front label to camera) — no back or combined
 // front/back views have been supplied, so each product has one gallery image
-// (view: "front" in content/site.ts), except the scalp serum and the Hair Fall
-// Defense Shampoo, whose eight-image galleries (NUMBERED_GALLERIES below) are
+// (view: "front" in content/site.ts), except the scalp serum and the two
+// shampoos, whose eight-image galleries (NUMBERED_GALLERIES below) are
 // numbered by the owner. Images keep their
 // native size and proportions — no crop, resize, redraw or background removal —
 // and are only re-encoded to WebP. Source files are left unchanged.
@@ -51,6 +51,7 @@ for (const { source, out } of PRODUCT_IMAGES) {
 const NUMBERED_GALLERIES = [
   { dir: "follivance", prefix: "follivance-hair-density-serum", count: 8 },
   { dir: "hair-fall-defense-shampoo", prefix: "hair-fall-defense-shampoo", count: 8 },
+  { dir: "scalp-balance-daily-shampoo", prefix: "scalp-balance-daily-shampoo", count: 8 },
 ];
 
 for (const { dir, prefix, count } of NUMBERED_GALLERIES) {

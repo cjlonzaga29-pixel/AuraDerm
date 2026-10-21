@@ -6,6 +6,7 @@ import { expect, test } from "@playwright/test";
 
 const SERUM = "hair-fall-defense-scalp-vitamin-serum";
 const SHAMPOO = "hair-fall-defense-shampoo";
+const SCALP_BALANCE = "scalp-balance-daily-shampoo";
 const CONDITIONER = "hair-fall-defense-conditioner";
 
 test.describe("product gallery", () => {
@@ -39,6 +40,27 @@ test.describe("product gallery", () => {
   test("Hair Fall Defense Shampoo: eight images in order, image 1 main, thumbnails select", async ({ page }) => {
     const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/${SHAMPOO}-0${i + 1}.webp`);
     await page.goto(`/shop/${SHAMPOO}`);
+    const gallery = page.getByTestId("product-gallery");
+    const main = gallery.getByTestId("product-image").locator("img");
+    await expect(main).toHaveAttribute("src", srcs[0]);
+    const thumbs = gallery.getByRole("group", { name: /images$/ }).getByRole("button");
+    const thumbImgs = thumbs.locator("img");
+    expect(await thumbImgs.evaluateAll((els) => els.map((el) => el.getAttribute("src")))).toEqual(srcs);
+    for (const img of await thumbImgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect(img).toHaveJSProperty("complete", true);
+      expect(await img.evaluate((el: HTMLImageElement) => [el.naturalWidth, el.naturalHeight])).toEqual([1254, 1254]);
+    }
+    for (const i of [4, 7, 0]) {
+      await thumbs.nth(i).click();
+      await expect(main).toHaveAttribute("src", srcs[i]);
+      await expect(thumbs.nth(i)).toHaveAttribute("aria-pressed", "true");
+    }
+  });
+
+  test("Scalp Balance Daily Shampoo: eight images in order, image 1 main, thumbnails select", async ({ page }) => {
+    const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/${SCALP_BALANCE}-0${i + 1}.webp`);
+    await page.goto(`/shop/${SCALP_BALANCE}`);
     const gallery = page.getByTestId("product-gallery");
     const main = gallery.getByTestId("product-image").locator("img");
     await expect(main).toHaveAttribute("src", srcs[0]);
