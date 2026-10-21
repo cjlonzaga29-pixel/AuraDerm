@@ -233,3 +233,32 @@ body {
 body:has([role="dialog"][data-state="open"]) [data-sticky-purchase] {
   display: none;
 }
+
+/* Long-form copy on /privacy and /terms (components/site/LegalPage). */
+.legal-prose ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.legal-prose li::marker {
+  color: var(--gold);
+}
+
+.legal-prose strong {
+  font-weight: 500;
+  color: var(--cream);
+}
+
+.legal-prose a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.legal-prose a:hover {
+  color: var(--cream);
+}

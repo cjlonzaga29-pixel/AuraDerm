@@ -3,14 +3,44 @@ import { Container } from "@/components/ui/Container";
 import { Logo } from "@/components/site/Logo";
 import { site } from "@/content/site";
 
-const NAV_LINKS = [
+// Section links are root-relative ("/#…") so they reach the homepage sections
+// from every route; product pages have their own #ingredients anchor.
+const EXPLORE_LINKS = [
+  { label: "Shop", href: "/shop" },
   { label: "Collection", href: "/#collection" },
   { label: "Ingredients", href: "/#ingredients" },
   { label: "Routine", href: "/#routine" },
-  { label: "Shop", href: "/shop" },
   { label: "Our story", href: "/about" },
 ];
 
+const INFORMATION_LINKS = [
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms & Conditions", href: "/terms" },
+  ...(site.commerce ? [{ label: "Shipping & Returns", href: "/shipping-returns" }] : []),
+];
+
+const linkClass =
+  "rounded-sm font-sans text-sm text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+function LinkColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+  return (
+    <nav aria-label={title} className="flex flex-col gap-4">
+      <h2 className="font-sans text-xs uppercase tracking-[0.18em] text-gold">{title}</h2>
+      <ul className="flex flex-col gap-3">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className={linkClass}>
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+// Contact details and social links appear only once the owner supplies them
+// (site.social); none are invented here.
 export function Footer() {
   const year = new Date().getFullYear();
 
@@ -19,67 +49,36 @@ export function Footer() {
       className="border-t border-glass-border"
       style={{ background: "color-mix(in srgb, var(--forest-deep) 92%, transparent)" }}
     >
-      <Container className="flex flex-col gap-8 py-12">
-        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          <div className="shrink-0">
-            <Logo variant="footer" />
+      <Container className="flex flex-col gap-10 py-12 lg:py-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
+          <div className="flex flex-col gap-5 sm:col-span-2 lg:col-span-1">
+            <div>
+              <Logo variant="footer" />
+            </div>
+            <p className="max-w-[38ch] font-sans text-sm leading-relaxed text-sage-muted">
+              {site.brand} — daily cleansing, conditioning and leave-on scalp care, with botanical
+              ingredients selected for each step from scalp to strand.
+            </p>
           </div>
 
-          <nav className="flex flex-wrap gap-x-8 gap-y-4" aria-label="Footer">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="font-sans text-sm text-cream transition-colors hover:text-gold"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <nav className="flex flex-wrap gap-x-8 gap-y-4" aria-label="Legal">
-            <Link
-              href="/privacy"
-              className="font-sans text-sm text-cream transition-colors hover:text-gold"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="font-sans text-sm text-cream transition-colors hover:text-gold"
-            >
-              Terms
-            </Link>
-            {site.commerce ? (
-              <Link
-                href="/shipping-returns"
-                className="font-sans text-sm text-cream transition-colors hover:text-gold"
-              >
-                Shipping & Returns
-              </Link>
-            ) : null}
-          </nav>
+          <LinkColumn title="Explore" links={EXPLORE_LINKS} />
+          <LinkColumn title="Information" links={INFORMATION_LINKS} />
 
           {site.social.length > 0 ? (
-            <nav className="flex flex-wrap gap-x-6 gap-y-4" aria-label="Social">
-              {site.social.map((entry) => (
-                <a
-                  key={entry.href}
-                  href={entry.href}
-                  className="font-sans text-sm text-cream transition-colors hover:text-gold"
-                >
-                  {entry.label}
-                </a>
-              ))}
-            </nav>
+            <LinkColumn title="Follow" links={site.social} />
           ) : null}
         </div>
 
-        <p className="font-sans text-xs text-sage-muted">{site.previewNotice}</p>
-
-        <p className="font-sans text-xs text-sage-muted">
-          &copy; {year} AuraDerm Botanicals
-        </p>
+        <div className="flex flex-col gap-3 border-t border-hairline pt-6">
+          <p className="font-sans text-xs leading-relaxed text-sage-muted">{site.previewNotice}</p>
+          <p className="font-sans text-xs leading-relaxed text-sage-muted">
+            Product images show illustrative packaging. Prices in the shop are sample prices for testing
+            the bag, and the store is not taking real orders or payments yet.
+          </p>
+          <p className="font-sans text-xs text-sage-muted">
+            &copy; {year} {site.brand}
+          </p>
+        </div>
       </Container>
     </footer>
   );
