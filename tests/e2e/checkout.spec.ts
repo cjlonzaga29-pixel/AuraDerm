@@ -140,7 +140,7 @@ test.describe("buy now", () => {
 });
 
 test.describe("test checkout without configuration", () => {
-  test("bag checkout shows server totals, delivery not configured, and cannot submit", async ({ page }) => {
+  test("bag checkout shows server totals, delivery not configured, and cannot submit", async ({ page }, testInfo) => {
     await page.goto(`/shop/${SHAMPOO}`);
     await page.getByRole("button", { name: /Increase quantity of/ }).click();
     await page.getByRole("button", { name: "Add to bag" }).click();
@@ -150,21 +150,84 @@ test.describe("test checkout without configuration", () => {
     await page.getByRole("dialog", { name: "Your Bag" }).getByRole("link", { name: "Go to test checkout" }).click();
 
     await expect(page).toHaveURL(/\/checkout$/);
-    await expect(page.getByRole("heading", { name: "Test mode" })).toBeVisible();
+    // One status banner, before the form, says orders cannot be submitted.
+    const banner = page.locator("#checkout-status");
+    await expect(banner.getByRole("heading", { name: "Checkout is not open yet" })).toBeVisible();
+    await expect(banner).toContainText("Orders cannot be submitted on this site yet.");
+    await expect(banner).toContainText("Delivery pricing is not configured yet");
     await expect(page.getByTestId("checkout-subtotal")).toHaveText("₱3,897.00");
     await expect(page.getByTestId("checkout-total")).toHaveText("₱3,897.00");
-    await expect(page.getByText("Total (before delivery)")).toBeVisible();
-    await expect(page.getByText("Not configured", { exact: true })).toBeVisible();
-    await expect(page.getByText("Checkout is not enabled on this site yet, so orders cannot be placed.")).toBeVisible();
-    await expect(page.getByText(/Delivery pricing is not configured/).first()).toBeVisible();
+    await expect(page.getByTestId("checkout-delivery")).toHaveText("Not yet available");
+    await expect(page.locator("main")).not.toContainText(/\bFree\b/);
+
+    // Every order line shows its catalog image, loaded and contained.
+    const thumbs = page.getByTestId("order-line").locator("img");
+    await expect(thumbs).toHaveCount(2);
+    for (const img of await thumbs.all()) {
+      await expect(img).toHaveJSProperty("complete", true);
+      expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
+      await expect(img).toHaveCSS("object-fit", "contain");
+    }
+
+    if (testInfo.project.name === "mobile") {
+      // The summary starts collapsed behind a toggle that shows the total.
+      const toggle = page.getByRole("button", { name: /Order summary/ });
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(toggle).toContainText("₱3,897.00");
+      await expect(page.getByTestId("order-summary")).toBeHidden();
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await expect(page.getByTestId("order-summary")).toBeVisible();
+    } else {
+      await expect(page.getByRole("button", { name: /Order summary/ })).toBeHidden();
+      await expect(page.getByTestId("order-summary")).toBeVisible();
+    }
+    await expect(page.getByText("Total (before delivery)").first()).toBeVisible();
+
+    // The form stays available to preview; payment and submission do not.
+    await expect(page.getByLabel("Full name")).toBeEnabled();
+    await expect(page.getByLabel("Full name")).toHaveAttribute("autocomplete", "name");
+    await expect(page.getByLabel("Mobile number")).toHaveAttribute("inputmode", "tel");
+    await expect(page.getByRole("radio", { name: "Pay online (test)" })).toBeDisabled();
+    await expect(page.getByRole("radio", { name: "Cash on delivery (test)" })).toBeDisabled();
+    await expect(page.getByText("Unavailable while checkout is off.")).toHaveCount(2);
     await expect(page.getByTestId("place-test-order")).toBeDisabled();
     await expect(page.getByTestId("place-test-order")).toHaveText("Checkout unavailable");
-    await expect(page.getByLabel("Full name")).toBeDisabled();
     await expect(page.locator("main")).not.toContainText(/SUPABASE|PAYMONGO|GOOGLE_|sk_test/);
 
-    // The bag is untouched by visiting checkout.
+    // Checkout chrome: its own header and compact footer, no marketing nav.
+    await expect(page.locator("header")).toHaveCount(1);
+    await expect(page.locator("footer")).toHaveCount(1);
+    await expect(page.locator("header").getByRole("link", { name: "AuraDerm Botanicals home" })).toHaveAttribute("href", "/");
+    await expect(page.locator("header").getByRole("link", { name: "Shop" })).toHaveCount(0);
+    const footer = page.locator("footer");
+    await expect(footer.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+    await expect(footer.getByRole("link", { name: "Terms & Conditions" })).toHaveAttribute("href", "/terms");
+    await expect(footer).toContainText(`© ${new Date().getFullYear()} AuraDerm Botanicals`);
+    await expect(footer.getByRole("navigation", { name: "Explore" })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+
+    // Back to bag opens the bag over checkout; typed details survive editing it.
+    await page.getByLabel("Full name").fill("Preview Name");
+    await page.getByRole("button", { name: "Back to bag" }).click();
+    const bag = page.getByRole("dialog", { name: "Your Bag" });
+    await bag.getByRole("button", { name: /Increase quantity of Aura Derm Hair Fall Defense Scalp/ }).click();
+    await bag.getByRole("link", { name: "Go to test checkout" }).click();
+    await expect(bag).toBeHidden();
+    await expect(page.getByTestId("checkout-subtotal")).toHaveText("₱5,196.00");
+    await expect(page.getByLabel("Full name")).toHaveValue("Preview Name");
+
+    // Nothing typed is persisted, and the bag survives a reload.
+    expect(await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }))).not.toContain("Preview Name");
     await page.reload();
-    await expect(page.getByTestId("checkout-subtotal")).toHaveText("₱3,897.00");
+    await expect(page.getByTestId("checkout-subtotal")).toHaveText("₱5,196.00");
+    await expect(page.getByLabel("Full name")).toHaveValue("");
+  });
+
+  test("other routes keep the full site footer", async ({ page }) => {
+    await page.goto("/shop");
+    await expect(page.locator("footer")).toHaveCount(1);
+    await expect(page.locator("footer").getByRole("navigation", { name: "Explore" })).toBeVisible();
   });
 
   test("empty bag shows an empty state", async ({ page }) => {

@@ -250,6 +250,22 @@ body:has([role="dialog"][data-state="open"]) [data-sticky-purchase] {
   display: none;
 }
 
+/* Checkout (components/checkout): a warm ivory form surface inside the forest
+   frame. Scoped to .checkout so no other route picks these tokens up. Measured
+   on ivory: ink 13.9:1, muted 6.3:1, error 6.8:1, field border 3.8:1. */
+.checkout {
+  --co-ivory: #f8f3e9;
+  --co-field: #fffdf9;
+  --co-ink: #15291f;
+  --co-ink-muted: #4b5e53;
+  --co-line: #e2d9c7;
+  --co-field-border: #857a66;
+  --co-focus: #2c5641;
+  --co-error: #9a2f1f;
+  --co-selected: #efe7d6;
+  --co-shadow: 0 1px 2px rgba(5, 14, 10, 0.18);
+}
+
 /* Long-form copy on /privacy and /terms (components/site/LegalPage). */
 .legal-prose ul {
   display: flex;

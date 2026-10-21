@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/site/Footer";
+import { FooterGate } from "@/components/site/FooterGate";
 import { CartProvider } from "@/context/CartContext";
 import { CartSheet } from "@/components/store/CartSheet";
 
@@ -45,7 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <CartProvider>
           {children}
-          <Footer />
+          <FooterGate>
+            <Footer />
+          </FooterGate>
           <CartSheet />
         </CartProvider>
       </body>

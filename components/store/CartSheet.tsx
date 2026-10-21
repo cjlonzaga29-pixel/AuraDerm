@@ -128,7 +128,17 @@ export function CartSheet() {
                 variant="primary"
                 className="w-full justify-center"
                 href="/checkout"
-                anchorProps={{ "aria-describedby": "checkout-note", onClick: closeCart }}
+                anchorProps={{
+                  "aria-describedby": "checkout-note",
+                  onClick: (event) => {
+                    closeCart();
+                    // Already on bag checkout (opened from "Back to bag"): just
+                    // close, so the form keeps what was typed. Buy now still
+                    // navigates to the bag checkout.
+                    const { pathname, search } = window.location;
+                    if (pathname === "/checkout" && !new URLSearchParams(search).has("buy")) event.preventDefault();
+                  },
+                }}
               >
                 Go to test checkout
               </Button>
