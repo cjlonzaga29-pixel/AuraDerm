@@ -1,5 +1,10 @@
 import { Product } from "@/types/store";
 
+// Demo store catalog. Prices are illustrative placeholders, not confirmed
+// retail prices; descriptions, ingredients and usage describe concept
+// formulas. No product photography exists yet, so `images` stays empty and
+// the shop renders labelled concept illustrations instead.
+
 export const PRODUCTS: Product[] = [
   {
     id: "prod_radiance_barrier_serum",
@@ -9,12 +14,8 @@ export const PRODUCTS: Product[] = [
     description:
       "A concentrated botanical infusion designed to replenish essential moisture, enhance natural radiance, and support the skin's protective barrier with gentle, nutrient-rich plant extracts.",
     priceMinor: 149900, // ₱1,499.00
-    compareAtPriceMinor: 179900,
     volume: "30 ml / 1.0 fl. oz.",
-    images: [
-      { src: "/stage/poster.webp", alt: "Radiance Barrier Serum glass bottle" },
-    ],
-    badges: ["Best Seller", "Cold-Pressed"],
+    images: [],
     inStock: true,
     ingredients: [
       "Jojoba Seed Oil",
@@ -34,12 +35,8 @@ export const PRODUCTS: Product[] = [
     description:
       "A restorative evening elixir formulated with antioxidant-dense botanicals to deeply nourish, soften skin texture, and restore vitality while you rest.",
     priceMinor: 179900, // ₱1,799.00
-    compareAtPriceMinor: 219900,
     volume: "50 ml / 1.7 fl. oz.",
-    images: [
-      { src: "/stage/poster-blur.webp", alt: "Night Renewal Nectar amber dropper bottle" },
-    ],
-    badges: ["Overnight Care", "Antioxidant Rich"],
+    images: [],
     inStock: true,
     ingredients: [
       "Bakuchiol",
@@ -60,10 +57,7 @@ export const PRODUCTS: Product[] = [
       "A delicate, non-stripping cleanser that effortlessly melts away impurities, sunscreen, and daily buildup while maintaining the skin's delicate moisture balance.",
     priceMinor: 99900, // ₱999.00
     volume: "120 ml / 4.0 fl. oz.",
-    images: [
-      { src: "/stage/poster.webp", alt: "Botanical Cleansing Elixir dispenser bottle" },
-    ],
-    badges: ["Gentle Cleanse", "Sulfate-Free"],
+    images: [],
     inStock: true,
     ingredients: [
       "Sunflower Seed Oil",

@@ -175,7 +175,7 @@ export const site: Site = {
   closing: {
     headline: "Make space for yourself.",
     subcopy: "Discover a botanical-inspired approach to your everyday routine.",
-    cta: { label: "Back to the collection", href: "#collection" },
+    cta: { label: "Visit the shop", href: "/shop" },
   },
   previewNotice: "Design preview — products, ingredients and copy are illustrative.",
   social: [],

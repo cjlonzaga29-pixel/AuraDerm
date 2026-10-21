@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Leaf, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/hooks/useCart";
 import { formatMoney } from "@/lib/money";
 
@@ -44,12 +43,18 @@ export function CartSheet() {
                   className="flex gap-4 border-b border-border pb-4 last:border-b-0"
                 >
                   <div className="size-20 shrink-0 overflow-hidden rounded-card bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="size-full object-cover"
-                    />
+                    {item.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center bg-forest">
+                        <Leaf className="size-6 text-gold" aria-hidden="true" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-1 flex-col gap-1">
@@ -103,17 +108,22 @@ export function CartSheet() {
                 <span className="font-medium">{formatMoney(subtotalMinor)}</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Badge className="bg-gold text-forest-deep">Cash on Delivery</Badge>
-                <span className="font-sans text-xs text-muted-foreground">
-                  Nationwide delivery
-                </span>
-              </div>
+              {/* Shop preview: demo prices are illustrative and no checkout,
+                  payment or delivery service is connected, so there is no
+                  order to place. */}
+              <p id="checkout-unavailable" className="font-sans text-xs text-muted-foreground">
+                Shop preview — prices are illustrative and checkout is not connected yet.
+              </p>
 
               <Separator className="bg-border" />
 
-              <Button variant="primary" className="w-full justify-center">
-                Proceed to COD Checkout
+              <Button
+                variant="primary"
+                className="w-full justify-center"
+                disabled
+                aria-describedby="checkout-unavailable"
+              >
+                Checkout unavailable
               </Button>
             </SheetFooter>
           </>
