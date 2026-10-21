@@ -146,9 +146,14 @@ export const site: Site = {
     cta: { label: "Explore the routine", href: "#routine" },
     media: {
       id: "home-editorial",
-      subject: "Forest stream and mossy stones in soft daylight",
+      subject: "Hands massaging the scalp along the part",
       ratio: "16:9",
-      image: null,
+      image: {
+        src: "/images/home/scalp-to-strand.webp",
+        alt: "Seen from behind, a woman massages her scalp with both hands along the part, her long dark hair falling past her shoulders",
+        width: 1672,
+        height: 941,
+      },
     },
   },
   statement: {
