@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 // Shared by /shop and the related-products row. The card stretches to its grid
 // row so titles of different lengths keep the cards level. The compact variant
-// (homepage collection) drops the price row and keeps the packshot contained.
+// (homepage collection) drops the price row. Packshots are always contained.
 export function ProductCard({
   product,
   variant = "default",
@@ -26,7 +26,6 @@ export function ProductCard({
         name={product.name}
         category={product.category}
         image={product.images[0]}
-        fit={compact ? "contain" : "cover"}
         className="aspect-[4/5] rounded-none"
       />
       <div className={cn("flex flex-1 flex-col gap-2 p-5", !compact && "sm:p-6")}>

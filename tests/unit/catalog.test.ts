@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { getRelatedProducts, getShopProduct, getShopProducts, toShopProduct } from "@/lib/catalog";
 import { findClaims } from "@/lib/claims";
@@ -91,9 +93,16 @@ describe("shop catalog adapter", () => {
     ]);
   });
 
-  it("uses no photography it does not have", () => {
+  it("shows each product's own front packshot, labelled as illustrative packaging", () => {
     for (const product of getShopProducts()) {
-      expect(product.images).toEqual([]);
+      expect(product.images).toHaveLength(1);
+      const [front] = product.images;
+      expect(front.src).toBe(`/images/products/${product.handle}-front.webp`);
+      expect(existsSync(path.join(process.cwd(), "public", front.src))).toBe(true);
+      expect(front.illustrative).toBe(true);
+      expect(front.alt).toMatch(/^Illustrative packaging: /);
+      expect(findClaims(front.alt)).toEqual([]);
+      expect([front.width, front.height]).toEqual([1122, 1402]);
     }
   });
 

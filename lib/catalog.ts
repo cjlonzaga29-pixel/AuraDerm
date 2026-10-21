@@ -2,6 +2,15 @@ import { site } from "@/content/site";
 import { getProductDetails, type KeyIngredient } from "@/content/products";
 import type { Product } from "@/types/store";
 
+export type CatalogImage = {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  /** Generated packaging mockup rather than product photography. */
+  illustrative?: boolean;
+};
+
 export type ConceptVisual = "cleanse" | "prepare" | "hydrate" | "finish";
 
 export type ProductCategory = "Shampoo" | "Conditioner" | "Scalp serum";
@@ -23,8 +32,9 @@ export type ShopProduct = {
   keyIngredients: KeyIngredient[];
   directions: string[];
   cautions: string[];
-  images: { src: string; alt: string }[];
-  /** Placeholder artwork used until product photography exists. */
+  /** Front view first; further views (back, front/back) follow in gallery order. */
+  images: CatalogImage[];
+  /** Placeholder artwork used for products without an image. */
   concept: ConceptVisual;
   price: PriceState;
   /** Store record handed to the cart; null when the product cannot be bought. */
@@ -60,7 +70,15 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
       : { kind: "unavailable" };
 
   const images: ShopProduct["images"] = entry.image
-    ? [{ src: entry.image.src, alt: entry.image.alt }]
+    ? [
+        {
+          src: entry.image.src,
+          alt: entry.image.alt,
+          width: entry.image.width,
+          height: entry.image.height,
+          illustrative: entry.image.illustrative,
+        },
+      ]
     : [];
 
   return {
@@ -87,7 +105,7 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
             description: details.description,
             priceMinor: price.priceMinor,
             volume: entry.size ?? "",
-            images,
+            images: images.map(({ src, alt }) => ({ src, alt })),
             inStock: true,
             ingredients: details.keyIngredients.map((i) => i.name),
             usage: details.directions.join(" "),

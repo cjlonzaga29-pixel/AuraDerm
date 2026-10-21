@@ -48,7 +48,7 @@ export function CartSheet() {
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="size-full object-cover"
+                        className="size-full object-contain"
                       />
                     ) : (
                       <div className="flex size-full items-center justify-center bg-forest">

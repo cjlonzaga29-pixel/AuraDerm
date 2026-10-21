@@ -66,7 +66,11 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                 name={product.name}
                 category={product.category}
                 images={product.images}
-                className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]"
+                className={
+                  product.images.length > 0
+                    ? "mx-auto aspect-[4/5] w-full sm:max-w-md lg:max-w-none"
+                    : "aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]"
+                }
               />
             </div>
 

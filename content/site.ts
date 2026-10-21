@@ -4,6 +4,8 @@ export type MediaImage = {
   alt: string;
   width: number;
   height: number;
+  /** Generated packaging mockup, not product photography; captioned as such. */
+  illustrative?: boolean;
 };
 
 /**
@@ -27,7 +29,7 @@ export type Product = {
   currency: "PHP" | "USD" | null;
   shopifyHandle: string | null;
   shortDescription: string;
-  /** Packshot (4:5, shown contained); null until photography is approved. */
+  /** Front packshot (4:5, shown contained); null until an image is approved. */
   image: MediaImage | null;
 };
 
@@ -174,7 +176,9 @@ export const site: Site = {
     headline: "Botanical ingredients, thoughtfully selected.",
     note: "Ingredients vary by product.",
   },
-  // Real Aura Derm hair-care range (label guide, COSMOS version). Prices and
+  // Real Aura Derm hair-care range (label guide, COSMOS version). Images are
+  // owner-supplied generated packaging mockups (illustrative only: their label
+  // text is not a source for names, ingredients or sizes). Prices and
   // net content are unconfirmed — the guide says 300 mL / 60 mL while newer
   // packaging references say 250 mL / 50 mL — so both stay null for now.
   products: [
@@ -185,7 +189,13 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      image: null,
+      image: {
+        src: "/images/products/hair-fall-defense-shampoo-front.webp",
+        alt: "Illustrative packaging: white Hair Fall Defense Shampoo pump bottle with a gold collar on a limestone plinth",
+        width: 1122,
+        height: 1402,
+        illustrative: true,
+      },
       shortDescription: "Sulfate-free daily shampoo for stronger, fuller-looking hair.",
     },
     {
@@ -195,7 +205,13 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      image: null,
+      image: {
+        src: "/images/products/hair-fall-defense-conditioner-front.webp",
+        alt: "Illustrative packaging: white conditioner pump bottle with a gold collar on a limestone plinth",
+        width: 1122,
+        height: 1402,
+        illustrative: true,
+      },
       shortDescription: "Silicone-free conditioner that detangles, softens and strengthens.",
     },
     {
@@ -205,7 +221,13 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      image: null,
+      image: {
+        src: "/images/products/hair-fall-defense-scalp-vitamin-serum-front.webp",
+        alt: "Illustrative packaging: emerald-to-gold glass serum bottle with a gold cap on a limestone plinth",
+        width: 1122,
+        height: 1402,
+        illustrative: true,
+      },
       shortDescription: "Lightweight leave-on scalp serum with a light peppermint cooling feel.",
     },
     {
@@ -215,7 +237,13 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      image: null,
+      image: {
+        src: "/images/products/scalp-balance-daily-shampoo-front.webp",
+        alt: "Illustrative packaging: white Scalp Balance Shampoo pump bottle with a gold collar on a limestone plinth",
+        width: 1122,
+        height: 1402,
+        illustrative: true,
+      },
       shortDescription: "Sulfate-free daily shampoo for oily or flaky scalps.",
     },
   ],

@@ -31,10 +31,12 @@ test.describe("shop", () => {
     await expect(page).toHaveURL(/\/shop$/);
     await expect(page.getByTestId("product-card")).toHaveCount(4);
     await expect(page.getByText("Price coming soon", { exact: true })).toHaveCount(4);
-    await expect(page.getByText("Product photography coming soon")).toHaveCount(4);
+    // Generated packaging mockups replace the placeholders, captioned as such.
+    await expect(page.getByText("Product photography coming soon")).toHaveCount(0);
+    await expect(page.getByText("Illustrative packaging", { exact: true })).toHaveCount(4);
     await expect(page.locator("main")).not.toContainText(/filter|sort by|rating|in stock/i);
     await expect(page.locator("main")).not.toContainText(/[₱$]\s?\d/);
-    await expect(page.locator("main")).not.toContainText(/concept|illustrative/i);
+    await expect(page.locator("main")).not.toContainText(/concept/i);
   });
 
   test("each card opens its own product page", async ({ page }) => {
@@ -54,7 +56,14 @@ test.describe("shop", () => {
     await expect(page.getByText("Purchasing will be available once pricing is confirmed.")).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Add to bag" })).toHaveCount(0);
     await expect(page.getByRole("group", { name: "Quantity" })).toHaveCount(0);
-    await expect(page.getByText("Product photography coming soon").first()).toBeVisible();
+    const gallery = info.getByTestId("product-image").first();
+    await expect(gallery.locator("img")).toHaveAttribute(
+      "src",
+      "/images/products/hair-fall-defense-scalp-vitamin-serum-front.webp",
+    );
+    await expect(gallery.getByText("Illustrative packaging")).toBeVisible();
+    // One image only, so no thumbnail controls.
+    await expect(info.getByRole("group", { name: /images$/ })).toHaveCount(0);
     await expect(page.getByTestId("highlights").getByRole("listitem")).toHaveCount(3);
 
     await page.getByRole("button", { name: "Key ingredients" }).click();
@@ -75,6 +84,36 @@ test.describe("shop", () => {
     await expect(
       page.getByRole("region", { name: "Key ingredients" }).getByText("Zinc PCA", { exact: true }),
     ).toBeVisible();
+  });
+
+  test("every product image loads, matches its product and is not cropped", async ({ page }) => {
+    const failed: string[] = [];
+    page.on("response", (res) => {
+      if (res.url().includes("/images/products/") && res.status() >= 400) failed.push(res.url());
+    });
+    for (const path of ["/", "/shop", ...PRODUCTS.map((p) => `/shop/${p.handle}`)]) {
+      await page.goto(path);
+      const images = page.locator("[data-testid='product-image'] img");
+      const count = await images.count();
+      expect(count).toBeGreaterThan(0);
+      for (let i = 0; i < count; i++) {
+        const img = images.nth(i);
+        await img.scrollIntoViewIfNeeded();
+        await expect(img).toHaveJSProperty("complete", true);
+        expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(1122);
+        await expect(img).toHaveCSS("object-fit", "contain");
+      }
+    }
+    for (const { handle } of PRODUCTS) {
+      await page.goto(`/shop/${handle}`);
+      await expect(page.getByTestId("product-detail").locator("img").first()).toHaveAttribute(
+        "src",
+        `/images/products/${handle}-front.webp`,
+      );
+    }
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    expect(failed).toEqual([]);
   });
 
   test("stale demo cart is discarded, other storage is kept", async ({ page }) => {

@@ -1,13 +1,15 @@
 import { cn } from "@/lib/utils";
-import type { ProductCategory } from "@/lib/catalog";
+import type { CatalogImage, ProductCategory } from "@/lib/catalog";
 
 type Props = {
   name: string;
   category: ProductCategory;
-  /** First approved photo; when present it fills the same frame. */
-  image?: { src: string; alt: string };
-  /** "contain" keeps a whole packshot in frame (homepage); default fills it. */
+  /** Approved image; when present it takes the same frame. */
+  image?: CatalogImage;
+  /** "contain" (default) keeps the whole bottle in frame; "cover" fills it. */
   fit?: "cover" | "contain";
+  /** Eager-load images that are visible on first paint. */
+  priority?: boolean;
   className?: string;
 };
 
@@ -63,20 +65,40 @@ function Sprig({ className }: { className?: string }) {
   );
 }
 
-// Product media slot. Without approved photography it shows a quiet,
+// Product media slot. Without an approved image it shows a quiet,
 // clearly-labelled placeholder (never presented as a photo of the product);
-// an `image` drops into the same frame with no layout change.
-export function ProductVisual({ name, category, image, fit = "cover", className }: Props) {
+// an `image` drops into the same frame with no layout change. Generated
+// packaging mockups carry a visible "Illustrative packaging" caption.
+export function ProductVisual({
+  name,
+  category,
+  image,
+  fit = "contain",
+  priority = false,
+  className,
+}: Props) {
   if (image) {
     return (
-      <div className={cn("relative overflow-hidden rounded-card bg-linen", className)}>
+      <figure
+        className={cn("relative overflow-hidden rounded-card bg-forest-panel", className)}
+        data-testid="product-image"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image.src}
           alt={image.alt}
+          width={image.width}
+          height={image.height}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
           className={cn("size-full", fit === "contain" ? "object-contain" : "object-cover")}
         />
-      </div>
+        {image.illustrative ? (
+          <figcaption className="absolute bottom-3 left-3 rounded-full border border-glass-border bg-forest-deep/85 px-2.5 py-1 font-sans text-xs text-cream">
+            Illustrative packaging
+          </figcaption>
+        ) : null}
+      </figure>
     );
   }
 
