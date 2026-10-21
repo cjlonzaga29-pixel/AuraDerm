@@ -544,11 +544,76 @@ test.describe("compact shop and purchase area", () => {
       }
       const title = cards.first().getByRole("heading", { level: 3 });
       const size = parseFloat(await title.evaluate((el) => getComputedStyle(el).fontSize));
-      expect(size, `title at ${width}`).toBeGreaterThanOrEqual(20);
-      expect(size, `title at ${width}`).toBeLessThanOrEqual(24);
-      await expect(cards.first().locator("p").first()).toHaveCSS("font-size", "16px");
+      expect(size, `title at ${width}`).toBeGreaterThanOrEqual(18);
+      expect(size, `title at ${width}`).toBeLessThanOrEqual(20);
+      await expect(cards.first().getByTestId("price").locator("span").first()).toHaveCSS("font-size", "16px");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, `overflow at ${width}`).toBeLessThanOrEqual(0);
+    }
+  });
+
+  // P4-P22: every listing and related card has a 1:1 media frame with the
+  // whole 4:5 bottle contained on the linen backing, and a short body: title,
+  // price and "View product" only (the summary stays on the product page).
+  test("product cards: square media, whole bottle, no summary; related cards ~256px centred", async ({ page }) => {
+    const surfaces = [
+      ["/", "#collection [data-testid=product-card]", 4],
+      ["/shop", "[data-testid=product-card]", 4],
+      [`/shop/${PRODUCTS[0].handle}`, "section[aria-labelledby='related-heading'] [data-testid=product-card]", 3],
+    ] as const;
+    for (const width of [390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const [path, selector, count] of surfaces) {
+        await page.goto(path);
+        const cards = page.locator(selector);
+        await expect(cards).toHaveCount(count);
+        await expect(cards.last()).toContainText(PRODUCTS[3].name);
+        for (let i = 0; i < count; i++) {
+          const card = cards.nth(i);
+          await card.scrollIntoViewIfNeeded();
+          const img = card.getByTestId("product-image").locator("img");
+          await expect(img).toHaveJSProperty("complete", true);
+          const m = await img.evaluate((el: HTMLImageElement) => {
+            const f = el.parentElement!.getBoundingClientRect();
+            const r = el.getBoundingClientRect();
+            const scale = Math.min(r.width / el.naturalWidth, r.height / el.naturalHeight);
+            return {
+              frame: f.width / f.height,
+              fit: getComputedStyle(el).objectFit,
+              painted: { w: el.naturalWidth * scale, h: el.naturalHeight * scale },
+              box: { w: r.width, h: r.height },
+              natural: el.naturalWidth / el.naturalHeight,
+            };
+          });
+          expect(m.frame, `${path} card ${i} at ${width}`).toBeCloseTo(1, 2);
+          expect(m.fit).toBe("contain");
+          expect(m.painted.w).toBeLessThanOrEqual(m.box.w + 0.5);
+          expect(m.painted.h).toBeLessThanOrEqual(m.box.h + 0.5);
+          expect(m.painted.w / m.painted.h).toBeCloseTo(m.natural, 2);
+          await expect(card.getByText("Illustrative packaging")).toBeVisible();
+          await expect(card.getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
+          await expect(card).toContainText("View product");
+          await expect(card.locator("h3 + p")).toHaveCount(0);
+        }
+        if (path.startsWith("/shop/")) {
+          const boxes = await cards.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect));
+          const list = (await page.locator("section[aria-labelledby='related-heading'] ul").boundingBox())!;
+          if (width >= 768) {
+            expect(new Set(boxes.map((b) => Math.round(b.y))).size, `related rows at ${width}`).toBe(1);
+            for (const b of boxes) {
+              expect(b.width).toBeLessThanOrEqual(256.5);
+              expect(Math.abs(b.width - boxes[0].width)).toBeLessThan(1);
+            }
+            const left = boxes[0].x - list.x;
+            const right = list.x + list.width - boxes[2].right;
+            expect(Math.abs(left - right), `related centred at ${width}`).toBeLessThanOrEqual(1);
+          } else {
+            for (const b of boxes) expect(b.width).toBeLessThanOrEqual(320);
+          }
+        }
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        expect(overflow, `${path} overflow at ${width}`).toBeLessThanOrEqual(0);
+      }
     }
   });
 

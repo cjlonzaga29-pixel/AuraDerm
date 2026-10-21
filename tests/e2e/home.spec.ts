@@ -88,7 +88,7 @@ test.describe("home P1-P5", () => {
     await expect(page.locator("main")).not.toContainText(/\$\s?\d/);
   });
 
-  test("compact collection cards: ~260px four across, 2/1 columns below, bottles uncropped", async ({
+  test("compact collection cards: ~260px square-media cards four across, 2/1 columns below, bottles uncropped", async ({
     page,
   }) => {
     for (const [width, columns] of [
@@ -125,17 +125,20 @@ test.describe("home P1-P5", () => {
             .locator(selector)
             .first()
             .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+        // P4-P22: shared compact treatment — ~20px titles, no summary.
         const titleSize = await fontSize("h3");
-        expect(titleSize).toBeGreaterThanOrEqual(22);
-        expect(titleSize).toBeLessThanOrEqual(24);
-        expect(await fontSize("h3 + p")).toBeGreaterThanOrEqual(16);
+        expect(titleSize).toBeGreaterThanOrEqual(18);
+        expect(titleSize).toBeLessThanOrEqual(20);
+        expect(await fontSize("[data-testid=price] span")).toBeGreaterThanOrEqual(16);
+        await expect(cards.first().locator("h3 + p")).toHaveCount(0);
       }
+      // P4-P22: square media frames; the 4:5 bottle is contained whole.
       for (let i = 0; i < 4; i++) {
         const figure = cards.nth(i).getByTestId("product-image");
         await expect(figure.locator("img")).toHaveCSS("object-fit", "contain");
         await expect(figure.getByText("Illustrative packaging")).toBeVisible();
         const ratio = await figure.evaluate((el) => el.clientWidth / el.clientHeight);
-        expect(ratio).toBeCloseTo(0.8, 2);
+        expect(ratio).toBeCloseTo(1, 2);
       }
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

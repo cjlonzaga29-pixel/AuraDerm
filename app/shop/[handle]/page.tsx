@@ -261,7 +261,9 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
               <h2 id="related-heading" className="font-heading text-[1.75rem] leading-tight font-medium text-cream">
                 More from the collection
               </h2>
-              <ul className="mx-auto grid w-full max-w-sm grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+              {/* Three equal cards capped at 16rem, centred as a group rather
+                  than stretched across the container; one ~320px card below md. */}
+              <ul className="mx-auto grid w-full max-w-80 grid-cols-1 gap-5 md:max-w-none md:grid-cols-[repeat(3,minmax(0,16rem))] md:justify-center lg:gap-6">
                 {related.map((item) => (
                   <li key={item.handle}>
                     <ProductCard product={item} />
