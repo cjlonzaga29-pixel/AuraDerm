@@ -15,6 +15,12 @@ describe("content model", () => {
     expect(site.routine.length).toBe(3);
   });
 
+  it("open statement is distinct from the hero headline", () => {
+    expect(site.statement.headline).toBe("A little care.\nFrom root to tip.");
+    expect(site.statement.headline.replace("\n", " ")).not.toBe(site.hero.headline);
+    expect(site.statement.headline).toContain(site.statement.accentWord);
+  });
+
   it("ingredient foundIn mappings match the label key-ingredient lists exactly", () => {
     for (const ingredient of site.ingredients) {
       // Labels group oils ("Batana, Argan & Jojoba Oils"), so match the botanical's first word.

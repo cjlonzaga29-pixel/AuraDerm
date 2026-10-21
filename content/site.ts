@@ -150,8 +150,8 @@ export const site: Site = {
     },
   },
   statement: {
-    headline: "Rooted in nature.\nMade for your hair.",
-    accentWord: "hair.",
+    headline: "A little care.\nFrom root to tip.",
+    accentWord: "tip.",
   },
   // Callouts quote the Scalp Balance label copy in content/products.ts.
   spotlight: {
