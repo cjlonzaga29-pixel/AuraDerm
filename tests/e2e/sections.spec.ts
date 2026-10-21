@@ -11,10 +11,13 @@ test.describe("sections 3-5", () => {
     await expect(page.locator("#ingredients li h3")).toHaveText(["Aloe Vera", "Batana Oil", "Rosemary"]);
     await expect(page.locator("#statement h3")).toHaveCount(0);
     await expect(page.locator("#benefits")).toHaveCount(0);
-    await expect(page.locator("#formula li h3")).toHaveText(["Zinc PCA", "Willow Bark", "Tea Tree Oil"]);
+    await expect(page.locator("#formula li h3")).toHaveText(["Niacinamide", "Caffeine", "Peppermint Oil"]);
+    await expect(page.locator("#formula")).not.toContainText(/Zinc PCA|Willow Bark|Tea Tree|Scalp Balance/);
+    await expect(page.locator("#formula img")).toHaveAttribute("src", /spotlight-scalp-serum/);
+    await expect(page.locator("#formula")).toContainText("Illustrative packaging");
     await expect(
-      page.locator("#formula").getByRole("link", { name: "View Scalp Balance Daily Shampoo" }),
-    ).toHaveAttribute("href", "/shop/scalp-balance-daily-shampoo");
+      page.locator("#formula").getByRole("link", { name: "View Hair Fall Defense Scalp Vitamin Serum" }),
+    ).toHaveAttribute("href", "/shop/hair-fall-defense-scalp-vitamin-serum");
     await expect(page.locator("#care").getByRole("link", { name: "Explore the routine" })).toHaveAttribute(
       "href",
       "#routine",

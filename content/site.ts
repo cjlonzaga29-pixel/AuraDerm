@@ -178,21 +178,30 @@ export const site: Site = {
     headline: "A little care.\nFrom root to tip.",
     accentWord: "tip.",
   },
-  // Callouts quote the Scalp Balance label copy in content/products.ts.
+  // Callouts restate the scalp serum's key-ingredient copy in content/products.ts.
   spotlight: {
     headline: "Inside the formula",
-    productSlug: "scalp-balance-daily-shampoo",
+    productSlug: "hair-fall-defense-scalp-vitamin-serum",
     callouts: [
-      { name: "Zinc PCA", benefit: "Helps control excess oil." },
-      { name: "Willow Bark", benefit: "Helps reduce visible flakes." },
-      { name: "Tea Tree Oil", benefit: "For a fresh, clean-feeling scalp." },
+      { name: "Niacinamide", benefit: "Scalp conditioning." },
+      { name: "Caffeine", benefit: "Refreshes and energizes the scalp." },
+      { name: "Peppermint Oil", benefit: "A light cooling sensation." },
     ],
-    cta: { label: "View Scalp Balance Daily Shampoo", href: "/shop/scalp-balance-daily-shampoo" },
+    cta: {
+      label: "View Hair Fall Defense Scalp Vitamin Serum",
+      href: "/shop/hair-fall-defense-scalp-vitamin-serum",
+    },
     media: {
       id: "home-spotlight-product",
-      subject: "Scalp Balance Daily Shampoo bottle",
+      subject: "Hair Fall Defense Scalp Vitamin Serum bottle",
       ratio: "4:5",
-      image: null,
+      image: {
+        src: "/images/home/spotlight-scalp-serum.webp",
+        alt: "Illustrative packaging: emerald-to-gold glass serum bottle with a gold dispenser, floating above its shadow in soft green light",
+        width: 1122,
+        height: 1402,
+        illustrative: true,
+      },
     },
   },
   ingredientsIntro: {

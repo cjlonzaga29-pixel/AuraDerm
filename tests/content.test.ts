@@ -41,6 +41,25 @@ describe("content model", () => {
     }
   });
 
+  it("spotlight benefits restate the approved key-ingredient copy, not new claims", () => {
+    const words = (s: string) =>
+      s.toLowerCase().replace(/[^a-z ]/g, "").split(" ").filter((w) => w.length > 2);
+    const listed = getProductDetails(site.spotlight.productSlug)?.keyIngredients ?? [];
+    for (const callout of site.spotlight.callouts) {
+      const source = listed.find((i) => i.name.toLowerCase().includes(callout.name.toLowerCase()));
+      expect(source, callout.name).toBeDefined();
+      expect(words(source!.benefit), callout.name).toEqual(expect.arrayContaining(words(callout.benefit)));
+    }
+  });
+
+  it("spotlight links to its own product and frames a described image", () => {
+    const { spotlight } = site;
+    expect(spotlight.productSlug).toBe("hair-fall-defense-scalp-vitamin-serum");
+    expect(spotlight.cta.href).toBe(`/shop/${spotlight.productSlug}`);
+    expect(spotlight.media.image?.src).toBe("/images/home/spotlight-scalp-serum.webp");
+    expect(spotlight.media.image?.illustrative).toBe(true);
+  });
+
   it("image slots are unique and either empty or fully described", () => {
     const slots = [
       site.editorial.media,

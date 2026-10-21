@@ -16,6 +16,12 @@ const HOME_IMAGES = [
     source: "public/images/Gentle scalp massage, healthy strands.png",
     out: "scalp-to-strand.webp",
   },
+  {
+    // Floating emerald-to-gold scalp serum bottle with its cast shadow; 4:5
+    // like the site.spotlight slot, framed whole (dispenser to base).
+    source: "public/images/AuraDerm Follivance in Emerald Light.png",
+    out: "spotlight-scalp-serum.webp",
+  },
 ];
 
 for (const { source, out } of HOME_IMAGES) {
