@@ -7,9 +7,14 @@ import { Statement } from "@/components/sections/Statement";
 import { Spotlight } from "@/components/sections/Spotlight";
 import { Ingredients } from "@/components/sections/Ingredients";
 import { Routine } from "@/components/sections/Routine";
+import { Questions } from "@/components/sections/Questions";
 import { Closing } from "@/components/sections/Closing";
+import { publicCheckoutStatus, resolveCheckoutConfig } from "@/lib/server/config";
 
 export default function Home() {
+  // Same availability check as /checkout, so the ordering answer matches it.
+  const checkoutMode = publicCheckoutStatus(resolveCheckoutConfig()).mode;
+
   return (
     <>
       <ScrollStage
@@ -26,6 +31,7 @@ export default function Home() {
         <Spotlight />
         <Ingredients />
         <Routine />
+        <Questions checkoutMode={checkoutMode} />
         <Closing />
       </main>
     </>

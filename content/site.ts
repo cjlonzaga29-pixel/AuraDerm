@@ -80,6 +80,23 @@ export type SustainabilityItem = {
   body: string;
 };
 
+/** A link under a homepage answer: a homepage anchor or a site route. */
+export type HomeQuestionLink = { label: string; href: string };
+
+/** Checkout availability as resolved on the server (lib/server/config.ts). */
+export type CheckoutMode = "test" | "disabled";
+
+/**
+ * Editorial guidance drawn from the catalog and product copy. An answer that
+ * depends on checkout availability carries one version per mode; the page
+ * picks the one matching the configured mode so the copy never contradicts it.
+ */
+export type HomeQuestion = {
+  question: string;
+  answer: string | Record<CheckoutMode, string>;
+  links?: HomeQuestionLink[];
+};
+
 export type SocialLink = {
   label: string;
   href: string;
@@ -135,6 +152,11 @@ export type Site = {
   };
   sustainability: SustainabilityItem[] | null;
   givesBackHeadline: string;
+  questions: {
+    headline: string;
+    note: string;
+    items: HomeQuestion[];
+  };
   closing: {
     headline: string;
     subcopy: string;
@@ -424,6 +446,68 @@ export const site: Site = {
   },
   sustainability: null,
   givesBackHeadline: "",
+  // Answers restate the routine above and the product copy in
+  // content/products.ts; exact usage stays on each product page.
+  questions: {
+    headline: "Questions & answers",
+    note: "Editorial guidance based on our product directions and cautions.",
+    items: [
+      {
+        question: "Where should I start with the routine?",
+        answer:
+          "Follow the three steps: cleanse with one of the two shampoos, follow with Hair Fall Defense Conditioner, then finish with the leave-on Scalp Vitamin Serum on a clean scalp. Each product’s How to use section gives its exact directions.",
+        links: [
+          { label: "See the routine", href: "#routine" },
+          { label: "Shop the collection", href: "/shop" },
+        ],
+      },
+      {
+        question: "Which shampoo should I choose?",
+        answer:
+          "Hair Fall Defense Shampoo is a sulfate-free daily shampoo for stronger, fuller-looking hair. Scalp Balance Daily Shampoo is a sulfate-free daily shampoo for oily or flaky scalps. Each product page lists its key ingredients and directions.",
+        links: [
+          { label: "Hair Fall Defense Shampoo", href: "/shop/hair-fall-defense-shampoo" },
+          { label: "Scalp Balance Daily Shampoo", href: "/shop/scalp-balance-daily-shampoo" },
+        ],
+      },
+      {
+        question: "Do I rinse out the scalp serum?",
+        answer:
+          "No. It is a leave-on serum: apply a few drops directly onto a clean scalp, on dry or towel-dried hair, massage gently for 1–2 minutes and do not rinse. Use it once or twice daily, and do a patch test before first use.",
+        links: [
+          {
+            label: "Scalp Vitamin Serum: How to use",
+            href: "/shop/hair-fall-defense-scalp-vitamin-serum#how-to-use",
+          },
+          { label: "Cautions", href: "/shop/hair-fall-defense-scalp-vitamin-serum#cautions" },
+        ],
+      },
+      {
+        question: "Where can I find ingredients and precautions?",
+        answer:
+          "Every product page has Key ingredients, How to use and Cautions sections. Key ingredients highlights selected ingredients; it is not a complete ingredient list.",
+        links: [
+          { label: "Hair Fall Defense Shampoo", href: "/shop/hair-fall-defense-shampoo#ingredients" },
+          { label: "Hair Fall Defense Conditioner", href: "/shop/hair-fall-defense-conditioner#ingredients" },
+          { label: "Scalp Balance Daily Shampoo", href: "/shop/scalp-balance-daily-shampoo#ingredients" },
+          { label: "Scalp Vitamin Serum", href: "/shop/hair-fall-defense-scalp-vitamin-serum#ingredients" },
+        ],
+      },
+      {
+        question: "Are these the final prices and packaging?",
+        answer:
+          "Not yet. The prices shown are sample prices for testing the bag and checkout, not retail prices. Product images are illustrative packaging mockups, and sizes are not yet confirmed.",
+      },
+      {
+        question: "Can I place an order?",
+        answer: {
+          test: "Not a real one yet. Checkout is open in test mode only: test orders use sample prices, are never fulfilled and take no real payment. Real orders will open once retail prices, delivery pricing and store policies are confirmed.",
+          disabled:
+            "Not yet. Checkout is not enabled on this site, so no orders can be placed and no payments are taken. Ordering will open once retail prices, delivery pricing and store policies are confirmed.",
+        },
+      },
+    ],
+  },
   closing: {
     headline: "Make space for yourself.",
     subcopy: "Explore the full hair and scalp care collection.",

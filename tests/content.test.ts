@@ -167,6 +167,75 @@ describe("product questions & answers", () => {
   });
 });
 
+describe("homepage questions & answers", () => {
+  const { items } = site.questions;
+  const answers = (mode: "test" | "disabled") =>
+    items.map((q) => (typeof q.answer === "string" ? q.answer : q.answer[mode]));
+  const byQuestion = (start: string) => items.find((q) => q.question.startsWith(start))!;
+  const productSections = ["#ingredients", "#how-to-use", "#cautions"];
+
+  it("asks the six questions in order, without duplicates", () => {
+    expect(items.map((q) => q.question)).toEqual([
+      "Where should I start with the routine?",
+      "Which shampoo should I choose?",
+      "Do I rinse out the scalp serum?",
+      "Where can I find ingredients and precautions?",
+      "Are these the final prices and packaging?",
+      "Can I place an order?",
+    ]);
+  });
+
+  it("links go to #routine, /shop or a real product page and one of its sections", () => {
+    const handles = site.products.map((p) => p.slug);
+    for (const link of items.flatMap((q) => q.links ?? [])) {
+      if (link.href === "#routine" || link.href === "/shop") continue;
+      const [, handle, hash] = link.href.match(/^\/shop\/([a-z0-9-]+)(#[a-z-]+)?$/) ?? [];
+      expect(handles.includes(handle), link.href).toBe(true);
+      if (hash) expect(productSections, link.href).toContain(hash);
+    }
+  });
+
+  it("shampoo answer restates both approved subtitles and links both pages", () => {
+    const q = byQuestion("Which shampoo");
+    for (const slug of ["hair-fall-defense-shampoo", "scalp-balance-daily-shampoo"]) {
+      expect(String(q.answer).toLowerCase()).toContain(getProductDetails(slug)!.subtitle.toLowerCase());
+      expect(q.links?.map((l) => l.href)).toContain(`/shop/${slug}`);
+    }
+  });
+
+  it("serum answer keeps the leave-on direction", () => {
+    const q = byQuestion("Do I rinse");
+    expect(q.answer).toMatch(/do not rinse/);
+    expect(q.answer).toMatch(/massage gently for 1–2 minutes/);
+    expect(q.links?.[0].href).toBe("/shop/hair-fall-defense-scalp-vitamin-serum#how-to-use");
+  });
+
+  it("ordering answer has a version per checkout mode; test mode is never a real order", () => {
+    const q = byQuestion("Can I place");
+    expect(typeof q.answer).toBe("object");
+    if (typeof q.answer === "string") return;
+    expect(q.answer.test).toMatch(/test mode/);
+    expect(q.answer.test).toMatch(/no real payment/);
+    expect(q.answer.disabled).toMatch(/not enabled/);
+    expect(q.answer.disabled).not.toMatch(/test/i);
+  });
+
+  it("states prices are samples and packaging illustrative; key ingredients are not a full list", () => {
+    expect(byQuestion("Are these").answer).toMatch(/sample prices/);
+    expect(byQuestion("Are these").answer).toMatch(/illustrative/);
+    expect(byQuestion("Where can I find").answer).toMatch(/not a complete ingredient list/);
+  });
+
+  it("adds no conditioner placement, reviews, shipping, results or diagnosis", () => {
+    for (const mode of ["test", "disabled"] as const) {
+      const text = items.map((q) => q.question).concat(answers(mode)).join(" ");
+      expect(text).not.toMatch(
+        /roots|ends\b|lengths|INCI|review|rating|bestsell|shipping|refund|return|guarantee|results? in|\d+ (weeks|months)|diagnos|doctor|clinical/i,
+      );
+    }
+  });
+});
+
 const HEX_OR_RGB = /#[0-9a-fA-F]{3,8}\b|rgba?\(/;
 
 function collectTsxFiles(dir: string): string[] {

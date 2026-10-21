@@ -7,7 +7,7 @@ test.describe("sections 3-5", () => {
   test("section order; #ingredients shows 3 tiles; spotlight has 3 callouts and a product link", async ({ page }) => {
     await page.goto("/");
     const ids = await page.locator("main > section").evaluateAll((els) => els.map((el) => el.id));
-    expect(ids).toEqual(["", "collection", "care", "statement", "formula", "ingredients", "routine", "closing"]);
+    expect(ids).toEqual(["", "collection", "care", "statement", "formula", "ingredients", "routine", "questions", "closing"]);
     await expect(page.locator("#ingredients li h3")).toHaveText(["Aloe Vera", "Batana Oil", "Rosemary"]);
     // P13: supplied ingredient and routine images replace the placeholders.
     const tileImages = page.locator("#ingredients li img");
@@ -47,7 +47,7 @@ test.describe("sections 3-5", () => {
     await expect(page.locator("[data-reveal]")).toHaveCount(0);
     const sections = page.locator("main section");
     const count = await sections.count();
-    expect(count).toBe(8);
+    expect(count).toBe(9);
     for (let i = 0; i < count; i++) {
       await expect(sections.nth(i)).toHaveCSS("opacity", "1");
     }
@@ -57,7 +57,7 @@ test.describe("sections 3-5", () => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto("/");
-    for (const id of ["#collection", "#care", "#statement", "#formula", "#ingredients", "#routine", "#closing"]) {
+    for (const id of ["#collection", "#care", "#statement", "#formula", "#ingredients", "#routine", "#questions", "#closing"]) {
       await expect(page.locator(`${id} h2`)).toBeVisible();
       await expect(page.locator(id)).toHaveCSS("opacity", "1");
     }
@@ -66,7 +66,7 @@ test.describe("sections 3-5", () => {
 
   test("anchored sections land below the fixed header", async ({ page }) => {
     await page.goto("/");
-    for (const id of ["collection", "care", "formula", "ingredients", "routine"]) {
+    for (const id of ["collection", "care", "formula", "ingredients", "routine", "questions"]) {
       await page.evaluate((target) => {
         document.documentElement.style.scrollBehavior = "auto";
         document.getElementById(target)?.scrollIntoView();
