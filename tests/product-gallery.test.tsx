@@ -21,6 +21,7 @@ describe("ProductGallery", () => {
     expect(html).not.toContain("Previous image");
     expect(html).not.toContain("Next image");
     expect(html).not.toContain("Show image");
+    expect(html).not.toContain("thumbnail-strip");
   });
 
   it("with several views shows previous/next and labelled thumbnails, the first selected", () => {
@@ -32,6 +33,19 @@ describe("ProductGallery", () => {
     expect(html).toContain("Show image 3 of 3 (Front and back view)");
     // Every image renders contained, including the 16:9 combined view's thumb.
     expect(html.match(/object-contain/g)!.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("lays thumbnails in one scrolling row, in order, with strip arrows only once measured", () => {
+    const eight = Array.from({ length: 8 }, (_, i) => ({ ...back, src: `/view-${i + 1}.webp`, alt: `View ${i + 1}` }));
+    const html = render(eight);
+    expect(html).toContain('data-testid="thumbnail-strip"');
+    expect(html).toContain("overflow-x-auto");
+    expect(html).not.toContain("grid-cols");
+    const order = [...html.matchAll(/Show image (\d) of 8/g)].map((m) => Number(m[1]));
+    expect(order).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+    // Overflow is measured in the browser, so the server render has no strip arrows.
+    expect(html).not.toContain("Scroll thumbnails");
   });
 
   it("falls back to the labelled placeholder with no images", () => {

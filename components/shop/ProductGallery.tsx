@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import { ProductVisual } from "@/components/shop/ProductVisual";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -53,11 +55,27 @@ const VIEW_LABELS: Record<NonNullable<CatalogImage["view"]>, string> = {
   "front-back": "Front and back",
 };
 
+const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Brings a thumbnail fully into its strip without scrolling the page, as
+// scrollIntoView would.
+function revealThumb(thumb: HTMLElement, behavior: ScrollBehavior) {
+  const strip = thumb.parentElement;
+  if (!strip) return;
+  const pad = 4;
+  const left = thumb.offsetLeft - pad;
+  const right = thumb.offsetLeft + thumb.offsetWidth + pad;
+  if (left < strip.scrollLeft) strip.scrollTo({ left, behavior });
+  else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollTo({ left: right - strip.clientWidth, behavior });
+}
+
 const controlClass =
   "flex size-10 items-center justify-center rounded-full border border-glass-border bg-forest-deep/80 text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 // Product gallery. Front view first (ordered by the catalog). Navigation —
 // thumbnails, previous/next and swipe — only appears with more than one image;
+// thumbnails sit in one horizontally scrolling row whose own arrows only move
+// the row, never the selection, and only appear once the row overflows;
 // a single image still opens in the enlarge dialog. Every view is shown
 // contained at its native ratio, so tall bottles and 16:9 front/back images
 // are never cropped.
@@ -75,6 +93,8 @@ export function ProductGallery({ name, category, images, className }: Props) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const suppressClickUntil = useRef(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [strip, setStrip] = useState({ overflow: false, atStart: true, atEnd: true });
   const count = images.length;
   const multiple = count > 1;
   const index = count > 0 ? Math.min(active, count - 1) : 0;
@@ -99,6 +119,39 @@ export function ProductGallery({ name, category, images, className }: Props) {
       if (multiple && Math.abs(dx) >= SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
     },
   };
+
+  // Thumbnail strip: measured after mount, so the server render (and no-JS)
+  // shows a plain scrollable row with no arrows.
+  const measureStrip = useCallback(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const next = { overflow: max > 1, atStart: el.scrollLeft <= 1, atEnd: el.scrollLeft >= max - 1 };
+    setStrip((prev) =>
+      prev.overflow === next.overflow && prev.atStart === next.atStart && prev.atEnd === next.atEnd ? prev : next,
+    );
+  }, []);
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    measureStrip();
+    const observer = new ResizeObserver(measureStrip);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [measureStrip, count]);
+
+  const scrollStrip = (direction: 1 | -1) => {
+    const el = stripRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  };
+
+  // Main-image navigation (arrows, swipe, dialog keys) keeps its thumbnail in view.
+  useEffect(() => {
+    const thumb = stripRef.current?.children[index];
+    if (thumb instanceof HTMLElement) revealThumb(thumb, prefersReducedMotion() ? "auto" : "smooth");
+  }, [index]);
 
   // The preview only lives while the pointer rests on the image: a scroll or
   // resize moves the image under it, so dismiss and let the next pointer move
@@ -329,23 +382,56 @@ export function ProductGallery({ name, category, images, className }: Props) {
       </div>
 
       {multiple ? (
-        <div className="grid grid-cols-5 gap-3" role="group" aria-label={`${name} images`}>
-          {images.map((image, i) => (
-            <button
-              key={image.src}
+        <div className="flex items-center gap-1" data-testid="thumbnail-strip">
+          {strip.overflow ? (
+            <Button
               type="button"
-              aria-label={`Show image ${i + 1} of ${count}${image.view ? ` (${VIEW_LABELS[image.view]} view)` : ""}: ${image.alt}`}
-              aria-pressed={i === index}
-              onClick={() => setActive(i)}
-              className={cn(
-                "aspect-square overflow-hidden rounded-card border-2 bg-linen transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                i === index ? "border-gold" : "border-hairline hover:border-gold/50",
-              )}
+              variant="quiet"
+              aria-label="Scroll thumbnails left"
+              disabled={strip.atStart}
+              onClick={() => scrollStrip(-1)}
+              className="size-11 shrink-0 p-0"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image.src} alt="" className="size-full object-contain" loading="lazy" />
-            </button>
-          ))}
+              <ChevronLeft className="size-4" aria-hidden="true" />
+            </Button>
+          ) : null}
+          <div
+            ref={stripRef}
+            onScroll={measureStrip}
+            className="relative flex min-w-0 flex-1 touch-pan-x scroll-px-1 gap-2 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="group"
+            aria-label={`${name} images`}
+          >
+            {images.map((image, i) => (
+              <button
+                key={image.src}
+                type="button"
+                aria-label={`Show image ${i + 1} of ${count}${image.view ? ` (${VIEW_LABELS[image.view]} view)` : ""}: ${image.alt}`}
+                aria-pressed={i === index}
+                onClick={() => setActive(i)}
+                onFocus={(event) => revealThumb(event.currentTarget, "auto")}
+                className={cn(
+                  "size-16 shrink-0 overflow-hidden rounded-card border-2 bg-linen transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:size-[4.5rem]",
+                  i === index ? "border-gold ring-1 ring-gold/60" : "border-hairline opacity-80 hover:border-gold/50 hover:opacity-100",
+                )}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.src} alt="" className="size-full object-contain" loading="lazy" draggable={false} />
+              </button>
+            ))}
+          </div>
+          {strip.overflow ? (
+            <Button
+              type="button"
+              variant="quiet"
+              aria-label="Scroll thumbnails right"
+              disabled={strip.atEnd}
+              onClick={() => scrollStrip(1)}
+              className="size-11 shrink-0 p-0"
+            >
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </div>
