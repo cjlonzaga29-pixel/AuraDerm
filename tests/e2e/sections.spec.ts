@@ -9,6 +9,14 @@ test.describe("sections 3-5", () => {
     const ids = await page.locator("main > section").evaluateAll((els) => els.map((el) => el.id));
     expect(ids).toEqual(["", "collection", "care", "statement", "formula", "ingredients", "routine", "closing"]);
     await expect(page.locator("#ingredients li h3")).toHaveText(["Aloe Vera", "Batana Oil", "Rosemary"]);
+    // P13: supplied ingredient and routine images replace the placeholders.
+    const tileImages = page.locator("#ingredients li img");
+    await expect(tileImages).toHaveCount(3);
+    for (const [i, name] of ["aloe-vera", "batana-oil", "rosemary"].entries()) {
+      await expect(tileImages.nth(i)).toHaveAttribute("src", `/images/ingredients/${name}.webp`);
+    }
+    await expect(page.locator("#routine img")).toHaveAttribute("src", "/images/home/routine-scalp-serum.webp");
+    await expect(page.locator("#ingredients, #routine").getByTestId("media-placeholder")).toHaveCount(0);
     await expect(page.locator("#statement h3")).toHaveCount(0);
     await expect(page.locator("#benefits")).toHaveCount(0);
     await expect(page.locator("#formula li h3")).toHaveText(["Niacinamide", "Caffeine", "Peppermint Oil"]);
