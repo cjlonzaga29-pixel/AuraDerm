@@ -356,9 +356,9 @@ test.describe("shop", () => {
         const img = images.nth(i);
         await img.scrollIntoViewIfNeeded();
         await expect(img).toHaveJSProperty("complete", true);
-        // Packshots are 1122 px wide; the serum's square Follivance artwork 1254.
+        // Packshots are 1122 px wide; the square serum and shampoo galleries 1254.
         const [src, naturalWidth] = await img.evaluate((el: HTMLImageElement) => [el.src, el.naturalWidth] as const);
-        expect(naturalWidth, src).toBe(src.includes("/follivance-") ? 1254 : 1122);
+        expect(naturalWidth, src).toBe(/\/(follivance-|hair-fall-defense-shampoo-0)/.test(src) ? 1254 : 1122);
         await expect(img).toHaveCSS("object-fit", "contain");
       }
     }
@@ -368,7 +368,9 @@ test.describe("shop", () => {
         "src",
         handle === "hair-fall-defense-scalp-vitamin-serum"
           ? "/images/products/follivance-hair-density-serum-01.webp"
-          : `/images/products/${handle}-front.webp`,
+          : handle === "hair-fall-defense-shampoo"
+            ? "/images/products/hair-fall-defense-shampoo-01.webp"
+            : `/images/products/${handle}-front.webp`,
       );
     }
     const width = await page.evaluate(() => document.documentElement.scrollWidth);

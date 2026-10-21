@@ -28,7 +28,7 @@ describe("stored cart reconciliation", () => {
       priceMinor: 129900,
       priceKind: "sample",
       quantity: 2,
-      image: "/images/products/hair-fall-defense-shampoo-front.webp",
+      image: "/images/products/hair-fall-defense-shampoo-01.webp",
     });
     expect(subtotal([item])).toBe(259800);
   });

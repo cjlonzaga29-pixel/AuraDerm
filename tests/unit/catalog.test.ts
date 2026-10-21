@@ -142,7 +142,7 @@ describe("shop catalog adapter", () => {
         expect(image.alt).toMatch(/^Illustrative packaging: /);
         expect(findClaims(image.alt)).toEqual([]);
       }
-      if (product.handle === "hair-fall-defense-scalp-vitamin-serum") continue;
+      if (product.handle === "hair-fall-defense-scalp-vitamin-serum" || product.handle === "hair-fall-defense-shampoo") continue;
       expect(product.images).toHaveLength(1);
       const [front] = product.images;
       expect(front.src).toBe(`/images/products/${product.handle}-front.webp`);
@@ -163,6 +163,20 @@ describe("shop catalog adapter", () => {
     );
     // The name is unchanged.
     expect(serum.name).toBe("Aura Derm Hair Fall Defense Scalp Vitamin Serum");
+  });
+
+  it("gives the Hair Fall Defense Shampoo its eight images in order, image 1 first everywhere", () => {
+    const shampoo = getShopProduct("hair-fall-defense-shampoo")!;
+    const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/hair-fall-defense-shampoo-0${i + 1}.webp`);
+    expect(shampoo.images.map((image) => image.src)).toEqual(srcs);
+    expect(shampoo.images.map((image) => image.view)).toEqual(["front", ...Array(7).fill("styled")]);
+    for (const image of shampoo.images) expect([image.width, image.height]).toEqual([1254, 1254]);
+    expect(shampoo.cartProduct!.images[0].src).toBe(srcs[0]);
+    expect(getRelatedProducts("hair-fall-defense-conditioner").find((p) => p.handle === shampoo.handle)!.images[0].src).toBe(
+      srcs[0],
+    );
+    expect(shampoo.name).toBe("Aura Derm Hair Fall Defense Shampoo");
+    expect(shampoo.size).toBeNull();
   });
 
   it("returns undefined for unknown and obsolete handles and excludes self from related", () => {

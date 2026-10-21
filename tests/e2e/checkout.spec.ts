@@ -6,10 +6,11 @@ import { expect, test } from "@playwright/test";
 
 const SERUM = "hair-fall-defense-scalp-vitamin-serum";
 const SHAMPOO = "hair-fall-defense-shampoo";
+const CONDITIONER = "hair-fall-defense-conditioner";
 
 test.describe("product gallery", () => {
   test("single image: no gallery navigation; enlarge dialog keeps the native ratio and returns focus", async ({ page }) => {
-    await page.goto(`/shop/${SHAMPOO}`);
+    await page.goto(`/shop/${CONDITIONER}`);
     const gallery = page.getByTestId("product-gallery");
     await expect(gallery.getByRole("button", { name: "Previous image" })).toHaveCount(0);
     await expect(gallery.getByRole("button", { name: "Next image" })).toHaveCount(0);
@@ -18,10 +19,10 @@ test.describe("product gallery", () => {
     const enlarge = gallery.getByRole("button", { name: /^Enlarge image/ });
     await enlarge.focus();
     await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog", { name: /Hair Fall Defense Shampoo/ });
+    const dialog = page.getByRole("dialog", { name: /Hair Fall Defense Conditioner/ });
     await expect(dialog).toBeVisible();
     const img = dialog.locator("img");
-    await expect(img).toHaveAttribute("src", `/images/products/${SHAMPOO}-front.webp`);
+    await expect(img).toHaveAttribute("src", `/images/products/${CONDITIONER}-front.webp`);
     await expect(img).toHaveCSS("object-fit", "contain");
     await expect(dialog.getByText("Illustrative packaging", { exact: true })).toBeVisible();
     const box = (await img.boundingBox())!;
@@ -33,6 +34,27 @@ test.describe("product gallery", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(enlarge).toBeFocused();
+  });
+
+  test("Hair Fall Defense Shampoo: eight images in order, image 1 main, thumbnails select", async ({ page }) => {
+    const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/${SHAMPOO}-0${i + 1}.webp`);
+    await page.goto(`/shop/${SHAMPOO}`);
+    const gallery = page.getByTestId("product-gallery");
+    const main = gallery.getByTestId("product-image").locator("img");
+    await expect(main).toHaveAttribute("src", srcs[0]);
+    const thumbs = gallery.getByRole("group", { name: /images$/ }).getByRole("button");
+    const thumbImgs = thumbs.locator("img");
+    expect(await thumbImgs.evaluateAll((els) => els.map((el) => el.getAttribute("src")))).toEqual(srcs);
+    for (const img of await thumbImgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect(img).toHaveJSProperty("complete", true);
+      expect(await img.evaluate((el: HTMLImageElement) => [el.naturalWidth, el.naturalHeight])).toEqual([1254, 1254]);
+    }
+    for (const i of [4, 7, 0]) {
+      await thumbs.nth(i).click();
+      await expect(main).toHaveAttribute("src", srcs[i]);
+      await expect(thumbs.nth(i)).toHaveAttribute("aria-pressed", "true");
+    }
   });
 
   test("Follivance serum: eight images in order, thumbnails, previous/next and keyboard dialog", async ({ page }) => {
