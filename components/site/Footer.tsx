@@ -71,10 +71,6 @@ export function Footer() {
 
         <div className="flex flex-col gap-3 border-t border-hairline pt-6">
           <p className="font-sans text-xs leading-relaxed text-sage-muted">{site.previewNotice}</p>
-          <p className="font-sans text-xs leading-relaxed text-sage-muted">
-            Product images show illustrative packaging. Prices in the shop are sample prices for testing
-            the bag, and the store is not taking real orders or payments yet.
-          </p>
           <p className="font-sans text-xs text-sage-muted">
             &copy; {year} {site.brand}
           </p>

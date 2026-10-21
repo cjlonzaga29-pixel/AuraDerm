@@ -16,7 +16,6 @@ import { formatMoney } from "@/lib/money";
 
 export function CartSheet() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, subtotalMinor } = useCart();
-  const hasSamplePrices = items.some((item) => item.priceKind === "sample");
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -65,9 +64,6 @@ export function CartSheet() {
                     <p className="font-sans text-xs text-muted-foreground">{item.volume}</p>
                     <p className="font-sans text-xs text-forest">
                       {formatMoney(item.priceMinor)}
-                      {item.priceKind === "sample" ? (
-                        <span className="text-muted-foreground"> · Sample price</span>
-                      ) : null}
                     </p>
 
                     <div className="mt-2 flex items-center gap-3">
@@ -114,14 +110,6 @@ export function CartSheet() {
                 </span>
               </div>
 
-              {/* Checkout runs in test mode only; the checkout page states whether
-                  it is enabled and never takes a real order at sample prices. */}
-              <p id="checkout-note" className="font-sans text-xs text-muted-foreground">
-                {hasSamplePrices
-                  ? "Sample prices for testing. Checkout is test-only: no real orders or payments."
-                  : "Checkout is test-only: no real orders or payments."}
-              </p>
-
               <Separator className="bg-border" />
 
               <Button
@@ -129,7 +117,6 @@ export function CartSheet() {
                 className="w-full justify-center"
                 href="/checkout"
                 anchorProps={{
-                  "aria-describedby": "checkout-note",
                   onClick: (event) => {
                     closeCart();
                     // Already on bag checkout (opened from "Back to bag"): just

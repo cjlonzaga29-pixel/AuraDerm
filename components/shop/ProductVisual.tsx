@@ -71,7 +71,7 @@ function Sprig({ className }: { className?: string }) {
 // Product media slot. Without an approved image it shows a quiet,
 // clearly-labelled placeholder (never presented as a photo of the product);
 // an `image` drops into the same frame with no layout change. Generated
-// packaging mockups carry a visible "Illustrative packaging" caption.
+// packaging mockups say so in their alt text.
 export function ProductVisual({
   name,
   category,
@@ -98,11 +98,6 @@ export function ProductVisual({
           decoding="async"
           className={cn("size-full", fit === "contain" ? "object-contain" : "object-cover", imageProps?.className)}
         />
-        {image.illustrative ? (
-          <figcaption className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-glass-border bg-forest-deep/85 px-2.5 py-1 font-sans text-xs text-cream">
-            Illustrative packaging
-          </figcaption>
-        ) : null}
       </figure>
     );
   }

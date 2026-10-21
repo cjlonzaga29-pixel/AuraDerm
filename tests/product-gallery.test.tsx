@@ -14,10 +14,10 @@ const render = (images: CatalogImage[]) =>
   renderToStaticMarkup(<ProductGallery name="Test Shampoo" category="Shampoo" images={images} />);
 
 describe("ProductGallery", () => {
-  it("omits navigation for a single image but keeps enlarge and the illustrative caption", () => {
+  it("omits navigation for a single image but keeps enlarge, with no packaging caption", () => {
     const html = render([front]);
     expect(html).toContain("Enlarge image: Front of the bottle");
-    expect(html).toContain("Illustrative packaging");
+    expect(html).not.toContain("Illustrative packaging");
     expect(html).not.toContain("Previous image");
     expect(html).not.toContain("Next image");
     expect(html).not.toContain("Show image");

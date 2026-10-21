@@ -33,8 +33,10 @@ test.describe("footer and legal pages P4-P17", () => {
     for (const [name, href] of INFORMATION) {
       await expect(footer.getByRole("navigation", { name: "Information" }).getByRole("link", { name, exact: true })).toHaveAttribute("href", href);
     }
+    // One concise preview line in the footer.
     await expect(footer).toContainText("illustrative packaging");
-    await expect(footer).toContainText("sample prices");
+    await expect(footer).toContainText("samples for testing");
+    await expect(footer.getByText(/Design preview/)).toHaveCount(1);
     await expect(footer).toContainText(`© ${new Date().getFullYear()} AuraDerm Botanicals`);
     // No invented contact or social links while site.social is empty.
     await expect(footer.locator('a[href^="mailto:"], a[href^="tel:"], a[href^="http"]')).toHaveCount(0);

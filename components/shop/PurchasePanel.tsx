@@ -11,9 +11,6 @@ import { MAX_LINE_QUANTITY } from "@/lib/checkout/limits";
 import type { PriceState } from "@/lib/catalog";
 import type { Product } from "@/types/store";
 
-export const SAMPLE_PRICE_NOTE =
-  "Sample price for testing only. Real orders and payments are not enabled.";
-
 // Quantity, Add to bag and Buy now, wired to the shared CartContext/CartSheet.
 // Products without a usable price arrive with a null cartProduct: no controls
 // render, only a single availability note, and addItem is never reachable.
@@ -156,10 +153,6 @@ export function PurchasePanel({
         </Button>
       </div>
 
-      {price.kind === "sample" ? (
-        <p className="max-w-[60ch] font-sans text-base leading-relaxed text-sage-muted">{SAMPLE_PRICE_NOTE}</p>
-      ) : null}
-
       {showStickyBar ? (
         <div
           data-sticky-purchase
@@ -171,7 +164,6 @@ export function PurchasePanel({
               <p className="truncate text-sm text-cream">{name}</p>
               <p className="text-xs text-sage-muted">
                 {formatMoney(price.priceMinor)}
-                {price.kind === "sample" ? " · Sample price" : ""}
                 {quantity > 1 ? ` · Qty ${quantity}` : ""}
               </p>
             </div>

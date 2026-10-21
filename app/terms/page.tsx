@@ -60,8 +60,8 @@ export default function TermsPage() {
             photographs of the final products, and the final packaging may differ.
           </li>
           <li>
-            Prices shown in the shop are <strong>sample prices</strong>, labelled as such, used only to
-            test the bag. They are not retail prices or offers to sell at that price.
+            Prices shown in the shop are <strong>sample prices</strong>, used only to test the bag and
+            checkout. They are not retail prices or offers to sell at that price.
           </li>
         </ul>
       </LegalSection>

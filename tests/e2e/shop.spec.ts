@@ -39,12 +39,12 @@ test.describe("shop", () => {
     await expect(cards).toHaveCount(4);
     for (const [i, { name }] of PRODUCTS.entries()) {
       await expect(cards.nth(i).getByRole("heading", { level: 3 })).toHaveText(name);
-      await expect(cards.nth(i).getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
+      await expect(cards.nth(i).getByTestId("price")).toHaveText("₱1,299.00");
     }
     await expect(page.getByText("Price coming soon", { exact: true })).toHaveCount(0);
-    // Generated packaging mockups replace the placeholders, captioned as such.
+    // Generated packaging mockups replace the placeholders, with no caption badge.
     await expect(page.getByText("Product photography coming soon")).toHaveCount(0);
-    await expect(page.getByText("Illustrative packaging", { exact: true })).toHaveCount(4);
+    await expect(page.getByText("Illustrative packaging", { exact: true })).toHaveCount(0);
     await expect(page.locator("main")).not.toContainText(/filter|sort by|rating|in stock/i);
     await expect(page.locator("main")).not.toContainText(/\$\s?\d/);
     await expect(page.locator("main")).not.toContainText(/concept/i);
@@ -60,16 +60,14 @@ test.describe("shop", () => {
     }
   });
 
-  test("product page: label content, labelled sample price with buy controls, related links", async ({
+  test("product page: label content, sample price with buy controls, related links", async ({
     page,
   }) => {
     await page.goto("/shop/hair-fall-defense-scalp-vitamin-serum");
     const info = page.getByTestId("product-detail");
     const panel = info.getByTestId("purchase-panel");
-    await expect(panel.getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
-    await expect(
-      panel.getByText("Sample price for testing only. Real orders and payments are not enabled."),
-    ).toBeVisible();
+    await expect(panel.getByTestId("price")).toHaveText("₱1,299.00");
+    await expect(panel).not.toContainText(/Sample price|for testing/);
     await expect(panel.getByRole("button", { name: "Buy now" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Add to bag" })).toHaveCount(1);
     await expect(page.getByRole("group", { name: "Quantity" })).toHaveCount(1);
@@ -79,7 +77,7 @@ test.describe("shop", () => {
       "src",
       "/images/products/follivance-hair-density-serum-01.webp",
     );
-    await expect(gallery.getByText("Illustrative packaging")).toBeVisible();
+    await expect(gallery.getByText("Illustrative packaging")).toHaveCount(0);
     // The eight-image Follivance gallery, main image selected.
     const thumbs = info.getByRole("group", { name: /images$/ }).getByRole("button");
     await expect(thumbs).toHaveCount(8);
@@ -464,10 +462,7 @@ test.describe("shop", () => {
     await page.getByRole("button", { name: "Add to bag" }).click();
     let bag = page.getByRole("dialog", { name: "Your Bag" });
     await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱2,598.00");
-    await expect(
-      bag.getByText("Sample prices for testing. Checkout is test-only: no real orders or payments."),
-    ).toBeVisible();
-    await expect(bag).toContainText("Sample price");
+    await expect(bag).not.toContainText(/Sample price|test-only/);
     await page.keyboard.press("Escape");
     await expect(bag).toBeHidden();
 
@@ -556,7 +551,7 @@ test.describe("compact shop and purchase area", () => {
       const size = parseFloat(await title.evaluate((el) => getComputedStyle(el).fontSize));
       expect(size, `title at ${width}`).toBeGreaterThanOrEqual(18);
       expect(size, `title at ${width}`).toBeLessThanOrEqual(20);
-      await expect(cards.first().getByTestId("price").locator("span").first()).toHaveCSS("font-size", "16px");
+      await expect(cards.first().getByTestId("price")).toHaveCSS("font-size", "16px");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, `overflow at ${width}`).toBeLessThanOrEqual(0);
     }
@@ -600,8 +595,7 @@ test.describe("compact shop and purchase area", () => {
           expect(m.painted.w).toBeLessThanOrEqual(m.box.w + 0.5);
           expect(m.painted.h).toBeLessThanOrEqual(m.box.h + 0.5);
           expect(m.painted.w / m.painted.h).toBeCloseTo(m.natural, 2);
-          await expect(card.getByText("Illustrative packaging")).toBeVisible();
-          await expect(card.getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
+          await expect(card.getByTestId("price")).toHaveText("₱1,299.00");
           await expect(card).toContainText("View product");
           await expect(card.locator("h3 + p")).toHaveCount(0);
         }
@@ -721,7 +715,6 @@ test.describe("square gallery and balanced purchase grid", () => {
           expect(m.right.top, at).toBeGreaterThan(m.left.bottom);
           expect(Math.abs(m.left.width - m.detail.width), at).toBeLessThanOrEqual(1);
         }
-        await expect(frame.getByText("Illustrative packaging")).toBeVisible();
         await expect(page.getByRole("button", { name: /^Enlarge image/ })).toBeVisible();
         for (const name of ["Add to bag", "Buy now"]) {
           expect((await page.getByRole("button", { name }).boundingBox())!.height, at).toBeGreaterThanOrEqual(44);
@@ -731,7 +724,7 @@ test.describe("square gallery and balanced purchase grid", () => {
   }
 });
 
-// P4-P27: quantity, Add to bag and Buy now share one row; the notice sits below.
+// P4-P27: quantity, Add to bag and Buy now share one row.
 test.describe("purchase controls in one row", () => {
   test.beforeEach(({ page }, testInfo) => {
     void page;
@@ -748,7 +741,6 @@ test.describe("purchase controls in one row", () => {
         const qty = (await area.getByRole("group", { name: "Quantity" }).boundingBox())!;
         const add = (await area.getByRole("button", { name: "Add to bag" }).boundingBox())!;
         const buy = (await area.getByRole("button", { name: "Buy now" }).boundingBox())!;
-        const note = (await area.getByText("Sample price for testing only.").boundingBox())!;
         const box = (await area.boundingBox())!;
 
         // Left to right, vertically aligned, not overlapping.
@@ -761,7 +753,6 @@ test.describe("purchase controls in one row", () => {
         expect(Math.abs(add.height - buy.height), at).toBeLessThanOrEqual(0.5);
         expect(Math.abs(add.width - buy.width), at).toBeLessThanOrEqual(1);
         expect(buy.x + buy.width, at).toBeLessThanOrEqual(box.x + box.width + 0.5);
-        expect(note.y, at).toBeGreaterThan(buy.y + buy.height);
 
         // Labels are not clipped.
         const clipped = await area.locator("button").evaluateAll((els) => els.filter((el) => el.scrollWidth > el.clientWidth).length);

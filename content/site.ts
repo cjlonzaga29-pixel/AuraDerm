@@ -692,6 +692,7 @@ export const site: Site = {
     subcopy: "Explore the full hair and scalp care collection.",
     cta: { label: "Visit the shop", href: "/shop" },
   },
-  previewNotice: "Design preview — prices, sizes and product photography are not yet confirmed.",
+  previewNotice:
+    "Design preview: product images show illustrative packaging, and prices are samples for testing — no real orders or payments are taken yet.",
   social: [],
 };

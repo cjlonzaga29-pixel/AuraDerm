@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PurchasePanel, SAMPLE_PRICE_NOTE } from "@/components/shop/PurchasePanel";
+import { PurchasePanel } from "@/components/shop/PurchasePanel";
 import { CartProvider } from "@/context/CartContext";
 import { getShopProduct, toShopProduct } from "@/lib/catalog";
 import { site } from "@/content/site";
@@ -17,11 +17,10 @@ const render = (product: ShopProduct) =>
   );
 
 describe("PurchasePanel", () => {
-  it("offers quantity, Add to bag and Buy now for a sample price, labelled as a test price", () => {
+  it("offers quantity, Add to bag and Buy now for a sample price, shown without a preview label", () => {
     const html = render(getShopProduct("hair-fall-defense-scalp-vitamin-serum")!);
     expect(html).toContain("₱1,299.00");
-    expect(html).toContain("Sample price");
-    expect(html).toContain(SAMPLE_PRICE_NOTE);
+    expect(html).not.toContain("Sample price");
     expect(html).toContain("Add to bag");
     expect(html).toContain("Buy now");
     expect(html).toContain('aria-label="Quantity"');

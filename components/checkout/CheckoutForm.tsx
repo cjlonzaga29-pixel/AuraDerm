@@ -714,7 +714,6 @@ function OrderSummary({ state, onRetry }: { state: QuoteState; onRetry: () => vo
                 <p className="text-sm text-sage-muted">
                   Qty {line.quantity} · {formatMoney(line.unitPriceMinor)} each
                 </p>
-                {line.priceKind === "sample" ? <p className="text-sm text-gold">Sample price</p> : null}
               </div>
               <p className="shrink-0 self-start text-base text-cream tabular-nums">{formatMoney(line.lineTotalMinor)}</p>
             </li>

@@ -22,7 +22,7 @@ test.describe("sections 3-5", () => {
     await expect(page.locator("#formula li h3")).toHaveText(["Niacinamide", "Caffeine", "Peppermint Oil"]);
     await expect(page.locator("#formula")).not.toContainText(/Zinc PCA|Willow Bark|Tea Tree|Scalp Balance/);
     await expect(page.locator("#formula img")).toHaveAttribute("src", /spotlight-scalp-serum/);
-    await expect(page.locator("#formula")).toContainText("Illustrative packaging");
+    await expect(page.locator("#formula")).not.toContainText("Illustrative packaging");
     await expect(
       page.locator("#formula").getByRole("link", { name: "Explore the scalp serum" }),
     ).toHaveAttribute("href", "/shop/hair-fall-defense-scalp-vitamin-serum");

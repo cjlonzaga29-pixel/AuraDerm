@@ -3,8 +3,8 @@ import { test, expect, request } from "@playwright/test";
 test.describe("home P1-P5", () => {
   // P4-P7: #collection moved directly under the hero and now renders the
   // shop's ProductCard (compact variant) through the catalog adapter.
-  // P4-P10: explicit display order (serum last) and a labelled sample price
-  // on every card; the card still links to its page rather than selling.
+  // P4-P10: explicit display order (serum last) and a sample price on every
+  // card (unlabelled since P4-P31); the card still links to its page rather than selling.
   test("#collection follows the hero with the 4 catalog products linking to their pages; #routine shows 3 ordered steps", async ({
     page,
   }) => {
@@ -23,7 +23,7 @@ test.describe("home P1-P5", () => {
     for (const [i, [name, href]] of expectedCards.entries()) {
       await expect(cards.nth(i).getByRole("link", { name, exact: true })).toHaveAttribute("href", href);
       await expect(cards.nth(i)).toContainText("View product");
-      await expect(cards.nth(i).getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
+      await expect(cards.nth(i).getByTestId("price")).toHaveText("₱1,299.00");
     }
     await expect(collection.getByText("Price coming soon")).toHaveCount(0);
     await expect(page.locator("#actives")).toHaveCount(0);
@@ -73,14 +73,13 @@ test.describe("home P1-P5", () => {
     await expect(main).not.toContainText(/chamomile|\brose\b|\boat\b/i);
   });
 
-  test("commerce disabled: only labelled sample prices, no add-to-cart actions on the homepage", async ({
+  test("commerce disabled: only card prices, no preview labels or add-to-cart actions on the homepage", async ({
     page,
   }) => {
     await page.goto("/");
     await expect(page.getByRole("button", { name: /add to (cart|bag)/i })).toHaveCount(0);
-    const collection = page.locator("#collection");
-    await expect(collection.getByText("Sample price", { exact: true })).toHaveCount(4);
-    // Every peso amount on the page is a labelled sample price on a card.
+    await expect(page.locator("main")).not.toContainText(/Sample price|Illustrative packaging/);
+    // Every peso amount on the page is a sample price on a card.
     const amounts = await page
       .locator("main")
       .evaluate((el) => el.textContent?.match(/₱\s?[\d,.]+/g) ?? []);
@@ -129,14 +128,13 @@ test.describe("home P1-P5", () => {
         const titleSize = await fontSize("h3");
         expect(titleSize).toBeGreaterThanOrEqual(18);
         expect(titleSize).toBeLessThanOrEqual(20);
-        expect(await fontSize("[data-testid=price] span")).toBeGreaterThanOrEqual(16);
+        expect(await fontSize("[data-testid=price]")).toBeGreaterThanOrEqual(16);
         await expect(cards.first().locator("h3 + p")).toHaveCount(0);
       }
       // P4-P22: square media frames; the 4:5 bottle is contained whole.
       for (let i = 0; i < 4; i++) {
         const figure = cards.nth(i).getByTestId("product-image");
         await expect(figure.locator("img")).toHaveCSS("object-fit", "contain");
-        await expect(figure.getByText("Illustrative packaging")).toBeVisible();
         const ratio = await figure.evaluate((el) => el.clientWidth / el.clientHeight);
         expect(ratio).toBeCloseTo(1, 2);
       }

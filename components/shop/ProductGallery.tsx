@@ -322,21 +322,14 @@ export function ProductGallery({ name, category, images, className }: Props) {
             </DialogTitle>
             <DialogDescription className="sr-only">{current.alt}</DialogDescription>
             <div className="flex items-center justify-center" {...swipe}>
-              <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={current.src}
-                  alt={current.alt}
-                  width={current.width}
-                  height={current.height}
-                  className="max-h-[calc(100dvh-7rem)] w-auto max-w-full object-contain"
-                />
-                {current.illustrative ? (
-                  <span className="absolute bottom-2 left-2 rounded-full border border-glass-border bg-forest-deep/85 px-2.5 py-1 font-sans text-xs text-cream">
-                    Illustrative packaging
-                  </span>
-                ) : null}
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={current.src}
+                alt={current.alt}
+                width={current.width}
+                height={current.height}
+                className="max-h-[calc(100dvh-7rem)] w-auto max-w-full object-contain"
+              />
             </div>
             {multiple ? (
               <div className="flex items-center justify-between gap-3">

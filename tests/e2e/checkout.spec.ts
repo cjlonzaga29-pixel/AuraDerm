@@ -25,7 +25,7 @@ test.describe("product gallery", () => {
     const img = dialog.locator("img");
     await expect(img).toHaveAttribute("src", `/images/products/${CONDITIONER}-front.webp`);
     await expect(img).toHaveCSS("object-fit", "contain");
-    await expect(dialog.getByText("Illustrative packaging", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Illustrative packaging", { exact: true })).toHaveCount(0);
     const box = (await img.boundingBox())!;
     expect(Math.abs(box.width / box.height - 1122 / 1402)).toBeLessThan(0.02);
     const viewport = page.viewportSize()!;
