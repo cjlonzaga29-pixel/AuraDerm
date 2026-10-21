@@ -5,34 +5,39 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { MediaSlot } from "@/components/ui/MediaSlot";
 import { site } from "@/content/site";
 
-// Image left, three numbered steps right (each naming and linking its
-// product), divided by fine rules rather than cards. The steps sit on veil
-// glass because the column crosses the bottle label in the footage. Stacks
-// image-first below lg.
+// P4-P23: one shared glass card holds the image and the steps. At lg the two
+// sit in equal columns and the steps are set compactly enough to match the
+// image's natural 4:3 height; if the copy needs more room the card simply
+// grows. Below lg the image stacks above the steps inside the same card.
 export function Routine() {
   const { routine, routineIntro } = site;
 
   return (
     <section id="routine" className="py-8 lg:py-12">
       <Container>
-        <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
+        <GlassPanel
+          tone="veil"
+          className="grid gap-6 p-5 sm:p-6 lg:grid-cols-2 lg:items-start"
+        >
           <MediaSlot slot={routineIntro.media} />
 
-          <GlassPanel tone="veil" className="flex flex-col gap-8 p-6 sm:p-8 lg:p-10">
-            <div className="flex flex-col gap-3">
-              <DisplayHeading level="h2">{routineIntro.headline}</DisplayHeading>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <DisplayHeading level="h2" size="h3" className="sm:text-[1.75rem] lg:text-[2rem]">
+                {routineIntro.headline}
+              </DisplayHeading>
               <p className="font-sans text-base leading-relaxed text-cream">{routineIntro.body}</p>
             </div>
 
-            <ol className="flex flex-col border-b border-hairline">
+            <ol className="flex flex-col">
               {routine.map((step, index) => (
-                <li key={step.title} className="flex gap-5 border-t border-hairline py-5">
-                  <span className="w-10 shrink-0 font-heading text-3xl leading-none text-gold tabular-nums">
+                <li key={step.title} className="flex gap-4 border-t border-hairline py-3 last:pb-0">
+                  <span className="w-8 shrink-0 font-heading text-2xl leading-none text-gold tabular-nums">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <div className="flex flex-col gap-1">
-                    <h3 className="font-sans text-lg font-medium text-cream">{step.title}</h3>
-                    <p className="font-sans text-base leading-relaxed text-sage-muted">
+                  <div className="flex flex-col gap-0.5">
+                    <h3 className="font-sans text-base font-medium leading-snug text-cream">{step.title}</h3>
+                    <p className="font-sans text-base leading-normal text-pretty text-sage-muted">
                       {step.body.map((segment, i) =>
                         typeof segment === "string" ? (
                           segment
@@ -51,8 +56,8 @@ export function Routine() {
                 </li>
               ))}
             </ol>
-          </GlassPanel>
-        </div>
+          </div>
+        </GlassPanel>
       </Container>
     </section>
   );
