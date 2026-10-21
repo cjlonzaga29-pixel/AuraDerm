@@ -1,13 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // Visible headings drop the brand prefix (shown as a label); the full catalog
 // name stays in the page title.
+// Display order: the serum comes last.
 const PRODUCTS = [
   { handle: "hair-fall-defense-shampoo", name: "Hair Fall Defense Shampoo" },
   { handle: "hair-fall-defense-conditioner", name: "Hair Fall Defense Conditioner" },
-  { handle: "hair-fall-defense-scalp-vitamin-serum", name: "Hair Fall Defense Scalp Vitamin Serum" },
   { handle: "scalp-balance-daily-shampoo", name: "Scalp Balance Daily Shampoo" },
+  { handle: "hair-fall-defense-scalp-vitamin-serum", name: "Hair Fall Defense Scalp Vitamin Serum" },
 ];
+
+const openBag = async (page: Page) => {
+  await page.getByTestId("bag-button").click();
+  return page.getByRole("dialog", { name: "Your Bag" });
+};
 
 test.describe("shop", () => {
   test("hero Shop now button opens the shop", async ({ page }) => {
@@ -29,13 +35,18 @@ test.describe("shop", () => {
       await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Shop" }).click();
     }
     await expect(page).toHaveURL(/\/shop$/);
-    await expect(page.getByTestId("product-card")).toHaveCount(4);
-    await expect(page.getByText("Price coming soon", { exact: true })).toHaveCount(4);
+    const cards = page.getByTestId("product-card");
+    await expect(cards).toHaveCount(4);
+    for (const [i, { name }] of PRODUCTS.entries()) {
+      await expect(cards.nth(i).getByRole("heading", { level: 3 })).toHaveText(name);
+      await expect(cards.nth(i).getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
+    }
+    await expect(page.getByText("Price coming soon", { exact: true })).toHaveCount(0);
     // Generated packaging mockups replace the placeholders, captioned as such.
     await expect(page.getByText("Product photography coming soon")).toHaveCount(0);
     await expect(page.getByText("Illustrative packaging", { exact: true })).toHaveCount(4);
     await expect(page.locator("main")).not.toContainText(/filter|sort by|rating|in stock/i);
-    await expect(page.locator("main")).not.toContainText(/[₱$]\s?\d/);
+    await expect(page.locator("main")).not.toContainText(/\$\s?\d/);
     await expect(page.locator("main")).not.toContainText(/concept/i);
   });
 
@@ -49,13 +60,17 @@ test.describe("shop", () => {
     }
   });
 
-  test("product page: label content, single availability block, related links", async ({ page }) => {
+  test("product page: label content, labelled sample price with buy controls, related links", async ({
+    page,
+  }) => {
     await page.goto("/shop/hair-fall-defense-scalp-vitamin-serum");
     const info = page.getByTestId("product-detail");
-    await expect(info.getByText("Price coming soon", { exact: true })).toHaveCount(1);
-    await expect(page.getByText("Purchasing will be available once pricing is confirmed.")).toHaveCount(1);
-    await expect(page.getByRole("button", { name: "Add to bag" })).toHaveCount(0);
-    await expect(page.getByRole("group", { name: "Quantity" })).toHaveCount(0);
+    const panel = info.getByTestId("purchase-panel");
+    await expect(panel.getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
+    await expect(panel.getByText("Sample pricing for testing. Checkout is unavailable.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Add to bag" })).toHaveCount(1);
+    await expect(page.getByRole("group", { name: "Quantity" })).toHaveCount(1);
+    await expect(info.getByText("Price coming soon", { exact: true })).toHaveCount(0);
     const gallery = info.getByTestId("product-image").first();
     await expect(gallery.locator("img")).toHaveAttribute(
       "src",
@@ -147,26 +162,95 @@ test.describe("shop", () => {
     expect(storage).toEqual({ v1: null, unrelated: "keep-me" });
   });
 
-  test("a saved v2 cart is restored, not overwritten by the empty first render", async ({ page }) => {
-    // Fixture only: no live product is purchasable while prices are unconfirmed.
+  test("a saved v2 cart is restored at current catalog prices, not overwritten by the first render", async ({
+    page,
+  }) => {
+    // A stale saved price (₱1.00) and an entry the catalog no longer sells.
     const saved = JSON.stringify([
       {
-        productId: "fixture_item",
+        productId: "prod_hair-fall-defense-shampoo",
         handle: "hair-fall-defense-shampoo",
-        title: "Fixture Cart Item",
+        title: "Old Title",
         priceMinor: 100,
+        quantity: 2,
+        volume: "",
+        image: "",
+      },
+      {
+        productId: "prod_radiance_barrier_serum",
+        handle: "radiance-barrier-serum",
+        title: "Radiance Barrier Serum",
+        priceMinor: 149900,
         quantity: 1,
         volume: "",
         image: "",
       },
     ]);
     await page.goto("/");
-    await page.evaluate((value) => localStorage.setItem("auraderm_cart_v2", value), saved);
+    await page.evaluate((value) => {
+      localStorage.setItem("auraderm_cart_v2", value);
+      localStorage.setItem("unrelated_key", "keep-me");
+    }, saved);
     await page.goto("/shop");
-    await page.getByTestId("bag-button").click();
-    await expect(page.getByRole("dialog", { name: "Your Bag" })).toContainText("Fixture Cart Item");
+    const bag = await openBag(page);
+    await expect(bag).toContainText("Aura Derm Hair Fall Defense Shampoo");
+    await expect(bag).not.toContainText("Radiance Barrier Serum");
+    await expect(bag).not.toContainText("₱1.00");
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱2,598.00");
     await page.reload();
-    expect(await page.evaluate(() => localStorage.getItem("auraderm_cart_v2"))).toBe(saved);
+    const storage = await page.evaluate(() => ({
+      cart: localStorage.getItem("auraderm_cart_v2"),
+      unrelated: localStorage.getItem("unrelated_key"),
+    }));
+    expect(storage).toEqual({ cart: saved, unrelated: "keep-me" });
+  });
+
+  test("sample-priced bag: add, quantity, second product, remove, empty, persist; no checkout", async ({
+    page,
+  }) => {
+    await page.goto("/shop/hair-fall-defense-shampoo");
+    const name = "Aura Derm Hair Fall Defense Shampoo";
+    await page.getByRole("button", { name: `Increase quantity of ${name}` }).click();
+    await expect(page.getByTestId("quantity-value")).toHaveText("2");
+    await page.getByRole("button", { name: "Add to bag" }).click();
+    let bag = page.getByRole("dialog", { name: "Your Bag" });
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱2,598.00");
+    await expect(bag.getByText("Sample pricing for testing. Checkout is unavailable.")).toBeVisible();
+    await expect(bag).toContainText("Sample price");
+    await page.keyboard.press("Escape");
+    await expect(bag).toBeHidden();
+
+    await page.goto("/shop/hair-fall-defense-scalp-vitamin-serum");
+    await page.getByRole("button", { name: "Add to bag" }).click();
+    bag = page.getByRole("dialog", { name: "Your Bag" });
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱3,897.00");
+
+    const checkout = bag.getByRole("button", { name: "Checkout unavailable" });
+    await expect(checkout).toBeDisabled();
+    await expect(bag.getByRole("button", { name: /place order|pay|submit/i })).toHaveCount(0);
+    await expect(bag.locator("form")).toHaveCount(0);
+
+    // Reload: the bag comes back with the same items and total.
+    await page.reload();
+    bag = await openBag(page);
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱3,897.00");
+
+    await bag.getByRole("button", { name: `Decrease quantity of ${name}` }).click();
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱2,598.00");
+    await bag.getByRole("button", { name: `Increase quantity of ${name}` }).click();
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱3,897.00");
+
+    await bag.getByRole("button", { name: `Remove ${name} from bag` }).click();
+    await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱1,299.00");
+    await bag
+      .getByRole("button", { name: "Remove Aura Derm Hair Fall Defense Scalp Vitamin Serum from bag" })
+      .click();
+    await expect(bag.getByText("Your bag is empty.")).toBeVisible();
+
+    await page.reload();
+    bag = await openBag(page);
+    await expect(bag.getByText("Your bag is empty.")).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem("auraderm_cart_v2"))).toBe("[]");
   });
 
   test("unknown and obsolete product handles return 404", async ({ request }) => {

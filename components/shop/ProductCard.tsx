@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 // Shared by /shop and the related-products row. The card stretches to its grid
 // row so titles of different lengths keep the cards level. The compact variant
-// (homepage collection) drops the price row. Packshots are always contained.
+// (homepage collection) tightens padding, gaps and the title for a ~260px
+// card. Packshots are always contained.
 export function ProductCard({
   product,
   variant = "default",
@@ -28,11 +29,11 @@ export function ProductCard({
         image={product.images[0]}
         className="aspect-[4/5] rounded-none"
       />
-      <div className={cn("flex flex-1 flex-col gap-2 p-5", !compact && "sm:p-6")}>
+      <div className={cn("flex flex-1 flex-col", compact ? "gap-1.5 p-4 sm:p-5" : "gap-2 p-5 sm:p-6")}>
         <h3
           className={cn(
-            "font-heading leading-tight font-medium text-cream",
-            compact ? "text-2xl" : "text-[1.625rem]",
+            "font-heading font-medium text-cream",
+            compact ? "text-[1.375rem] leading-[1.2]" : "text-[1.625rem] leading-tight",
           )}
         >
           <Link
@@ -45,11 +46,11 @@ export function ProductCard({
         <p className="font-sans text-base leading-relaxed text-sage-muted">{product.summary}</p>
         <div
           className={cn(
-            "mt-auto flex items-center gap-4 border-t border-hairline pt-4",
-            compact ? "justify-start" : "justify-between",
+            "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-hairline",
+            compact ? "pt-3" : "pt-4",
           )}
         >
-          {compact ? null : <PriceTag price={product.price} />}
+          <PriceTag price={product.price} />
           <span
             aria-hidden="true"
             className="inline-flex items-center gap-1.5 font-sans text-sm font-medium text-gold"

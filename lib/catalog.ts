@@ -17,6 +17,8 @@ export type ProductCategory = "Shampoo" | "Conditioner" | "Scalp serum";
 
 export type PriceState =
   | { kind: "confirmed"; priceMinor: number }
+  /** Owner-authorized testing price, always shown labelled "Sample price". */
+  | { kind: "sample"; priceMinor: number }
   | { kind: "unavailable" };
 
 export type ShopProduct = {
@@ -57,16 +59,21 @@ const CATEGORIES: Record<string, ProductCategory> = {
 
 export const BRAND_LABEL = "Aura Derm";
 
+const isPositiveMinor = (value: number | null | undefined): value is number =>
+  typeof value === "number" && Number.isInteger(value) && value > 0;
+
 // Bridges the two content sources: content/site.ts is the marketing source of
-// truth (order, names, sizes, prices — all null today) and content/products.ts
-// holds the label-guide copy. Only a confirmed price makes a product
-// purchasable; a missing price stays missing rather than becoming zero.
+// truth (order, names, sizes, retail prices — all null today — and sample
+// prices) and content/products.ts holds the label-guide copy. A confirmed
+// retail price wins; otherwise a valid PHP sample price makes the product
+// testable in the bag. A missing price stays missing rather than becoming zero.
 export function toShopProduct(entry: (typeof site.products)[number]): ShopProduct {
   const details = getProductDetails(entry.slug);
 
-  const price: PriceState =
-    entry.priceMinor !== null && Number.isInteger(entry.priceMinor) && entry.priceMinor > 0
-      ? { kind: "confirmed", priceMinor: entry.priceMinor }
+  const price: PriceState = isPositiveMinor(entry.priceMinor)
+    ? { kind: "confirmed", priceMinor: entry.priceMinor }
+    : entry.samplePrice?.currency === "PHP" && isPositiveMinor(entry.samplePrice.priceMinor)
+      ? { kind: "sample", priceMinor: entry.samplePrice.priceMinor }
       : { kind: "unavailable" };
 
   const images: ShopProduct["images"] = entry.image
@@ -96,7 +103,7 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
     concept: CONCEPTS[entry.slug] ?? "hydrate",
     price,
     cartProduct:
-      details && price.kind === "confirmed"
+      details && price.kind !== "unavailable"
         ? {
             id: `prod_${entry.slug}`,
             handle: entry.slug,
@@ -104,6 +111,7 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
             subtitle: details.subtitle,
             description: details.description,
             priceMinor: price.priceMinor,
+            priceKind: price.kind,
             volume: entry.size ?? "",
             images: images.map(({ src, alt }) => ({ src, alt })),
             inStock: true,
@@ -114,8 +122,16 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
   };
 }
 
+// Sorted by slug against site.productOrder, so the display order never
+// depends on where an entry sits in site.products; unlisted slugs go last.
 export function getShopProducts(): ShopProduct[] {
-  return site.products.map(toShopProduct);
+  const rank = (slug: string) => {
+    const index = site.productOrder.indexOf(slug);
+    return index === -1 ? site.productOrder.length : index;
+  };
+  return [...site.products]
+    .sort((a, b) => rank(a.slug) - rank(b.slug))
+    .map(toShopProduct);
 }
 
 export function getShopProduct(handle: string): ShopProduct | undefined {

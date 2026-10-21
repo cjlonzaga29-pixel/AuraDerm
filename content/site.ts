@@ -20,13 +20,25 @@ export type MediaSlot = {
   image: MediaImage | null;
 };
 
+/** Owner-authorized placeholder price for exercising the cart; not retail. */
+export type SamplePrice = {
+  priceMinor: number;
+  currency: "PHP";
+};
+
 export type Product = {
   slug: string;
   name: string;
   /** Net content; null until the owner confirms it. */
   size: string | null;
+  /** Confirmed retail price; null until the owner confirms it. */
   priceMinor: number | null;
   currency: "PHP" | "USD" | null;
+  /**
+   * Cart-testing price, always labelled "Sample price". Used only while the
+   * retail price is null; checkout stays disabled either way.
+   */
+  samplePrice: SamplePrice | null;
   shopifyHandle: string | null;
   shortDescription: string;
   /** Front packshot (4:5, shown contained); null until an image is approved. */
@@ -100,6 +112,8 @@ export type Site = {
     note: string;
   };
   products: Product[];
+  /** Display order for the homepage collection and /shop, by product slug. */
+  productOrder: string[];
   ingredients: Ingredient[];
   routine: RoutineStep[];
   routineIntro: {
@@ -117,6 +131,10 @@ export type Site = {
   previewNotice: string;
   social: SocialLink[];
 };
+
+// Owner-authorized sample price (PHP 1,299) so the bag can be tested end to
+// end. Confirmed retail prices stay null; nothing here is a retail price.
+const SAMPLE_PRICE: SamplePrice = { priceMinor: 129900, currency: "PHP" };
 
 export const site: Site = {
   brand: "AuraDerm Botanicals",
@@ -185,7 +203,8 @@ export const site: Site = {
   // owner-supplied generated packaging mockups (illustrative only: their label
   // text is not a source for names, ingredients or sizes). Prices and
   // net content are unconfirmed — the guide says 300 mL / 60 mL while newer
-  // packaging references say 250 mL / 50 mL — so both stay null for now.
+  // packaging references say 250 mL / 50 mL — so both stay null for now
+  // (each carries the labelled sample price above for cart testing).
   products: [
     {
       slug: "hair-fall-defense-shampoo",
@@ -193,6 +212,7 @@ export const site: Site = {
       size: null,
       priceMinor: null,
       currency: null,
+      samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
       image: {
         src: "/images/products/hair-fall-defense-shampoo-front.webp",
@@ -209,6 +229,7 @@ export const site: Site = {
       size: null,
       priceMinor: null,
       currency: null,
+      samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
       image: {
         src: "/images/products/hair-fall-defense-conditioner-front.webp",
@@ -225,6 +246,7 @@ export const site: Site = {
       size: null,
       priceMinor: null,
       currency: null,
+      samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
       image: {
         src: "/images/products/hair-fall-defense-scalp-vitamin-serum-front.webp",
@@ -241,6 +263,7 @@ export const site: Site = {
       size: null,
       priceMinor: null,
       currency: null,
+      samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
       image: {
         src: "/images/products/scalp-balance-daily-shampoo-front.webp",
@@ -251,6 +274,13 @@ export const site: Site = {
       },
       shortDescription: "Sulfate-free daily shampoo for oily or flaky scalps.",
     },
+  ],
+  // Shampoo, conditioner, the second shampoo, then the leave-on serum last.
+  productOrder: [
+    "hair-fall-defense-shampoo",
+    "hair-fall-defense-conditioner",
+    "scalp-balance-daily-shampoo",
+    "hair-fall-defense-scalp-vitamin-serum",
   ],
   // The three botanicals shown on the homepage strip. foundIn must match the
   // key-ingredient lists in content/products.ts (asserted in tests) so no

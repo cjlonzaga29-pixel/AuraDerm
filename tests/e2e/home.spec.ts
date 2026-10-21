@@ -2,9 +2,9 @@ import { test, expect, request } from "@playwright/test";
 
 test.describe("home P1-P5", () => {
   // P4-P7: #collection moved directly under the hero and now renders the
-  // shop's ProductCard (compact variant) through the catalog adapter. The
-  // compact card carries no price row, so the former "Price coming soon"
-  // per-row label is replaced by a working "View product" link per card.
+  // shop's ProductCard (compact variant) through the catalog adapter.
+  // P4-P10: explicit display order (serum last) and a labelled sample price
+  // on every card; the card still links to its page rather than selling.
   test("#collection follows the hero with the 4 catalog products linking to their pages; #routine shows 3 ordered steps", async ({
     page,
   }) => {
@@ -17,12 +17,13 @@ test.describe("home P1-P5", () => {
     const expectedCards: [string, string][] = [
       ["Hair Fall Defense Shampoo", "/shop/hair-fall-defense-shampoo"],
       ["Hair Fall Defense Conditioner", "/shop/hair-fall-defense-conditioner"],
-      ["Hair Fall Defense Scalp Vitamin Serum", "/shop/hair-fall-defense-scalp-vitamin-serum"],
       ["Scalp Balance Daily Shampoo", "/shop/scalp-balance-daily-shampoo"],
+      ["Hair Fall Defense Scalp Vitamin Serum", "/shop/hair-fall-defense-scalp-vitamin-serum"],
     ];
     for (const [i, [name, href]] of expectedCards.entries()) {
       await expect(cards.nth(i).getByRole("link", { name, exact: true })).toHaveAttribute("href", href);
       await expect(cards.nth(i)).toContainText("View product");
+      await expect(cards.nth(i).getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
     }
     await expect(collection.getByText("Price coming soon")).toHaveCount(0);
     await expect(page.locator("#actives")).toHaveCount(0);
@@ -72,10 +73,75 @@ test.describe("home P1-P5", () => {
     await expect(main).not.toContainText(/chamomile|\brose\b|\boat\b/i);
   });
 
-  test("commerce disabled: no prices or add-to-cart actions on the homepage", async ({ page }) => {
+  test("commerce disabled: only labelled sample prices, no add-to-cart actions on the homepage", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(page.getByRole("button", { name: /add to (cart|bag)/i })).toHaveCount(0);
-    await expect(page.locator("main")).not.toContainText(/[₱$]\s?\d/);
+    const collection = page.locator("#collection");
+    await expect(collection.getByText("Sample price", { exact: true })).toHaveCount(4);
+    // Every peso amount on the page is a labelled sample price on a card.
+    const amounts = await page
+      .locator("main")
+      .evaluate((el) => el.textContent?.match(/₱\s?[\d,.]+/g) ?? []);
+    expect(amounts).toEqual(Array(4).fill("₱1,299.00"));
+    await expect(page.locator("main")).not.toContainText(/\$\s?\d/);
+  });
+
+  test("compact collection cards: ~260px four across, 2/1 columns below, bottles uncropped", async ({
+    page,
+  }) => {
+    for (const [width, columns] of [
+      [390, 1],
+      [768, 2],
+      [1440, 4],
+    ] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const cards = page.locator("#collection").getByTestId("product-card");
+      await cards.first().scrollIntoViewIfNeeded();
+      const boxes = await cards.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: Math.round(r.x), y: Math.round(r.y + window.scrollY), w: r.width, right: r.right };
+        }),
+      );
+      expect(new Set(boxes.map((b) => b.y)).size, `rows at ${width}`).toBe(4 / columns);
+      for (const box of boxes) {
+        expect(box.right, `card inside viewport at ${width}`).toBeLessThanOrEqual(width);
+      }
+      if (width === 1440) {
+        for (const box of boxes) {
+          expect(box.w).toBeGreaterThanOrEqual(250);
+          expect(box.w).toBeLessThanOrEqual(280);
+        }
+        // The serum is the far-right card of the row and last in the DOM.
+        const rightmost = boxes.reduce((best, b, i) => (b.x > boxes[best].x ? i : best), 0);
+        expect(rightmost).toBe(3);
+        await expect(cards.nth(3)).toContainText("Hair Fall Defense Scalp Vitamin Serum");
+        const fontSize = (selector: string) =>
+          cards
+            .first()
+            .locator(selector)
+            .first()
+            .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+        const titleSize = await fontSize("h3");
+        expect(titleSize).toBeGreaterThanOrEqual(22);
+        expect(titleSize).toBeLessThanOrEqual(24);
+        expect(await fontSize("h3 + p")).toBeGreaterThanOrEqual(16);
+      }
+      for (let i = 0; i < 4; i++) {
+        const figure = cards.nth(i).getByTestId("product-image");
+        await expect(figure.locator("img")).toHaveCSS("object-fit", "contain");
+        await expect(figure.getByText("Illustrative packaging")).toBeVisible();
+        const ratio = await figure.evaluate((el) => el.clientWidth / el.clientHeight);
+        expect(ratio).toBeCloseTo(0.8, 2);
+      }
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `overflow at ${width}`).toBeLessThanOrEqual(0);
+    }
   });
 
   test("with site.sustainability null: no GivesBack element in the DOM", async ({ page }) => {

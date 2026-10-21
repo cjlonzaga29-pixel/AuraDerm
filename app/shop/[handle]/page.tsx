@@ -116,7 +116,11 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                 </section>
               ) : null}
 
-              <PurchasePanel name={product.name} cartProduct={product.cartProduct} />
+              <PurchasePanel
+                name={product.name}
+                price={product.price}
+                cartProduct={product.cartProduct}
+              />
 
               <div>
                 <Separator className="bg-hairline" />

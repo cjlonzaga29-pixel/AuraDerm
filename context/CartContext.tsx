@@ -11,6 +11,8 @@ import {
 } from "react";
 import type { CartItem, Product } from "@/types/store";
 import { addMoney, multiplyMoney } from "@/lib/money";
+import { reconcileCartItems } from "@/lib/cart";
+import { getShopProducts } from "@/lib/catalog";
 
 // v1 held demo skincare items with fictional prices. Bumping the version drops
 // them instead of mapping them onto the real catalog; only the stale v1 key is
@@ -38,8 +40,8 @@ function readStoredCart(): CartItem[] {
   try {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
     if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+    // Saved prices are never trusted: entries are repriced from the catalog.
+    return reconcileCartItems(JSON.parse(raw), getShopProducts());
   } catch {
     return [];
   }
@@ -100,7 +102,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((item) =>
           item.productId === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? {
+                ...item,
+                priceMinor: product.priceMinor,
+                priceKind: product.priceKind,
+                quantity: item.quantity + quantity,
+              }
             : item
         );
       }
@@ -109,6 +116,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         handle: product.handle,
         title: product.title,
         priceMinor: product.priceMinor,
+        priceKind: product.priceKind,
         quantity,
         volume: product.volume,
         image: product.images[0]?.src ?? "",

@@ -5,6 +5,8 @@ export interface Product {
   subtitle: string;
   description: string;
   priceMinor: number; // Integer minor units (e.g. 149900 = ₱1,499.00)
+  /** "sample" marks an owner-authorized testing price, not a retail price. */
+  priceKind?: "confirmed" | "sample";
   compareAtPriceMinor?: number;
   volume: string; // e.g. "50 ml / 1.7 fl. oz."
   images: { src: string; alt: string }[];
@@ -19,6 +21,7 @@ export interface CartItem {
   handle: string;
   title: string;
   priceMinor: number;
+  priceKind?: "confirmed" | "sample";
   quantity: number; // Integer >= 1
   volume: string;
   image: string;

@@ -7,18 +7,22 @@ import { addMoney, multiplyMoney } from "@/lib/money";
 import { PRODUCT_DETAILS } from "@/content/products";
 import { site } from "@/content/site";
 
+// Display order for the homepage collection and /shop: the serum comes last.
 const HANDLES = [
   "hair-fall-defense-shampoo",
   "hair-fall-defense-conditioner",
-  "hair-fall-defense-scalp-vitamin-serum",
   "scalp-balance-daily-shampoo",
+  "hair-fall-defense-scalp-vitamin-serum",
 ];
 
+const SAMPLE_PRICE_MINOR = 129900;
+
 describe("shop catalog adapter", () => {
-  it("lists the four hair-care products, in marketing order, each with label details", () => {
+  it("lists the four hair-care products, in display order, each with label details", () => {
     const products = getShopProducts();
     expect(products.map((p) => p.handle)).toEqual(HANDLES);
-    expect(site.products.map((p) => p.slug)).toEqual(HANDLES);
+    expect(site.productOrder).toEqual(HANDLES);
+    expect(site.products.map((p) => p.slug).sort()).toEqual([...HANDLES].sort());
     expect(PRODUCT_DETAILS.map((p) => p.handle).sort()).toEqual([...HANDLES].sort());
     for (const product of products) {
       expect(product.keyIngredients.length).toBeGreaterThan(0);
@@ -27,12 +31,43 @@ describe("shop catalog adapter", () => {
     }
   });
 
-  it("has no prices or sizes until the owner confirms them, so nothing is purchasable", () => {
+  it("orders by slug, not by position in site.products", () => {
+    const original = site.products;
+    try {
+      site.products = [...original].reverse();
+      expect(getShopProducts().map((p) => p.handle)).toEqual(HANDLES);
+    } finally {
+      site.products = original;
+    }
+  });
+
+  it("keeps retail prices and sizes unconfirmed; each product carries the PHP 1,299 sample price", () => {
+    for (const entry of site.products) {
+      expect(entry.priceMinor).toBeNull();
+      expect(entry.currency).toBeNull();
+      expect(entry.samplePrice).toEqual({ priceMinor: SAMPLE_PRICE_MINOR, currency: "PHP" });
+    }
     for (const product of getShopProducts()) {
-      expect(product.price).toEqual({ kind: "unavailable" });
-      expect(product.cartProduct).toBeNull();
+      expect(product.price).toEqual({ kind: "sample", priceMinor: SAMPLE_PRICE_MINOR });
+      expect(product.cartProduct?.priceMinor).toBe(SAMPLE_PRICE_MINOR);
+      expect(product.cartProduct?.priceKind).toBe("sample");
       expect(product.size).toBeNull();
     }
+  });
+
+  it("keeps a product unpurchasable with neither a confirmed nor a sample price", () => {
+    const product = toShopProduct({ ...site.products[0], samplePrice: null });
+    expect(product.price).toEqual({ kind: "unavailable" });
+    expect(product.cartProduct).toBeNull();
+  });
+
+  it("never turns a zero sample price into a purchasable product", () => {
+    const product = toShopProduct({
+      ...site.products[0],
+      samplePrice: { priceMinor: 0, currency: "PHP" },
+    });
+    expect(product.price).toEqual({ kind: "unavailable" });
+    expect(product.cartProduct).toBeNull();
   });
 
   it("keeps the two shampoos' highlights distinct", () => {
@@ -66,16 +101,22 @@ describe("shop catalog adapter", () => {
     }
   });
 
-  it("makes a product purchasable only with a confirmed price", () => {
+  it("prefers a confirmed retail price over the sample price", () => {
     const entry = { ...site.products[0], priceMinor: 120000, currency: "PHP" as const };
     const product = toShopProduct(entry);
     expect(product.price).toEqual({ kind: "confirmed", priceMinor: 120000 });
     expect(product.cartProduct?.priceMinor).toBe(120000);
+    expect(product.cartProduct?.priceKind).toBe("confirmed");
     expect(product.cartProduct?.handle).toBe(entry.slug);
   });
 
   it("never turns a zero price into a purchasable product", () => {
-    const product = toShopProduct({ ...site.products[0], priceMinor: 0, currency: "PHP" });
+    const product = toShopProduct({
+      ...site.products[0],
+      priceMinor: 0,
+      currency: "PHP",
+      samplePrice: null,
+    });
     expect(product.price).toEqual({ kind: "unavailable" });
     expect(product.cartProduct).toBeNull();
   });
@@ -88,8 +129,8 @@ describe("shop catalog adapter", () => {
     expect(getShopProducts().map((p) => p.category)).toEqual([
       "Shampoo",
       "Conditioner",
-      "Scalp serum",
       "Shampoo",
+      "Scalp serum",
     ]);
   });
 
@@ -128,6 +169,13 @@ describe("shop catalog adapter", () => {
         expect(findClaims(text)).toEqual([]);
       }
     }
+  });
+
+  it("sample-price totals stay integer: 2 × ₱1,299 then one more product", () => {
+    const [a, b] = getShopProducts();
+    const two = multiplyMoney(a.cartProduct!.priceMinor, 2);
+    expect(two).toBe(259800);
+    expect(addMoney(two, multiplyMoney(b.cartProduct!.priceMinor, 1))).toBe(389700);
   });
 
   it("cart totals for a confirmed-price product stay integer via money utilities", () => {

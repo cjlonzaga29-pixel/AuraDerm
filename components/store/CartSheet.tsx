@@ -16,6 +16,7 @@ import { formatMoney } from "@/lib/money";
 
 export function CartSheet() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, subtotalMinor } = useCart();
+  const hasSamplePrices = items.some((item) => item.priceKind === "sample");
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -64,6 +65,9 @@ export function CartSheet() {
                     <p className="font-sans text-xs text-muted-foreground">{item.volume}</p>
                     <p className="font-sans text-xs text-forest">
                       {formatMoney(item.priceMinor)}
+                      {item.priceKind === "sample" ? (
+                        <span className="text-muted-foreground"> · Sample price</span>
+                      ) : null}
                     </p>
 
                     <div className="mt-2 flex items-center gap-3">
@@ -105,13 +109,17 @@ export function CartSheet() {
             <SheetFooter className="gap-3 border-t border-border bg-cream">
               <div className="flex items-center justify-between font-sans text-sm text-forest-deep">
                 <span>Subtotal</span>
-                <span className="font-medium">{formatMoney(subtotalMinor)}</span>
+                <span className="font-medium" data-testid="cart-subtotal">
+                  {formatMoney(subtotalMinor)}
+                </span>
               </div>
 
               {/* Shop preview: no checkout, payment or delivery service is
                   connected, so there is no order to place. */}
               <p id="checkout-unavailable" className="font-sans text-xs text-muted-foreground">
-                Shop preview — checkout is not connected yet.
+                {hasSamplePrices
+                  ? "Sample pricing for testing. Checkout is unavailable."
+                  : "Shop preview — checkout is not connected yet."}
               </p>
 
               <Separator className="bg-border" />

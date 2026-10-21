@@ -66,6 +66,23 @@ describe("content model", () => {
       }
     }
   });
+
+  it("sample prices are positive integer PHP minor units", () => {
+    for (const product of site.products) {
+      if (product.samplePrice === null) continue;
+      expect(Number.isInteger(product.samplePrice.priceMinor)).toBe(true);
+      expect(product.samplePrice.priceMinor).toBeGreaterThan(0);
+      expect(product.samplePrice.currency).toBe("PHP");
+    }
+  });
+
+  it("commerce stays off while prices are samples", () => {
+    expect(site.commerce).toBe(false);
+  });
+
+  it("product display order names every product exactly once", () => {
+    expect(site.productOrder.slice().sort()).toEqual(site.products.map((p) => p.slug).sort());
+  });
 });
 
 const HEX_OR_RGB = /#[0-9a-fA-F]{3,8}\b|rgba?\(/;
