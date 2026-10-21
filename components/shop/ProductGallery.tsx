@@ -35,8 +35,8 @@ const TAP_SLOP = 10;
 // The hover preview needs a mouse and room beside the gallery (the two-column
 // layout from lg). Touch, pen and narrower screens use tap-to-enlarge instead.
 export const HOVER_ZOOM_QUERY = "(hover: hover) and (pointer: fine) and (min-width: 64rem)";
-/** Gap between the gallery and the preview, matching the page's column gap. */
-const PREVIEW_GAP = 48;
+/** Gap between the gallery and the preview when the bounds set no column gap. */
+const PREVIEW_GAP = 40;
 
 type Hover = MagnifierView & {
   src: string;
@@ -138,13 +138,17 @@ export function ProductGallery({ name, category, images, className }: Props) {
     }
     // As large as the painted image, but never past the area the page marks
     // as available beside the gallery.
+    // The preview sits across the page's own column gap, so it starts where
+    // the purchase column does.
     const outer = wrapper.getBoundingClientRect();
-    const bounds = wrapper.closest("[data-magnifier-bounds]")?.getBoundingClientRect();
+    const boundsEl = wrapper.closest("[data-magnifier-bounds]");
+    const bounds = boundsEl?.getBoundingClientRect();
     const right = bounds ? bounds.right : document.documentElement.clientWidth;
+    const gap = (boundsEl && parseFloat(getComputedStyle(boundsEl).columnGap)) || PREVIEW_GAP;
     const preview = {
-      left: outer.width + PREVIEW_GAP,
+      left: outer.width + gap,
       top: box.top - outer.top + content.top,
-      width: Math.min(content.width, right - outer.right - PREVIEW_GAP),
+      width: Math.min(content.width, right - outer.right - gap),
       height: content.height,
     };
     const view =

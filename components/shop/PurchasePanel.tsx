@@ -97,7 +97,7 @@ export function PurchasePanel({
   };
 
   return (
-    <div className="flex flex-col gap-5" data-testid="purchase-panel">
+    <div className="flex flex-col gap-4" data-testid="purchase-panel">
       <PriceTag price={price} size="lg" />
 
       {children}

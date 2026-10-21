@@ -84,9 +84,9 @@ test.describe("shop", () => {
     await expect(info.getByRole("group", { name: /images$/ })).toHaveCount(0);
     await expect(page.getByTestId("highlights").getByRole("listitem")).toHaveCount(3);
 
-    // Every details section is open; only the Q&A answers sit in an accordion.
-    const details = page.getByTestId("product-details");
-    for (const title of [
+    // Folder tabs: Overview first and alone; each tab replaces the panel.
+    const tabs = page.getByRole("tablist", { name: "Product details" }).getByRole("tab");
+    await expect(tabs).toHaveText([
       "Overview",
       "Key ingredients",
       "How to use",
@@ -94,31 +94,146 @@ test.describe("shop", () => {
       "Specifications",
       "Questions & answers",
       "Reviews",
-    ]) {
-      await expect(details.getByRole("heading", { level: 2, name: title })).toBeVisible();
-      await expect(details.getByRole("navigation", { name: "Product details" }).getByRole("link", { name: title })).toHaveAttribute("href", /^#/);
-    }
-    const ingredients = page.getByRole("region", { name: "Key ingredients" });
+    ]);
+    await expect(page.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tabpanel")).toHaveCount(1);
+    // The description appears exactly once, in Overview.
+    await expect(page.getByText(/nourishes and refreshes the scalp/i)).toHaveCount(1);
+    await expect(page.getByRole("tabpanel", { name: "Overview" })).toContainText(/nourishes and refreshes the scalp/i);
+    await page.getByRole("tab", { name: "Key ingredients" }).click();
+    const ingredients = page.getByRole("tabpanel", { name: "Key ingredients" });
     await expect(ingredients.getByText("Caffeine", { exact: true })).toBeVisible();
     await expect(page.getByText("Key ingredients only — not the full ingredient list.")).toBeVisible();
-    await expect(page.getByText("Massage gently for 1–2 minutes. Do not rinse.")).toBeVisible();
-    await expect(page.getByText("For external use only. For adults.")).toBeVisible();
-    await expect(page.getByText(/patch test before first use/)).toBeVisible();
-    await expect(page.getByRole("region", { name: "Reviews" })).toContainText("No reviews yet.");
-    // The description and each ingredient benefit appear exactly once.
+    // Each ingredient benefit appears exactly once.
     const product = await page.getByTestId("product-detail").locator("..").innerText();
     expect(product.split("Refreshes and energizes the scalp").length - 1).toBe(1);
-    await expect(page.getByText(/nourishes and refreshes the scalp/i)).toHaveCount(1);
+    await page.getByRole("tab", { name: "How to use" }).click();
+    await expect(page.getByText("Massage gently for 1–2 minutes. Do not rinse.")).toBeVisible();
+    await expect(ingredients).toHaveCount(0);
+    await page.getByRole("tab", { name: "Cautions" }).click();
+    await expect(page.getByText("For external use only. For adults.")).toBeVisible();
+    await expect(page.getByText(/patch test before first use/)).toBeVisible();
+    await page.getByRole("tab", { name: "Reviews" }).click();
+    await expect(page.getByRole("tabpanel", { name: "Reviews" })).toContainText("No reviews yet.");
+    await expect(page.getByRole("tabpanel")).toHaveCount(1);
     // No invented commerce signals and no unconfirmed size.
     await expect(page.locator("main")).not.toContainText(/rating|★|sold|in stock|% off|free shipping|\b\d+\s?m[lL]\b/);
 
+    // Related products sit below and outside the tabs.
     const related = page.locator("section[aria-labelledby='related-heading']");
+    await expect(page.getByTestId("product-details").locator("#related-heading")).toHaveCount(0);
     await expect(related.getByTestId("product-card")).toHaveCount(3);
     await related.getByRole("link", { name: "Scalp Balance Daily Shampoo" }).click();
     await expect(page).toHaveURL(/\/shop\/scalp-balance-daily-shampoo$/);
+    await expect(page.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
+    await page.getByRole("tab", { name: "Key ingredients" }).click();
     await expect(
-      page.getByRole("region", { name: "Key ingredients" }).getByText("Zinc PCA", { exact: true }),
+      page.getByRole("tabpanel", { name: "Key ingredients" }).getByText("Zinc PCA", { exact: true }),
     ).toBeVisible();
+  });
+
+  test("details tabs: hash links, back/forward, keyboard and mobile scrolling", async ({ page }, testInfo) => {
+    const handle = "hair-fall-defense-scalp-vitamin-serum";
+    const selected = (name: string) =>
+      expect(page.getByRole("tab", { name, exact: true })).toHaveAttribute("aria-selected", "true");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+
+    // Direct links select their tab on load and land below the fixed header.
+    for (const [hash, name] of [
+      ["ingredients", "Key ingredients"],
+      ["how-to-use", "How to use"],
+      ["cautions", "Cautions"],
+      ["questions", "Questions & answers"],
+    ] as const) {
+      await page.goto(`/shop/${handle}#${hash}`);
+      await selected(name);
+      await expect(page.getByRole("tabpanel")).toHaveCount(1);
+      await expect(page.getByRole("tabpanel", { name })).toBeVisible();
+      const header = (await page.locator(".site-header").boundingBox())!;
+      await expect
+        .poll(async () => (await page.locator(`#${hash}`).boundingBox())!.y, { message: hash })
+        .toBeGreaterThanOrEqual(header.y + header.height - 1);
+      await expect(page.locator(`#${hash}`)).toBeInViewport();
+    }
+
+    // Clicking updates the hash without a reload or a page jump.
+    await page.goto(`/shop/${handle}`);
+    await selected("Overview");
+    await page.evaluate(() => ((window as unknown as { __noReload: boolean }).__noReload = true));
+    const cautionsTab = page.getByRole("tab", { name: "Cautions" });
+    await cautionsTab.scrollIntoViewIfNeeded();
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await cautionsTab.click();
+    await expect(page).toHaveURL(/#cautions$/);
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - scrollBefore)).toBeLessThan(2);
+    await page.getByRole("tab", { name: "Specifications" }).click();
+    await expect(page).toHaveURL(/#specifications$/);
+    await expect(page.getByTestId("specifications")).toBeVisible();
+
+    // Back and forward follow the selection, without reloading.
+    await page.goBack();
+    await expect(page).toHaveURL(/#cautions$/);
+    await selected("Cautions");
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`/shop/${handle}$`));
+    await selected("Overview");
+    await page.goForward();
+    await selected("Cautions");
+    expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
+
+    // Arrow keys, Home and End move between tabs; inactive panels are not rendered.
+    await cautionsTab.focus();
+    await page.keyboard.press("Home");
+    await expect(page.getByRole("tab", { name: "Overview" })).toBeFocused();
+    await selected("Overview");
+    await page.keyboard.press("ArrowRight");
+    await selected("Key ingredients");
+    await expect(page).toHaveURL(/#ingredients$/);
+    await page.keyboard.press("End");
+    await selected("Reviews");
+    await page.keyboard.press("ArrowLeft");
+    await selected("Questions & answers");
+    await expect(page.getByRole("tab", { name: "Questions & answers" })).toBeFocused();
+    await expect(cautionsTab).toHaveAttribute("tabindex", "-1");
+    await expect(page.getByRole("tabpanel")).toHaveCount(1);
+    await expect(page.getByText("For external use only. For adults.")).toHaveCount(0);
+    // Tab moves from the tab list to the open panel, never into hidden content.
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("tabpanel", { name: "Questions & answers" })).toBeFocused();
+
+    // Q&A answer links open the How to use and Cautions tabs.
+    for (const [link, name] of [
+      ["See How to use", "How to use"],
+      ["See all cautions", "Cautions"],
+    ] as const) {
+      await page.goto(`/shop/${handle}#questions`);
+      const qa = page.getByRole("tabpanel", { name: "Questions & answers" });
+      for (const trigger of await qa.getByRole("button").all()) await trigger.click();
+      await qa.getByRole("link", { name: link }).first().click();
+      await selected(name);
+      await expect(page.getByRole("tabpanel", { name })).toBeVisible();
+      await expect(page.getByRole("tab", { name, exact: true })).toBeInViewport();
+    }
+
+    // The highlights link opens Key ingredients.
+    await page.goto(`/shop/${handle}`);
+    await page.getByRole("link", { name: "All key ingredients and what they do" }).click();
+    await selected("Key ingredients");
+
+    // Touch targets, and on phones a scrolling tab list that never widens the page.
+    for (const tab of await page.getByRole("tab").all()) {
+      expect((await tab.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
+    const list = page.getByRole("tablist", { name: "Product details" });
+    if (testInfo.project.name === "mobile") {
+      expect(await list.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+      await page.getByRole("tab", { name: "Overview" }).click();
+      await expect(page.getByTestId("tabs-more")).toHaveCSS("opacity", "1");
+      await page.getByRole("tab", { name: "Reviews" }).click();
+      await expect(page.getByRole("tab", { name: "Reviews" })).toBeInViewport({ ratio: 1 });
+    }
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
   });
 
   test("questions & answers: product-specific, accessible accordion between Specifications and Reviews", async ({
@@ -151,17 +266,24 @@ test.describe("shop", () => {
     for (const { handle } of PRODUCTS) {
       const want = expected[handle];
       await page.goto(`/shop/${handle}`);
-      const section = page.getByRole("region", { name: "Questions & answers" });
+
+      // Tab order: Specifications, then Q&A, then Reviews.
+      const order = await page.getByRole("tab").evaluateAll((els) => els.map((el) => el.id));
+      expect(order.slice(-3), handle).toEqual(["specifications", "questions", "reviews"]);
+
+      // The tab lands below the fixed header and shows the Q&A panel.
+      const tab = page.getByRole("tab", { name: "Questions & answers" });
+      await tab.click();
+      await expect(page).toHaveURL(new RegExp(`#questions$`));
+      const headerHeight = (await page.locator(".site-header").boundingBox())!.height;
+      await expect
+        .poll(async () => (await tab.boundingBox())!.y, { message: handle })
+        .toBeGreaterThanOrEqual(headerHeight);
+      const section = page.getByRole("tabpanel", { name: "Questions & answers" });
       await expect(section.getByRole("heading", { level: 2 })).toHaveText("Questions & answers");
       await expect(section).toContainText("editorial guidance");
       await expect(section).not.toContainText(/verified|helpful|ask a question/i);
       await expect(section.locator("form, input, textarea")).toHaveCount(0);
-
-      // Reading order: Specifications, then Q&A, then Reviews.
-      const order = await page
-        .locator("[data-testid='product-details'] section[id]")
-        .evaluateAll((els) => els.map((el) => el.id));
-      expect(order.slice(-3), handle).toEqual(["specifications", "questions", "reviews"]);
 
       const triggers = section.getByRole("button");
       await expect(triggers).toHaveCount(want.count);
@@ -169,15 +291,6 @@ test.describe("shop", () => {
         await expect(trigger).toHaveAttribute("aria-expanded", "false");
         expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
       }
-
-      // Anchor from the section nav lands below the fixed header.
-      await page.getByRole("navigation", { name: "Product details" }).getByRole("link", { name: "Questions & answers" }).click();
-      await expect(page).toHaveURL(new RegExp(`#questions$`));
-      const headerHeight = (await page.locator(".site-header").boundingBox())!.height;
-      await expect
-        .poll(async () => (await section.boundingBox())!.y, { message: handle })
-        .toBeGreaterThanOrEqual(headerHeight);
-      await expect(section.getByRole("heading", { level: 2 })).toBeInViewport();
 
       // Mouse opens and closes.
       const trigger = section.getByRole("button", { name: want.question });
@@ -394,6 +507,74 @@ test.describe("shop", () => {
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
       expect(overflow, path).toBeLessThanOrEqual(0);
+    }
+  });
+});
+
+// P4-P20: compact shop cards and a ~400px gallery beside a matching purchase column.
+test.describe("compact shop and purchase area", () => {
+  test.beforeEach(({ page }, testInfo) => {
+    void page;
+    test.skip(testInfo.project.name !== "desktop", "sets its own viewports");
+  });
+
+  test("shop cards: four ~250px across, two on tablet, one on phones; serum last", async ({ page }) => {
+    for (const [width, columns] of [
+      [1440, 4],
+      [768, 2],
+      [390, 1],
+    ] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/shop");
+      const cards = page.getByTestId("product-card");
+      await expect(cards).toHaveCount(4);
+      await expect(cards.last().getByRole("heading", { level: 3 })).toHaveText(PRODUCTS[3].name);
+      const boxes = await cards.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { y: Math.round(r.y + window.scrollY), w: r.width };
+        }),
+      );
+      expect(new Set(boxes.map((b) => b.y)).size, `rows at ${width}`).toBe(4 / columns);
+      if (width === 1440) {
+        for (const b of boxes) {
+          expect(b.w).toBeGreaterThanOrEqual(240);
+          expect(b.w).toBeLessThanOrEqual(270);
+        }
+      }
+      const title = cards.first().getByRole("heading", { level: 3 });
+      const size = parseFloat(await title.evaluate((el) => getComputedStyle(el).fontSize));
+      expect(size, `title at ${width}`).toBeGreaterThanOrEqual(20);
+      expect(size, `title at ${width}`).toBeLessThanOrEqual(24);
+      await expect(cards.first().locator("p").first()).toHaveCSS("font-size", "16px");
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `overflow at ${width}`).toBeLessThanOrEqual(0);
+    }
+  });
+
+  test("product page: ~400px gallery, compact title and details 24–32px below", async ({ page }) => {
+    for (const { handle } of PRODUCTS) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(`/shop/${handle}`);
+      const gallery = (await page.getByTestId("product-gallery").getByTestId("product-image").boundingBox())!;
+      expect(gallery.width, handle).toBeGreaterThanOrEqual(380);
+      expect(gallery.width, handle).toBeLessThanOrEqual(420);
+      const h1 = parseFloat(await page.getByRole("heading", { level: 1 }).evaluate((el) => getComputedStyle(el).fontSize));
+      expect(h1).toBeGreaterThanOrEqual(30);
+      expect(h1).toBeLessThanOrEqual(36);
+      const detail = (await page.getByTestId("product-detail").boundingBox())!;
+      const tabs = (await page.getByRole("tablist", { name: "Product details" }).boundingBox())!;
+      const gap = tabs.y - (detail.y + detail.height);
+      expect(gap, handle).toBeGreaterThanOrEqual(24);
+      expect(gap, handle).toBeLessThanOrEqual(32);
+      for (const name of ["Add to bag", "Buy now"]) {
+        expect((await page.getByRole("button", { name }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      }
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      const mobile = parseFloat(await page.getByRole("heading", { level: 1 }).evaluate((el) => getComputedStyle(el).fontSize));
+      expect(mobile).toBeGreaterThanOrEqual(26);
+      expect(mobile).toBeLessThanOrEqual(30);
     }
   });
 });

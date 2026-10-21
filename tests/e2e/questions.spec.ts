@@ -84,8 +84,10 @@ test.describe("homepage questions & answers", () => {
       expect((await request.get(route)).status(), href).toBe(200);
       if (hash) {
         const target = await page.context().newPage();
-        await target.goto(route);
+        await target.goto(href);
         await expect(target.locator(`#${hash}`), href).toHaveCount(1);
+        // Product-page anchors are detail tabs: the link opens its tab.
+        if (route.startsWith("/shop/")) await expect(target.locator(`#${hash}`), href).toHaveAttribute("aria-selected", "true");
         await target.close();
       }
     }
@@ -131,7 +133,7 @@ test.describe("homepage questions & answers", () => {
   });
 
   test("product-page Q&A is still in place", async ({ page }) => {
-    await page.goto("/shop/hair-fall-defense-shampoo");
-    await expect(page.getByTestId("product-questions")).toHaveCount(1);
+    await page.goto("/shop/hair-fall-defense-shampoo#questions");
+    await expect(page.getByRole("tabpanel", { name: "Questions & answers" }).getByTestId("product-questions")).toHaveCount(1);
   });
 });

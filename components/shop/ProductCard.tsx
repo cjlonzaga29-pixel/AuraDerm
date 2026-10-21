@@ -29,11 +29,11 @@ export function ProductCard({
         image={product.images[0]}
         className="aspect-[4/5] rounded-none"
       />
-      <div className={cn("flex flex-1 flex-col", compact ? "gap-1.5 p-4 sm:p-5" : "gap-2 p-5 sm:p-6")}>
+      <div className={cn("flex flex-1 flex-col", compact ? "gap-1.5 p-4 sm:p-5" : "gap-1.5 p-4")}>
         <h3
           className={cn(
             "font-heading font-medium text-cream",
-            compact ? "text-[1.375rem] leading-[1.2]" : "text-[1.625rem] leading-tight",
+            compact ? "text-[1.375rem] leading-[1.2]" : "text-[1.25rem] leading-tight lg:text-[1.375rem]",
           )}
         >
           <Link
@@ -47,7 +47,7 @@ export function ProductCard({
         <div
           className={cn(
             "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-hairline",
-            compact ? "pt-3" : "pt-4",
+            "pt-3",
           )}
         >
           <PriceTag price={product.price} />

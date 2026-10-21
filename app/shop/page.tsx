@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 // The catalog has no categories (four hair-care products), so the collection
-// is a plain two-column grid without filter or sorting controls.
+// is a plain grid without filter or sorting controls: four ~250px cards on
+// wide screens, two on tablets, one readable card on phones.
 export default function ShopPage() {
   const products = getShopProducts();
 
@@ -35,7 +36,7 @@ export default function ShopPage() {
                 <h2 id="products-heading" className="sr-only">
                   Products
                 </h2>
-                <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:gap-8">
+                <ul className="mx-auto grid max-w-sm grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
                   {products.map((product) => (
                     <li key={product.handle}>
                       <ProductCard product={product} />
