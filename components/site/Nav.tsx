@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { Container } from "@/components/ui/Container";
+import { Logo } from "@/components/site/Logo";
 import { MenuToggle } from "@/components/site/MenuToggle";
 import { Button } from "@/components/ui/button";
 import { site } from "@/content/site";
@@ -56,13 +56,7 @@ export function Nav({ variant = "home" }: { variant?: "home" | "page" }) {
     >
       <Container>
         <div className="flex h-16 items-center justify-between gap-6 lg:h-20">
-          <Link href="/" className="flex flex-col leading-none">
-            {/* [CONTENT: vector logo] — text lockup placeholder */}
-            <span className="font-display text-lg text-gold">AURADERM</span>
-            <span className="font-sans text-[0.625rem] uppercase tracking-[0.24em] text-cream">
-              Botanicals
-            </span>
-          </Link>
+          <Logo />
 
           <nav className="hidden items-center gap-9 lg:flex" aria-label="Primary">
             {links.map((link) => (

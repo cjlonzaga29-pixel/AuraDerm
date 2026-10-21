@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
+import { Logo } from "@/components/site/Logo";
 import { site } from "@/content/site";
 
 const NAV_LINKS = [
@@ -20,11 +21,8 @@ export function Footer() {
     >
       <Container className="flex flex-col gap-8 py-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          <div className="flex flex-col leading-none">
-            <span className="font-display text-lg text-gold">AURADERM</span>
-            <span className="font-sans text-[0.625rem] uppercase tracking-[0.24em] text-sage-muted">
-              Botanicals
-            </span>
+          <div className="shrink-0">
+            <Logo variant="footer" />
           </div>
 
           <nav className="flex flex-wrap gap-x-8 gap-y-4" aria-label="Footer">
