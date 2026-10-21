@@ -728,3 +728,73 @@ test.describe("square gallery and balanced purchase grid", () => {
     });
   }
 });
+
+// P4-P27: quantity, Add to bag and Buy now share one row; the notice sits below.
+test.describe("purchase controls in one row", () => {
+  test.beforeEach(({ page }, testInfo) => {
+    void page;
+    test.skip(testInfo.project.name !== "desktop", "sets its own viewports");
+  });
+
+  for (const { handle } of PRODUCTS) {
+    test(`${handle}: quantity | Add to bag | Buy now on one row at 390, 768 and 1440`, async ({ page }) => {
+      for (const width of [390, 768, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`/shop/${handle}`);
+        const at = `${handle} @${width}`;
+        const area = panel(page);
+        const qty = (await area.getByRole("group", { name: "Quantity" }).boundingBox())!;
+        const add = (await area.getByRole("button", { name: "Add to bag" }).boundingBox())!;
+        const buy = (await area.getByRole("button", { name: "Buy now" }).boundingBox())!;
+        const note = (await area.getByText("Sample price for testing only.").boundingBox())!;
+        const box = (await area.boundingBox())!;
+
+        // Left to right, vertically aligned, not overlapping.
+        expect(qty.x + qty.width, at).toBeLessThanOrEqual(add.x);
+        expect(add.x + add.width, at).toBeLessThanOrEqual(buy.x);
+        for (const b of [add, buy]) {
+          expect(Math.abs(b.y + b.height / 2 - (qty.y + qty.height / 2)), at).toBeLessThanOrEqual(1);
+          expect(b.height, at).toBeGreaterThanOrEqual(44);
+        }
+        expect(Math.abs(add.height - buy.height), at).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(add.width - buy.width), at).toBeLessThanOrEqual(1);
+        expect(buy.x + buy.width, at).toBeLessThanOrEqual(box.x + box.width + 0.5);
+        expect(note.y, at).toBeGreaterThan(buy.y + buy.height);
+
+        // Labels are not clipped.
+        const clipped = await area.locator("button").evaluateAll((els) => els.filter((el) => el.scrollWidth > el.clientWidth).length);
+        expect(clipped, at).toBe(0);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        expect(overflow, at).toBeLessThanOrEqual(0);
+      }
+
+      // Keyboard order follows the visual order.
+      await panel(page).getByRole("button", { name: /Increase quantity/ }).click();
+      await panel(page).getByRole("button", { name: /Decrease quantity/ }).focus();
+      const order: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        await page.keyboard.press("Tab");
+        order.push(await page.evaluate(() => document.activeElement?.textContent?.trim() || document.activeElement?.getAttribute("aria-label") || ""));
+      }
+      expect(order[0]).toMatch(/^Increase quantity/);
+      expect(order.slice(1)).toEqual(["Add to bag", "Buy now"]);
+    });
+  }
+
+  test("Add to bag adds the selected quantity", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/shop/${PRODUCTS[1].handle}`);
+    const p = panel(page);
+    await p.getByRole("button", { name: /Increase quantity/ }).click();
+    await p.getByRole("button", { name: /Increase quantity/ }).click();
+    await expect(p.getByTestId("quantity-value")).toHaveText("3");
+    await p.getByRole("button", { name: "Add to bag" }).click();
+    const bag = page.getByRole("dialog", { name: "Your Bag" });
+    await expect(bag).toBeVisible();
+    const lines = await page.evaluate(() => JSON.parse(localStorage.getItem("auraderm_cart_v2") ?? "null"));
+    await expect(bag).toContainText(PRODUCTS[1].name);
+    expect(JSON.stringify(lines)).toMatch(/"quantity":3/);
+  });
+});
+
+const panel = (page: Page) => page.getByTestId("purchase-panel");

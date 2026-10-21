@@ -102,47 +102,56 @@ export function PurchasePanel({
 
       {children}
 
-      <div ref={controlsRef} className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            role="group"
-            aria-label="Quantity"
-            className="flex h-11 items-center gap-1 rounded-full border border-glass-border px-1"
+      {/* One row: quantity at its intrinsic width, then Add to bag and Buy now
+          sharing the rest equally. Each button keeps its whole label
+          (min-w-max), so when even that cannot fit (very narrow screens,
+          enlarged text) Buy now wraps to a full-width line instead of
+          clipping. */}
+      <div ref={controlsRef} className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div
+          role="group"
+          aria-label="Quantity"
+          className="flex h-11 shrink-0 items-center gap-1 rounded-full border border-glass-border px-1"
+        >
+          <button
+            type="button"
+            aria-label={`Decrease quantity of ${name}`}
+            disabled={quantity <= 1}
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            className="flex size-9 items-center justify-center rounded-full text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
           >
-            <button
-              type="button"
-              aria-label={`Decrease quantity of ${name}`}
-              disabled={quantity <= 1}
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex size-9 items-center justify-center rounded-full text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
-            >
-              <Minus className="size-4" aria-hidden="true" />
-            </button>
-            <output
-              aria-live="polite"
-              aria-label="Selected quantity"
-              data-testid="quantity-value"
-              className="min-w-[2ch] text-center font-sans text-sm text-cream"
-            >
-              {quantity}
-            </output>
-            <button
-              type="button"
-              aria-label={`Increase quantity of ${name}`}
-              disabled={quantity >= MAX_LINE_QUANTITY}
-              onClick={() => setQuantity((q) => Math.min(MAX_LINE_QUANTITY, q + 1))}
-              className="flex size-9 items-center justify-center rounded-full text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-
-          <Button variant="primary" size="cta" className="min-w-0 flex-1" onClick={addToBag}>
-            Add to bag
-          </Button>
+            <Minus className="size-4" aria-hidden="true" />
+          </button>
+          <output
+            aria-live="polite"
+            aria-label="Selected quantity"
+            data-testid="quantity-value"
+            className="min-w-[2ch] text-center font-sans text-sm text-cream"
+          >
+            {quantity}
+          </output>
+          <button
+            type="button"
+            aria-label={`Increase quantity of ${name}`}
+            disabled={quantity >= MAX_LINE_QUANTITY}
+            onClick={() => setQuantity((q) => Math.min(MAX_LINE_QUANTITY, q + 1))}
+            className="flex size-9 items-center justify-center rounded-full text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+          </button>
         </div>
 
-        <Button variant="quiet" size="cta" className="w-full" onClick={buyNow}>
+        <Button
+          variant="primary"
+          size="cta"
+          // Transparent border: same box as the outlined Buy now, so equal widths.
+          className="min-w-max flex-1 basis-0 border border-transparent px-3 sm:px-6"
+          onClick={addToBag}
+        >
+          Add to bag
+        </Button>
+
+        <Button variant="quiet" size="cta" className="min-w-max flex-1 basis-0 px-3 sm:px-6" onClick={buyNow}>
           Buy now
         </Button>
       </div>
