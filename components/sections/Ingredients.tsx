@@ -5,7 +5,9 @@ import { MediaSlot } from "@/components/ui/MediaSlot";
 import { site } from "@/content/site";
 
 // Three wide botanical tiles, each linking to the products whose label lists
-// that ingredient. Open composition — image over caption, no surrounding panel.
+// that ingredient. Open composition — image over caption, no surrounding panel;
+// captions cross the bottle and falls, so they take the dense scrim. Product
+// links stack one per line under a "Found in" label.
 export function Ingredients() {
   const { ingredientsIntro, ingredients, products } = site;
 
@@ -21,28 +23,27 @@ export function Ingredients() {
           {ingredients.map((ingredient) => (
             <li key={ingredient.order} className="flex flex-col gap-5">
               <MediaSlot slot={ingredient.media} />
-              <div className="text-scrim flex flex-col gap-1">
+              <div className="text-scrim text-scrim-dense glass-text flex flex-col gap-1">
                 <h3 className="font-heading text-2xl leading-tight font-medium text-cream">
                   {ingredient.name}
                 </h3>
                 <p className="font-sans text-base leading-relaxed text-cream">{ingredient.benefit}</p>
-                <p className="font-sans text-base leading-relaxed text-sage-muted">
-                  Found in{" "}
-                  {ingredient.foundIn.map((slug, i) => {
+                <p className="mt-2 font-sans text-sm text-sage-muted">Found in</p>
+                <ul className="flex flex-col items-start gap-1.5" aria-label={`Products with ${ingredient.name}`}>
+                  {ingredient.foundIn.map((slug) => {
                     const product = products.find((p) => p.slug === slug);
                     return (
-                      <span key={slug}>
-                        {i > 0 ? ", " : null}
+                      <li key={slug}>
                         <Link
                           href={`/shop/${slug}`}
-                          className="text-cream underline underline-offset-4 hover:text-gold"
+                          className="rounded-sm font-sans text-base leading-snug text-cream underline decoration-gold/50 underline-offset-4 hover:text-gold hover:decoration-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                         >
                           {product?.name.replace(/^Aura Derm /, "") ?? slug}
                         </Link>
-                      </span>
+                      </li>
                     );
                   })}
-                </p>
+                </ul>
               </div>
             </li>
           ))}

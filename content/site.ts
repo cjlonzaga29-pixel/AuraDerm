@@ -177,7 +177,7 @@ export const site: Site = {
     headline: "Rooted in nature. Made for your hair.",
     accentWord: "hair.",
     subcopy:
-      "Explore daily cleansing, conditioning and scalp care for softer, stronger, fuller-looking hair.",
+      "Explore daily cleansing, conditioning, and scalp care for softer, stronger, fuller-looking hair.",
     primaryCta: {
       label: "Shop now",
       href: "/shop",
@@ -194,7 +194,7 @@ export const site: Site = {
   editorial: {
     headline: "Care from scalp to strand.",
     accentWord: "strand.",
-    body: "Explore cleansing, conditioning and leave-on scalp care, with ingredients selected for each step.",
+    body: "Explore cleansing, conditioning, and leave-on scalp care with ingredients selected for each step.",
     cta: { label: "Explore the routine", href: "#routine" },
     media: {
       id: "home-editorial",
@@ -217,12 +217,12 @@ export const site: Site = {
     headline: "Inside the formula",
     productSlug: "hair-fall-defense-scalp-vitamin-serum",
     callouts: [
-      { name: "Niacinamide", benefit: "Scalp conditioning." },
-      { name: "Caffeine", benefit: "Refreshes and energizes the scalp." },
-      { name: "Peppermint Oil", benefit: "A light cooling sensation." },
+      { name: "Niacinamide", benefit: "Scalp conditioning" },
+      { name: "Caffeine", benefit: "Refreshes and energizes the scalp" },
+      { name: "Peppermint Oil", benefit: "A light cooling sensation" },
     ],
     cta: {
-      label: "View Hair Fall Defense Scalp Vitamin Serum",
+      label: "Explore the scalp serum",
       href: "/shop/hair-fall-defense-scalp-vitamin-serum",
     },
     media: {
@@ -287,7 +287,7 @@ export const site: Site = {
           illustrative: true,
         },
       ],
-      shortDescription: "Silicone-free conditioner that detangles, softens and strengthens.",
+      shortDescription: "Silicone-free conditioner that detangles, softens, and strengthens.",
     },
     {
       slug: "hair-fall-defense-scalp-vitamin-serum",
@@ -345,7 +345,7 @@ export const site: Site = {
       order: 1,
       word: "ALOE VERA",
       name: "Aloe Vera",
-      benefit: "Soothes the scalp and softens hair.",
+      benefit: "Soothes the scalp and softens hair",
       media: {
         id: "home-ingredient-aloe-vera",
         subject: "Cut aloe vera leaves showing their gel",
@@ -363,7 +363,7 @@ export const site: Site = {
       order: 2,
       word: "BATANA OIL",
       name: "Batana Oil",
-      benefit: "Nourishes hair and scalp.",
+      benefit: "Nourishes hair and scalp",
       media: {
         id: "home-ingredient-batana-oil",
         subject: "Palm fruit beside a bowl of oil",
@@ -385,7 +385,7 @@ export const site: Site = {
       order: 3,
       word: "ROSEMARY",
       name: "Rosemary",
-      benefit: "Part of a botanical scalp-care complex.",
+      benefit: "Part of a botanical scalp-care complex",
       media: {
         id: "home-ingredient-rosemary",
         subject: "Fresh rosemary sprigs",

@@ -157,6 +157,15 @@ describe("contrastRatio", () => {
     expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
   });
 
+  // P4-P24: .text-scrim-dense (editorial + ingredient captions) fills with
+  // --glass-solid feathered by blur(16px) from a 1.5rem inset; at the text
+  // edge the gaussian leaves ~93% of it, so 0.78 is the floor inside the text.
+  it("cream and sage-muted on the dense scrim edge over BRIGHT_FRAME are at least 4.5:1", () => {
+    const blended = blendOver("rgba(9,22,17,0.78)", BRIGHT_FRAME);
+    expect(contrastRatio(CREAM, blended)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(SAGE_MUTED, blended)).toBeGreaterThanOrEqual(4.5);
+  });
+
   // Champagne is reserved for large heading accents (h1/h2, >= 30px) and
   // fills; it is never small text over footage, where it cannot reach 4.5:1.
   it("champagne accent on the text scrim over BRIGHT_FRAME is at least 3:1 (large text only)", () => {

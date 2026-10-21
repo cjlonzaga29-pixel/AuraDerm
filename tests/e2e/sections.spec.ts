@@ -24,12 +24,35 @@ test.describe("sections 3-5", () => {
     await expect(page.locator("#formula img")).toHaveAttribute("src", /spotlight-scalp-serum/);
     await expect(page.locator("#formula")).toContainText("Illustrative packaging");
     await expect(
-      page.locator("#formula").getByRole("link", { name: "View Hair Fall Defense Scalp Vitamin Serum" }),
+      page.locator("#formula").getByRole("link", { name: "Explore the scalp serum" }),
     ).toHaveAttribute("href", "/shop/hair-fall-defense-scalp-vitamin-serum");
     await expect(page.locator("#care").getByRole("link", { name: "Explore the routine" })).toHaveAttribute(
       "href",
       "#routine",
     );
+  });
+
+  // P4-P24: "Found in" is its own line; each product is a separate link in a
+  // list, mapped exactly as content/site.ts foundIn.
+  test("ingredient tiles list their products as separate links under Found in", async ({ page }) => {
+    await page.goto("/");
+    const expected: Record<string, string[]> = {
+      "Aloe Vera": ["/shop/hair-fall-defense-shampoo", "/shop/scalp-balance-daily-shampoo"],
+      "Batana Oil": [
+        "/shop/hair-fall-defense-shampoo",
+        "/shop/hair-fall-defense-conditioner",
+        "/shop/scalp-balance-daily-shampoo",
+      ],
+      Rosemary: ["/shop/hair-fall-defense-scalp-vitamin-serum", "/shop/scalp-balance-daily-shampoo"],
+    };
+    for (const [name, hrefs] of Object.entries(expected)) {
+      const list = page.getByRole("list", { name: `Products with ${name}` });
+      const links = list.getByRole("link");
+      await expect(links).toHaveCount(hrefs.length);
+      for (const [i, href] of hrefs.entries()) await expect(links.nth(i)).toHaveAttribute("href", href);
+    }
+    await expect(page.locator("#ingredients p", { hasText: /^Found in$/ })).toHaveCount(3);
+    await expect(page.locator("#ingredients")).not.toContainText(/hair\.|scalp\.|complex\./);
   });
 
   test("exactly one h1 on /; section headings are h2", async ({ page }) => {

@@ -100,7 +100,7 @@ export const PRODUCT_DETAILS: ProductDetails[] = [
   },
   {
     handle: "hair-fall-defense-conditioner",
-    subtitle: "Silicone-free conditioner that detangles, softens and strengthens",
+    subtitle: "Silicone-free conditioner that detangles, softens, and strengthens",
     description:
       "A creamy, silicone-free conditioner with a plant-based conditioning system. With Redensyl®, Bioran HG Factor, Batana, Argan and Jojoba Oils and Rice Protein to detangle, soften and strengthen hair, helping reduce hair fall due to breakage.",
     keyIngredients: [

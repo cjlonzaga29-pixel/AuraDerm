@@ -142,6 +142,17 @@ body {
   filter: blur(28px);
 }
 
+/* Denser, tighter backing for copy that crosses detailed bright footage (the
+   falls and the bottle's label behind the editorial and ingredient captions),
+   where label lettering still reads through the base scrim. --glass-solid
+   with a shorter feather: still edge-less, still confined to the text block. */
+.text-scrim-dense::before {
+  inset: -1.5rem;
+  border-radius: 2rem;
+  background-color: var(--glass-solid);
+  filter: blur(16px);
+}
+
 /* Transparent smoked-glass surface for content panels (GlassPanel). Blur is
    panel-scoped only — never applied to the video or a full-bleed backdrop.
    Two tints share one border/radius/highlight treatment:

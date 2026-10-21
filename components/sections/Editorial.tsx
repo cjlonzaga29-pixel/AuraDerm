@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { site } from "@/content/site";
 
 // Alternating image/text: a wide landscape on the left, copy on the right set
-// on the footage with a feathered scrim rather than a card. Stacks image-first
-// below lg.
+// on the footage with a feathered scrim rather than a card. The copy can land
+// on the bottle's label and the falls, so it takes the dense scrim. Stacks
+// image-first below lg.
 export function Editorial() {
   const { editorial } = site;
 
@@ -15,7 +16,7 @@ export function Editorial() {
       <Container>
         <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
           <MediaSlot slot={editorial.media} />
-          <div className="text-scrim flex flex-col items-start gap-5">
+          <div className="text-scrim text-scrim-dense glass-text flex flex-col items-start gap-5">
             <DisplayHeading level="h2" accent={editorial.accentWord}>
               {editorial.headline}
             </DisplayHeading>

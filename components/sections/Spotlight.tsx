@@ -8,12 +8,14 @@ import { site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 // Grid placement around the central packshot from lg: two callouts left, one
-// right, with the product link beneath it. Below lg everything stacks in DOM
-// order — image, then the three callouts as rows.
+// right, with the product link beneath it. Row-2 items sit at the bottom of
+// their row and row-3 items at the top, so the callouts gather around the
+// image's midline instead of leaving empty bands beside it. Below lg
+// everything stacks in DOM order — image, then the three callouts as rows.
 const PLACEMENT = [
-  "lg:col-start-1 lg:row-start-2 lg:text-right",
-  "lg:col-start-3 lg:row-start-2",
-  "lg:col-start-1 lg:row-start-3 lg:text-right",
+  "lg:col-start-1 lg:row-start-2 lg:self-end lg:text-right",
+  "lg:col-start-3 lg:row-start-2 lg:self-end",
+  "lg:col-start-1 lg:row-start-3 lg:self-start lg:text-right",
 ];
 
 // One product, its three hero ingredients. The single glass panel on the page
@@ -27,7 +29,7 @@ export function Spotlight() {
     <section id="formula" className="py-8 lg:py-12">
       <Container>
         <GlassPanel className="p-6 sm:p-8 lg:p-12">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)_minmax(0,1fr)] lg:items-center lg:gap-x-12 lg:gap-y-6">
+          <div className="grid gap-6 lg:mx-auto lg:max-w-4xl lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)_minmax(0,1fr)] lg:items-center lg:gap-x-10 lg:gap-y-6">
             <div className="flex flex-col gap-3 lg:col-span-3 lg:items-center lg:text-center">
               <DisplayHeading level="h2">{spotlight.headline}</DisplayHeading>
               <p className="font-sans text-base leading-relaxed text-cream">
@@ -59,7 +61,7 @@ export function Spotlight() {
               ))}
             </ul>
 
-            <div className="lg:col-start-3 lg:row-start-3 lg:border-t lg:border-hairline lg:py-4">
+            <div className="lg:col-start-3 lg:row-start-3 lg:self-start lg:border-t lg:border-hairline lg:py-4">
               <Button variant="text" size="inline" href={spotlight.cta.href}>
                 {spotlight.cta.label}
               </Button>
