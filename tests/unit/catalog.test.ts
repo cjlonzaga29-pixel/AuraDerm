@@ -78,6 +78,19 @@ describe("shop catalog adapter", () => {
     expect(product.cartProduct).toBeNull();
   });
 
+  it("derives brand-free display names and categories, keeping full names", () => {
+    const serum = getShopProduct("hair-fall-defense-scalp-vitamin-serum")!;
+    expect(serum.name).toBe("Aura Derm Hair Fall Defense Scalp Vitamin Serum");
+    expect(serum.displayName).toBe("Hair Fall Defense Scalp Vitamin Serum");
+    expect(serum.category).toBe("Scalp serum");
+    expect(getShopProducts().map((p) => p.category)).toEqual([
+      "Shampoo",
+      "Conditioner",
+      "Scalp serum",
+      "Shampoo",
+    ]);
+  });
+
   it("uses no photography it does not have", () => {
     for (const product of getShopProducts()) {
       expect(product.images).toEqual([]);

@@ -1,13 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+// Visible headings drop the brand prefix (shown as a label); the full catalog
+// name stays in the page title.
 const PRODUCTS = [
-  { handle: "hair-fall-defense-shampoo", name: "Aura Derm Hair Fall Defense Shampoo" },
-  { handle: "hair-fall-defense-conditioner", name: "Aura Derm Hair Fall Defense Conditioner" },
-  {
-    handle: "hair-fall-defense-scalp-vitamin-serum",
-    name: "Aura Derm Hair Fall Defense Scalp Vitamin Serum",
-  },
-  { handle: "scalp-balance-daily-shampoo", name: "Aura Derm Scalp Balance Daily Shampoo" },
+  { handle: "hair-fall-defense-shampoo", name: "Hair Fall Defense Shampoo" },
+  { handle: "hair-fall-defense-conditioner", name: "Hair Fall Defense Conditioner" },
+  { handle: "hair-fall-defense-scalp-vitamin-serum", name: "Hair Fall Defense Scalp Vitamin Serum" },
+  { handle: "scalp-balance-daily-shampoo", name: "Scalp Balance Daily Shampoo" },
 ];
 
 test.describe("shop", () => {
@@ -18,7 +17,7 @@ test.describe("shop", () => {
     await expect(cta).toBeInViewport();
     await cta.click();
     await expect(page).toHaveURL(/\/shop$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Shop" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Hair & scalp care" })).toBeVisible();
   });
 
   test("Shop is reachable from the homepage navigation", async ({ page }, testInfo) => {
@@ -31,8 +30,9 @@ test.describe("shop", () => {
     }
     await expect(page).toHaveURL(/\/shop$/);
     await expect(page.getByTestId("product-card")).toHaveCount(4);
-    await expect(page.getByTestId("shop-preview-notice")).toBeVisible();
     await expect(page.getByText("Price coming soon", { exact: true })).toHaveCount(4);
+    await expect(page.getByText("Product photography coming soon")).toHaveCount(4);
+    await expect(page.locator("main")).not.toContainText(/filter|sort by|rating|in stock/i);
     await expect(page.locator("main")).not.toContainText(/[₱$]\s?\d/);
     await expect(page.locator("main")).not.toContainText(/concept|illustrative/i);
   });
@@ -43,31 +43,38 @@ test.describe("shop", () => {
       await page.getByRole("link", { name, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/shop/${handle}$`));
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
+      await expect(page).toHaveTitle(`Aura Derm ${name} · AuraDerm Botanicals`);
     }
   });
 
-  test("product page: label content, disabled purchase, related links", async ({ page }) => {
+  test("product page: label content, single availability block, related links", async ({ page }) => {
     await page.goto("/shop/hair-fall-defense-scalp-vitamin-serum");
-    await expect(page.getByText("Price coming soon").first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Add to bag" })).toBeDisabled();
-    await expect(page.getByText("Unavailable to add until a price is confirmed.")).toBeVisible();
-    await expect(page.getByText("Product image coming soon").first()).toBeVisible();
+    const info = page.getByTestId("product-detail");
+    await expect(info.getByText("Price coming soon", { exact: true })).toHaveCount(1);
+    await expect(page.getByText("Purchasing will be available once pricing is confirmed.")).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Add to bag" })).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Quantity" })).toHaveCount(0);
+    await expect(page.getByText("Product photography coming soon").first()).toBeVisible();
+    await expect(page.getByTestId("highlights").getByRole("listitem")).toHaveCount(3);
 
     await page.getByRole("button", { name: "Key ingredients" }).click();
-    await expect(page.getByText("Caffeine", { exact: true })).toBeVisible();
+    const ingredients = page.getByRole("region", { name: "Key ingredients" });
+    await expect(ingredients.getByText("Caffeine", { exact: true })).toBeVisible();
     await expect(page.getByText("Key ingredients only — not the full ingredient list.")).toBeVisible();
-    await page.getByRole("button", { name: "Directions" }).click();
+    await page.getByRole("button", { name: "How to use" }).click();
     await expect(page.getByText("Massage gently for 1–2 minutes. Do not rinse.")).toBeVisible();
-    await page.getByRole("button", { name: "Caution" }).click();
+    await page.getByRole("button", { name: "Cautions" }).click();
     await expect(page.getByText("For external use only. For adults.")).toBeVisible();
     await expect(page.getByText(/patch test before first use/)).toBeVisible();
 
     const related = page.locator("section[aria-labelledby='related-heading']");
     await expect(related.getByTestId("product-card")).toHaveCount(3);
-    await related.getByRole("link", { name: "Aura Derm Scalp Balance Daily Shampoo" }).click();
+    await related.getByRole("link", { name: "Scalp Balance Daily Shampoo" }).click();
     await expect(page).toHaveURL(/\/shop\/scalp-balance-daily-shampoo$/);
     await page.getByRole("button", { name: "Key ingredients" }).click();
-    await expect(page.getByText("Zinc PCA", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Key ingredients" }).getByText("Zinc PCA", { exact: true }),
+    ).toBeVisible();
   });
 
   test("stale demo cart is discarded, other storage is kept", async ({ page }) => {

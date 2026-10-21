@@ -2,31 +2,24 @@
 
 import { useState } from "react";
 import { ProductVisual } from "@/components/shop/ProductVisual";
-import type { ConceptVisual } from "@/lib/catalog";
+import type { ProductCategory } from "@/lib/catalog";
 
 type Props = {
   name: string;
-  concept: ConceptVisual;
+  category: ProductCategory;
   images: { src: string; alt: string }[];
+  className?: string;
 };
 
 // Thumbnails appear only when a product has more than one real image; with no
-// photography the labelled placeholder artwork stands in on its own.
-export function ProductGallery({ name, concept, images }: Props) {
+// photography the labelled placeholder stands in on its own, in the same frame.
+export function ProductGallery({ name, category, images, className }: Props) {
   const [active, setActive] = useState(0);
-
-  if (images.length === 0) {
-    return <ProductVisual concept={concept} name={name} />;
-  }
-
-  const current = images[Math.min(active, images.length - 1)];
+  const current = images.length > 0 ? images[Math.min(active, images.length - 1)] : undefined;
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="aspect-[4/5] w-full overflow-hidden rounded-card border border-hairline bg-forest">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={current.src} alt={current.alt} className="size-full object-cover" />
-      </div>
+      <ProductVisual name={name} category={category} image={current} className={className} />
       {images.length > 1 ? (
         <div className="grid grid-cols-5 gap-3" role="group" aria-label={`${name} images`}>
           {images.map((image, index) => (
@@ -36,7 +29,7 @@ export function ProductGallery({ name, concept, images }: Props) {
               aria-label={`Show image ${index + 1} of ${images.length}`}
               aria-pressed={index === active}
               onClick={() => setActive(index)}
-              className={`aspect-square overflow-hidden rounded-card border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`aspect-square overflow-hidden rounded-card border bg-linen transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 index === active ? "border-gold" : "border-hairline hover:border-gold/50"
               }`}
             >

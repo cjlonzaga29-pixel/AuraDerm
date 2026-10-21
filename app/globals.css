@@ -25,6 +25,12 @@
   --radius-panel: 20px;
   --radius-pill: 999px;
   --radius-card: 14px;
+  /* Shop surfaces (P4-P4): warm linen for product media, a lifted forest
+     panel for product copy, so both read apart from the forest-deep frame. */
+  --linen: #efe8da;
+  --linen-line: #d9cdb6;
+  --botanical-ink: #3f5a4b;
+  --forest-panel: #142a21;
 }
 
 @theme inline {
@@ -42,6 +48,10 @@
   --color-glass-highlight: var(--glass-highlight);
   --color-surface-nav: var(--surface-nav);
   --color-hairline: var(--hairline);
+  --color-linen: var(--linen);
+  --color-linen-line: var(--linen-line);
+  --color-botanical-ink: var(--botanical-ink);
+  --color-forest-panel: var(--forest-panel);
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
   --radius-card: var(--radius-card);
