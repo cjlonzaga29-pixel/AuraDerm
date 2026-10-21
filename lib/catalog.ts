@@ -1,5 +1,5 @@
 import { site, type ProductImageView } from "@/content/site";
-import { getProductDetails, type KeyIngredient } from "@/content/products";
+import { getProductDetails, type KeyIngredient, type ProductQuestion } from "@/content/products";
 import type { Product } from "@/types/store";
 
 export type CatalogImage = {
@@ -36,6 +36,8 @@ export type ShopProduct = {
   keyIngredients: KeyIngredient[];
   directions: string[];
   cautions: string[];
+  /** Editorial questions and answers drawn from the copy above. */
+  questions: ProductQuestion[];
   /** Front view first; further views (back, front/back) follow in gallery order. */
   images: CatalogImage[];
   /** Placeholder artwork used for products without an image. */
@@ -102,6 +104,7 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
     keyIngredients: details?.keyIngredients ?? [],
     directions: details?.directions ?? [],
     cautions: details?.cautions ?? [],
+    questions: details?.questions ?? [],
     images,
     concept: CONCEPTS[entry.slug] ?? "hydrate",
     price,

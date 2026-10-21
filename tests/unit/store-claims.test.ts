@@ -28,6 +28,14 @@ describe("product details claims guard", () => {
           expect(findClaims(line)).toEqual([]);
         }
       });
+
+      it("questions and answers clear the claims guard", () => {
+        for (const { question, answer, links = [] } of product.questions) {
+          for (const text of [question, answer, ...links.map((l) => l.label)]) {
+            expect(findClaims(text)).toEqual([]);
+          }
+        }
+      });
     });
   }
 });

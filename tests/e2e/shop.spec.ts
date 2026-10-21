@@ -84,9 +84,17 @@ test.describe("shop", () => {
     await expect(info.getByRole("group", { name: /images$/ })).toHaveCount(0);
     await expect(page.getByTestId("highlights").getByRole("listitem")).toHaveCount(3);
 
-    // Every details section is open: no accordion to click through.
+    // Every details section is open; only the Q&A answers sit in an accordion.
     const details = page.getByTestId("product-details");
-    for (const title of ["Overview", "Key ingredients", "How to use", "Cautions", "Specifications", "Reviews"]) {
+    for (const title of [
+      "Overview",
+      "Key ingredients",
+      "How to use",
+      "Cautions",
+      "Specifications",
+      "Questions & answers",
+      "Reviews",
+    ]) {
       await expect(details.getByRole("heading", { level: 2, name: title })).toBeVisible();
       await expect(details.getByRole("navigation", { name: "Product details" }).getByRole("link", { name: title })).toHaveAttribute("href", /^#/);
     }
@@ -111,6 +119,112 @@ test.describe("shop", () => {
     await expect(
       page.getByRole("region", { name: "Key ingredients" }).getByText("Zinc PCA", { exact: true }),
     ).toBeVisible();
+  });
+
+  test("questions & answers: product-specific, accessible accordion between Specifications and Reviews", async ({
+    page,
+  }) => {
+    const expected: Record<string, { count: number; question: string; answer: RegExp }> = {
+      "hair-fall-defense-shampoo": {
+        count: 6,
+        question: "How do I use this shampoo?",
+        answer: /massage it into the scalp to a lather for 1–2 minutes/,
+      },
+      "hair-fall-defense-conditioner": {
+        count: 6,
+        question: "How long should I leave it on?",
+        answer: /Leave it on for 2–3 minutes/,
+      },
+      "scalp-balance-daily-shampoo": {
+        count: 5,
+        question: "How often should I use it?",
+        answer: /daily, or at least 2–3 times a week/,
+      },
+      "hair-fall-defense-scalp-vitamin-serum": {
+        count: 6,
+        question: "What should I do before first use?",
+        answer: /patch test: apply a small amount behind the ear and wait 24 hours.*for adults/,
+      },
+    };
+    // Instant anchor jumps: smooth scrolling makes the landing position timing-dependent.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    for (const { handle } of PRODUCTS) {
+      const want = expected[handle];
+      await page.goto(`/shop/${handle}`);
+      const section = page.getByRole("region", { name: "Questions & answers" });
+      await expect(section.getByRole("heading", { level: 2 })).toHaveText("Questions & answers");
+      await expect(section).toContainText("editorial guidance");
+      await expect(section).not.toContainText(/verified|helpful|ask a question/i);
+      await expect(section.locator("form, input, textarea")).toHaveCount(0);
+
+      // Reading order: Specifications, then Q&A, then Reviews.
+      const order = await page
+        .locator("[data-testid='product-details'] section[id]")
+        .evaluateAll((els) => els.map((el) => el.id));
+      expect(order.slice(-3), handle).toEqual(["specifications", "questions", "reviews"]);
+
+      const triggers = section.getByRole("button");
+      await expect(triggers).toHaveCount(want.count);
+      for (const trigger of await triggers.all()) {
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+        expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      }
+
+      // Anchor from the section nav lands below the fixed header.
+      await page.getByRole("navigation", { name: "Product details" }).getByRole("link", { name: "Questions & answers" }).click();
+      await expect(page).toHaveURL(new RegExp(`#questions$`));
+      const headerHeight = (await page.locator(".site-header").boundingBox())!.height;
+      await expect
+        .poll(async () => (await section.boundingBox())!.y, { message: handle })
+        .toBeGreaterThanOrEqual(headerHeight);
+      await expect(section.getByRole("heading", { level: 2 })).toBeInViewport();
+
+      // Mouse opens and closes.
+      const trigger = section.getByRole("button", { name: want.question });
+      await trigger.click();
+      await expect(trigger).toHaveAttribute("aria-expanded", "true");
+      const panel = section.getByRole("region", { name: want.question });
+      await expect(panel).toBeVisible();
+      await expect(panel).toContainText(want.answer);
+      await trigger.click();
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(panel).toBeHidden();
+
+      // Enter and Space toggle the focused question.
+      const first = triggers.first();
+      await first.focus();
+      await page.keyboard.press("Enter");
+      await expect(first).toHaveAttribute("aria-expanded", "true");
+      await page.keyboard.press("Space");
+      await expect(first).toHaveAttribute("aria-expanded", "false");
+      await page.keyboard.press("Space");
+      await expect(first).toHaveAttribute("aria-expanded", "true");
+
+      // Open everything: no overflow, and the last answer clears the sticky bar.
+      for (const t of await triggers.all()) {
+        if ((await t.getAttribute("aria-expanded")) === "false") await t.click();
+      }
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, handle).toBeLessThanOrEqual(0);
+      const lastAnswer = section.locator("[data-slot='accordion-content']").last();
+      await lastAnswer.scrollIntoViewIfNeeded();
+      const bar = page.getByTestId("sticky-purchase-bar");
+      if (await bar.isVisible()) {
+        const answerBox = (await lastAnswer.boundingBox())!;
+        expect(answerBox.y + answerBox.height).toBeLessThanOrEqual((await bar.boundingBox())!.y + 1);
+      }
+
+      // In-answer links resolve: section anchors exist, product links return 200.
+      for (const href of await section.locator("a").evaluateAll((els) => els.map((el) => el.getAttribute("href")!))) {
+        if (href.startsWith("#")) {
+          await expect(page.locator(href), `${handle} ${href}`).toHaveCount(1);
+        } else {
+          expect((await page.request.get(href)).status(), href).toBe(200);
+        }
+      }
+    }
   });
 
   test("every product image loads, matches its product and is not cropped", async ({ page }) => {
@@ -274,7 +388,7 @@ test.describe("shop", () => {
   });
 
   test("no horizontal overflow on shop pages", async ({ page }) => {
-    for (const path of ["/shop", "/shop/hair-fall-defense-scalp-vitamin-serum", "/checkout"]) {
+    for (const path of ["/shop", ...PRODUCTS.map((p) => `/shop/${p.handle}`), "/checkout"]) {
       await page.goto(path);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

@@ -228,6 +228,11 @@ body {
   body[data-sticky-purchase="on"] {
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
   }
+
+  /* Keyboard focus and anchor jumps stop above the bar, not beneath it. */
+  html:has(body[data-sticky-purchase="on"]) {
+    scroll-padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
 }
 
 body:has([role="dialog"][data-state="open"]) [data-sticky-purchase] {

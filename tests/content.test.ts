@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { site } from "@/content/site";
-import { getProductDetails } from "@/content/products";
+import { PRODUCT_DETAILS, getProductDetails } from "@/content/products";
 
 const keyIngredientText = (slug: string) =>
   (getProductDetails(slug)?.keyIngredients ?? []).map((i) => i.name).join(" | ").toLowerCase();
@@ -110,6 +110,60 @@ describe("content model", () => {
 
   it("product display order names every product exactly once", () => {
     expect(site.productOrder.slice().sort()).toEqual(site.products.map((p) => p.slug).sort());
+  });
+});
+
+describe("product questions & answers", () => {
+  const handles = site.products.map((p) => p.slug);
+  const qa = (handle: string) =>
+    (getProductDetails(handle)?.questions ?? []).map((q) => `${q.question} ${q.answer}`).join(" ");
+
+  it("every catalog product has 4–6 distinct questions", () => {
+    for (const handle of handles) {
+      const questions = getProductDetails(handle)?.questions ?? [];
+      expect(questions.length, handle).toBeGreaterThanOrEqual(4);
+      expect(questions.length, handle).toBeLessThanOrEqual(6);
+      const asked = questions.map((q) => q.question);
+      expect(new Set(asked).size, handle).toBe(asked.length);
+    }
+  });
+
+  it("links point at a section the product renders or at a real product page", () => {
+    for (const product of PRODUCT_DETAILS) {
+      const sections: Record<string, boolean> = {
+        "#how-to-use": product.directions.length > 0,
+        "#cautions": product.cautions.length > 0,
+      };
+      for (const link of product.questions.flatMap((q) => q.links ?? [])) {
+        if (link.href.startsWith("#")) {
+          expect(sections[link.href], `${product.handle} ${link.href}`).toBe(true);
+        } else {
+          const handle = link.href.match(/^\/shop\/([a-z0-9-]+)$/)?.[1];
+          expect(handle && handles.includes(handle) && handle !== product.handle, link.href).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("answers keep each product's own directions", () => {
+    expect(qa("hair-fall-defense-shampoo")).toMatch(/to a lather for 1–2 minutes/);
+    expect(qa("hair-fall-defense-shampoo")).toMatch(/daily use/);
+    expect(qa("scalp-balance-daily-shampoo")).toMatch(/Leave the lather on for 1–2 minutes/);
+    expect(qa("scalp-balance-daily-shampoo")).toMatch(/at least 2–3 times a week/);
+    expect(qa("hair-fall-defense-conditioner")).toMatch(/from roots to ends/);
+    expect(qa("hair-fall-defense-conditioner")).toMatch(/Leave it on for 2–3 minutes/);
+    expect(qa("hair-fall-defense-conditioner")).toMatch(/rinse thoroughly/);
+    const serum = qa("hair-fall-defense-scalp-vitamin-serum");
+    expect(serum).toMatch(/do not rinse/i);
+    expect(serum).toMatch(/for adults/);
+    expect(serum).toMatch(/patch test: apply a small amount behind the ear and wait 24 hours/);
+  });
+
+  it("answers add no suitability, results, timelines or commerce claims", () => {
+    const text = handles.map(qa).join(" ");
+    expect(text).not.toMatch(
+      /pregnan|breastfeed|child|kids|sensitive|colou?r-treated|allerg|condition(s)? like|doctor|results? in|\d+ (weeks|months)|within|guarantee|shipping|deliver|refund|return|verified|customer said/i,
+    );
   });
 });
 

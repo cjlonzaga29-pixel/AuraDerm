@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/Container";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { PurchasePanel } from "@/components/shop/PurchasePanel";
 import { Separator } from "@/components/ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { BRAND_LABEL, getRelatedProducts, getShopProduct, getShopProducts } from "@/lib/catalog";
 
@@ -23,6 +24,9 @@ export async function generateMetadata(props: PageProps<"/shop/[handle]">): Prom
   const product = getShopProduct(handle);
   return { title: product ? `${product.name} · AuraDerm Botanicals` : "Not found" };
 }
+
+const QUESTION_LINK =
+  "inline-flex min-h-11 items-center rounded-sm font-sans text-sm text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 // One titled block of the details area; the id doubles as the anchor for the
 // section links.
@@ -67,6 +71,7 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
     { id: "how-to-use", title: "How to use", show: product.directions.length > 0 },
     { id: "cautions", title: "Cautions", show: product.cautions.length > 0 },
     { id: "specifications", title: "Specifications", show: true },
+    { id: "questions", title: "Questions & answers", show: product.questions.length > 0 },
     { id: "reviews", title: "Reviews", show: true },
   ].filter((section) => section.show);
 
@@ -156,7 +161,7 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
           </div>
 
           {/* Details: every section open and scannable; each piece of copy
-              appears once. */}
+              appears once (the Q&A answers stay short and link back). */}
           <div className="flex flex-col gap-6 pt-6 lg:pt-10" data-testid="product-details">
             <nav aria-label="Product details" className="border-y border-hairline">
               <ul className="flex flex-wrap gap-x-6 gap-y-1 py-3 font-sans text-sm">
@@ -239,6 +244,44 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                   ) : null}
                 </dl>
               </DetailSection>
+
+              {/* Editorial guidance from the copy above, not customer answers;
+                  the full directions and cautions stay in their sections. */}
+              {product.questions.length > 0 ? (
+                <DetailSection id="questions" title="Questions & answers" className="lg:col-span-2">
+                  <p className="max-w-3xl text-sm">
+                    Answers are editorial guidance based on this product&rsquo;s directions and cautions, not
+                    customer-submitted answers.
+                  </p>
+                  <Accordion type="multiple" className="mt-2 max-w-3xl border-t border-hairline" data-testid="product-questions">
+                    {product.questions.map((item, i) => (
+                      <AccordionItem key={item.question} value={`q${i}`}>
+                        <AccordionTrigger className="min-h-14 text-lg">{item.question}</AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-3 text-base">
+                          <p className="text-cream">{item.answer}</p>
+                          {item.links?.length ? (
+                            <ul className="flex flex-wrap gap-x-5 gap-y-1">
+                              {item.links.map((link) => (
+                                <li key={link.href}>
+                                  {link.href.startsWith("#") ? (
+                                    <a href={link.href} className={QUESTION_LINK}>
+                                      {link.label}
+                                    </a>
+                                  ) : (
+                                    <Link href={link.href} className={QUESTION_LINK}>
+                                      {link.label}
+                                    </Link>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </DetailSection>
+              ) : null}
 
               {/* No reviews exist yet; none are invented. */}
               <DetailSection id="reviews" title="Reviews" className="lg:col-span-2">
