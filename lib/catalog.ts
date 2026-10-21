@@ -59,7 +59,9 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
       ? { kind: "confirmed", priceMinor: entry.priceMinor }
       : { kind: "unavailable" };
 
-  const images: ShopProduct["images"] = [];
+  const images: ShopProduct["images"] = entry.image
+    ? [{ src: entry.image.src, alt: entry.image.alt }]
+    : [];
 
   return {
     handle: entry.slug,

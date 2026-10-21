@@ -1,17 +1,30 @@
 import { test, expect, request } from "@playwright/test";
 
 test.describe("home P1-P5", () => {
-  // P3-P15: #actives (four concept badges) was consolidated into #collection,
-  // and the routine dropped its AM/SPF REAPPLY/PM slot labels (the middle
-  // label contradicted its "Layer" step) for plain numbered steps.
-  test("#collection lists the 4 hair-care products, each labelled price coming soon; #routine shows 3 ordered steps", async ({
+  // P4-P7: #collection moved directly under the hero and now renders the
+  // shop's ProductCard (compact variant) through the catalog adapter. The
+  // compact card carries no price row, so the former "Price coming soon"
+  // per-row label is replaced by a working "View product" link per card.
+  test("#collection follows the hero with the 4 catalog products linking to their pages; #routine shows 3 ordered steps", async ({
     page,
   }) => {
     await page.goto("/");
     const collection = page.locator("#collection");
     await expect(collection).toHaveCount(1);
-    await expect(collection.locator("li h3")).toHaveCount(4);
-    await expect(collection.getByText("Price coming soon")).toHaveCount(4);
+    await expect(page.locator("main > section").nth(1)).toHaveAttribute("id", "collection");
+    const cards = collection.getByTestId("product-card");
+    await expect(cards).toHaveCount(4);
+    const expectedCards: [string, string][] = [
+      ["Hair Fall Defense Shampoo", "/shop/hair-fall-defense-shampoo"],
+      ["Hair Fall Defense Conditioner", "/shop/hair-fall-defense-conditioner"],
+      ["Hair Fall Defense Scalp Vitamin Serum", "/shop/hair-fall-defense-scalp-vitamin-serum"],
+      ["Scalp Balance Daily Shampoo", "/shop/scalp-balance-daily-shampoo"],
+    ];
+    for (const [i, [name, href]] of expectedCards.entries()) {
+      await expect(cards.nth(i).getByRole("link", { name, exact: true })).toHaveAttribute("href", href);
+      await expect(cards.nth(i)).toContainText("View product");
+    }
+    await expect(collection.getByText("Price coming soon")).toHaveCount(0);
     await expect(page.locator("#actives")).toHaveCount(0);
 
     const steps = page.locator("#routine ol li h3");

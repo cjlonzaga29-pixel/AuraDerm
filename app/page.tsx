@@ -1,8 +1,10 @@
 import { ScrollStage } from "@/components/scroll/ScrollStage";
 import { Nav } from "@/components/site/Nav";
 import { Hero } from "@/components/sections/Hero";
-import { Statement } from "@/components/sections/Statement";
 import { Collection } from "@/components/sections/Collection";
+import { Editorial } from "@/components/sections/Editorial";
+import { Statement } from "@/components/sections/Statement";
+import { Spotlight } from "@/components/sections/Spotlight";
 import { Ingredients } from "@/components/sections/Ingredients";
 import { Routine } from "@/components/sections/Routine";
 import { Closing } from "@/components/sections/Closing";
@@ -18,8 +20,10 @@ export default function Home() {
       <Nav />
       <main className="relative overflow-x-clip">
         <Hero />
-        <Statement />
         <Collection />
+        <Editorial />
+        <Statement />
+        <Spotlight />
         <Ingredients />
         <Routine />
         <Closing />

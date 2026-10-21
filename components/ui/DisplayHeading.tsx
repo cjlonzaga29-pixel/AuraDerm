@@ -1,9 +1,13 @@
 type HeadingLevel = "h1" | "h2" | "h3";
 
+type HeadingSize = HeadingLevel | "display";
+
 type DisplayHeadingProps = {
   children: string;
   accent?: string;
   level: HeadingLevel;
+  /** Visual scale when it should differ from the level; "display" is the open brand statement. */
+  size?: HeadingSize;
   className?: string;
 };
 
@@ -11,10 +15,11 @@ type DisplayHeadingProps = {
 // distinctive editorial voice; body, nav and buttons stay in Jost. Bebas is
 // kept only for the AURADERM wordmark. The h1 scale steps up at lg, where the
 // hero copy moves into the canopy column beside the bottle.
-const sizeClasses: Record<HeadingLevel, string> = {
+const sizeClasses: Record<HeadingSize, string> = {
   h1: "text-[clamp(2.75rem,11vw,3.75rem)] lg:text-[clamp(3.5rem,6.5vw,6.5rem)] leading-[1.02] tracking-[-0.025em]",
   h2: "text-[clamp(2.25rem,4vw,4rem)] leading-[1.05] tracking-[-0.02em]",
   h3: "text-2xl leading-tight tracking-[-0.01em]",
+  display: "text-[clamp(2.75rem,7vw,6rem)] leading-[1.02] tracking-[-0.025em]",
 };
 
 function renderWithAccent(text: string, accent: string | undefined, italic: boolean) {
@@ -32,11 +37,11 @@ function renderWithAccent(text: string, accent: string | undefined, italic: bool
   );
 }
 
-export function DisplayHeading({ children, accent, level, className }: DisplayHeadingProps) {
+export function DisplayHeading({ children, accent, level, size, className }: DisplayHeadingProps) {
   const Tag = level;
   return (
     <Tag
-      className={`font-heading font-medium text-cream min-w-0 text-balance break-words ${sizeClasses[level]} ${className ?? ""}`}
+      className={`font-heading font-medium text-cream min-w-0 text-balance break-words ${sizeClasses[size ?? level]} ${className ?? ""}`}
     >
       {/* Italic is reserved for the single h1 accent phrase. */}
       {renderWithAccent(children, accent, level === "h1")}

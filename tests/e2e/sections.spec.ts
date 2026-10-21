@@ -1,13 +1,24 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("sections 3-5", () => {
-  // P3-P15: the benefit cards were folded into #statement as three h3 rows.
-  test("#ingredients shows 5 items; statement shows the 3 benefits", async ({ page }) => {
+  // P4-P7: the strip narrowed to three botanical tiles, #statement became an
+  // open two-line statement (its benefit rows retired), and the editorial and
+  // ingredient-spotlight sections were added in the reference page order.
+  test("section order; #ingredients shows 3 tiles; spotlight has 3 callouts and a product link", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("#ingredients")).toHaveCount(1);
-    await expect(page.locator("#ingredients li h3")).toHaveCount(5);
-    await expect(page.locator("#statement h3")).toHaveCount(3);
+    const ids = await page.locator("main > section").evaluateAll((els) => els.map((el) => el.id));
+    expect(ids).toEqual(["", "collection", "care", "statement", "formula", "ingredients", "routine", "closing"]);
+    await expect(page.locator("#ingredients li h3")).toHaveText(["Aloe Vera", "Batana Oil", "Rosemary"]);
+    await expect(page.locator("#statement h3")).toHaveCount(0);
     await expect(page.locator("#benefits")).toHaveCount(0);
+    await expect(page.locator("#formula li h3")).toHaveText(["Zinc PCA", "Willow Bark", "Tea Tree Oil"]);
+    await expect(
+      page.locator("#formula").getByRole("link", { name: "View Scalp Balance Daily Shampoo" }),
+    ).toHaveAttribute("href", "/shop/scalp-balance-daily-shampoo");
+    await expect(page.locator("#care").getByRole("link", { name: "Explore the routine" })).toHaveAttribute(
+      "href",
+      "#routine",
+    );
   });
 
   test("exactly one h1 on /; section headings are h2", async ({ page }) => {
@@ -25,7 +36,7 @@ test.describe("sections 3-5", () => {
     await expect(page.locator("[data-reveal]")).toHaveCount(0);
     const sections = page.locator("main section");
     const count = await sections.count();
-    expect(count).toBe(6);
+    expect(count).toBe(8);
     for (let i = 0; i < count; i++) {
       await expect(sections.nth(i)).toHaveCSS("opacity", "1");
     }
@@ -35,7 +46,7 @@ test.describe("sections 3-5", () => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto("/");
-    for (const id of ["#statement", "#collection", "#ingredients", "#routine", "#closing"]) {
+    for (const id of ["#collection", "#care", "#statement", "#formula", "#ingredients", "#routine", "#closing"]) {
       await expect(page.locator(`${id} h2`)).toBeVisible();
       await expect(page.locator(id)).toHaveCSS("opacity", "1");
     }
@@ -44,7 +55,7 @@ test.describe("sections 3-5", () => {
 
   test("anchored sections land below the fixed header", async ({ page }) => {
     await page.goto("/");
-    for (const id of ["collection", "ingredients", "routine"]) {
+    for (const id of ["collection", "care", "formula", "ingredients", "routine"]) {
       await page.evaluate((target) => {
         document.documentElement.style.scrollBehavior = "auto";
         document.getElementById(target)?.scrollIntoView();

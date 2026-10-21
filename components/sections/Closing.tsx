@@ -9,7 +9,7 @@ export function Closing() {
   const { closing } = site;
 
   return (
-    <section id="closing" data-testid="closing" className="pt-16 pb-28 lg:pt-24 lg:pb-40">
+    <section id="closing" data-testid="closing" className="pt-12 pb-20 lg:pt-20 lg:pb-28">
       <Container>
         <div className="text-scrim flex max-w-md flex-col items-start gap-6">
           <DisplayHeading level="h2">{closing.headline}</DisplayHeading>

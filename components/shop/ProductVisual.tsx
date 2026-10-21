@@ -6,6 +6,8 @@ type Props = {
   category: ProductCategory;
   /** First approved photo; when present it fills the same frame. */
   image?: { src: string; alt: string };
+  /** "contain" keeps a whole packshot in frame (homepage); default fills it. */
+  fit?: "cover" | "contain";
   className?: string;
 };
 
@@ -64,12 +66,16 @@ function Sprig({ className }: { className?: string }) {
 // Product media slot. Without approved photography it shows a quiet,
 // clearly-labelled placeholder (never presented as a photo of the product);
 // an `image` drops into the same frame with no layout change.
-export function ProductVisual({ name, category, image, className }: Props) {
+export function ProductVisual({ name, category, image, fit = "cover", className }: Props) {
   if (image) {
     return (
       <div className={cn("relative overflow-hidden rounded-card bg-linen", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={image.src} alt={image.alt} className="size-full object-cover" />
+        <img
+          src={image.src}
+          alt={image.alt}
+          className={cn("size-full", fit === "contain" ? "object-contain" : "object-cover")}
+        />
       </div>
     );
   }

@@ -1,43 +1,36 @@
 import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
-import { GlassPanel } from "@/components/ui/GlassPanel";
+import { ProductCard } from "@/components/shop/ProductCard";
+import { getShopProducts } from "@/lib/catalog";
 import { site } from "@/content/site";
 
-// The product range as one grouped glass panel with hairline rows rather
-// than a card per item. Prices are unconfirmed, so there is no price or buy
-// action — each row carries the honest availability label instead.
+// Products come straight after the hero, drawn through the shared catalog
+// adapter and the shop's card in its compact variant (no price row, no buy
+// action). Four across from 1200px, two on tablet, one on narrow phones.
 export function Collection() {
-  const { collectionIntro, products } = site;
+  const { collectionIntro } = site;
+  const products = getShopProducts();
 
   return (
-    <section id="collection" className="py-24 lg:py-36">
-      <Container>
-        <GlassPanel className="flex max-w-xl flex-col gap-8 p-7 lg:max-w-136 lg:p-10">
-          <div className="flex flex-col gap-3">
-            <DisplayHeading level="h2">{collectionIntro.headline}</DisplayHeading>
-            <p className="font-sans text-base leading-relaxed text-cream">{collectionIntro.body}</p>
-          </div>
+    <section id="collection" className="py-8 lg:py-12">
+      <Container className="flex flex-col gap-8 lg:gap-10">
+        <div className="text-scrim flex max-w-xl flex-col gap-3 self-start">
+          <DisplayHeading level="h2">{collectionIntro.headline}</DisplayHeading>
+          <p className="font-sans text-base leading-relaxed text-cream lg:text-lg">
+            {collectionIntro.body}
+          </p>
+        </div>
 
-          <ul className="flex flex-col" data-testid="collection-list">
-            {products.map((product) => (
-              <li
-                key={product.slug}
-                className="flex flex-col gap-1 border-t border-hairline py-5 last:pb-0"
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <h3 className="font-sans text-lg font-normal text-cream">{product.name}</h3>
-                  {product.size ? (
-                    <span className="font-sans text-sm text-sage-muted">{product.size}</span>
-                  ) : null}
-                </div>
-                <p className="font-sans text-sm leading-relaxed text-sage-muted">
-                  {product.shortDescription}
-                </p>
-                <span className="mt-1 font-sans text-xs tracking-wide text-sage-muted">{collectionIntro.label}</span>
-              </li>
-            ))}
-          </ul>
-        </GlassPanel>
+        <ul
+          className="grid gap-5 sm:grid-cols-2 lg:gap-6 min-[75rem]:grid-cols-4"
+          data-testid="collection-list"
+        >
+          {products.map((product) => (
+            <li key={product.handle}>
+              <ProductCard product={product} variant="compact" />
+            </li>
+          ))}
+        </ul>
       </Container>
     </section>
   );

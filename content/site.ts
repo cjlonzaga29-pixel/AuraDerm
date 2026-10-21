@@ -1,3 +1,23 @@
+/** An approved photograph; dimensions are the source file's intrinsic size. */
+export type MediaImage = {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+};
+
+/**
+ * A homepage image slot. Setting `image` swaps the placeholder for the photo
+ * with no JSX change; `subject` describes what the photo should show and
+ * labels the placeholder until then.
+ */
+export type MediaSlot = {
+  id: string;
+  subject: string;
+  ratio: "4:5" | "16:9" | "3:2" | "4:3";
+  image: MediaImage | null;
+};
+
 export type Product = {
   slug: string;
   name: string;
@@ -7,6 +27,8 @@ export type Product = {
   currency: "PHP" | "USD" | null;
   shopifyHandle: string | null;
   shortDescription: string;
+  /** Packshot (4:5, shown contained); null until photography is approved. */
+  image: MediaImage | null;
 };
 
 export type Ingredient = {
@@ -14,14 +36,9 @@ export type Ingredient = {
   word: string;
   name: string;
   benefit: string;
-  image: string | null;
+  media: MediaSlot;
   /** Slugs of the products whose label lists this ingredient. */
   foundIn: string[];
-};
-
-export type Benefit = {
-  title: string;
-  body: string;
 };
 
 /** Routine copy; a `{ slug }` segment renders as a link to that product. */
@@ -52,27 +69,41 @@ export type Site = {
     primaryCta: { label: string; href: string };
     secondaryCta: { label: string; href: string };
   };
-  statement: {
-    headline: string;
-    accentWord: string;
-    subcopy: string;
-  };
   collectionIntro: {
     headline: string;
     body: string;
-    label: string;
+  };
+  editorial: {
+    headline: string;
+    accentWord: string;
+    body: string;
+    cta: { label: string; href: string };
+    media: MediaSlot;
+  };
+  statement: {
+    headline: string;
+    accentWord: string;
+  };
+  spotlight: {
+    headline: string;
+    productSlug: string;
+    /** Each name must appear in that product's key-ingredient list. */
+    callouts: { name: string; benefit: string }[];
+    cta: { label: string; href: string };
+    /** Optional dedicated shot; falls back to the product's packshot. */
+    media: MediaSlot;
   };
   ingredientsIntro: {
     headline: string;
-    body: string;
+    note: string;
   };
   products: Product[];
   ingredients: Ingredient[];
-  benefits: Benefit[];
   routine: RoutineStep[];
   routineIntro: {
     headline: string;
     body: string;
+    media: MediaSlot;
   };
   sustainability: SustainabilityItem[] | null;
   givesBackHeadline: string;
@@ -102,19 +133,46 @@ export const site: Site = {
       href: "#routine",
     },
   },
-  statement: {
-    headline: "Care from scalp to strand.",
-    accentWord: "strand.",
-    subcopy: "A thoughtful routine of cleansing, conditioning and leave-on scalp care.",
-  },
   collectionIntro: {
     headline: "The collection",
-    body: "Four hair and scalp formulas — two daily shampoos, a conditioner and a leave-on scalp serum.",
-    label: "Price coming soon",
+    body: "Daily care for hair and scalp.",
+  },
+  editorial: {
+    headline: "Care from scalp to strand.",
+    accentWord: "strand.",
+    body: "Explore cleansing, conditioning and leave-on scalp care, with ingredients selected for each step.",
+    cta: { label: "Explore the routine", href: "#routine" },
+    media: {
+      id: "home-editorial",
+      subject: "Forest stream and mossy stones in soft daylight",
+      ratio: "16:9",
+      image: null,
+    },
+  },
+  statement: {
+    headline: "Rooted in nature.\nMade for your hair.",
+    accentWord: "hair.",
+  },
+  // Callouts quote the Scalp Balance label copy in content/products.ts.
+  spotlight: {
+    headline: "Inside the formula",
+    productSlug: "scalp-balance-daily-shampoo",
+    callouts: [
+      { name: "Zinc PCA", benefit: "Helps control excess oil." },
+      { name: "Willow Bark", benefit: "Helps reduce visible flakes." },
+      { name: "Tea Tree Oil", benefit: "For a fresh, clean-feeling scalp." },
+    ],
+    cta: { label: "View Scalp Balance Daily Shampoo", href: "/shop/scalp-balance-daily-shampoo" },
+    media: {
+      id: "home-spotlight-product",
+      subject: "Scalp Balance Daily Shampoo bottle",
+      ratio: "4:5",
+      image: null,
+    },
   },
   ingredientsIntro: {
-    headline: "Key ingredients",
-    body: "Highlights from across the range. Ingredients vary by product — each one shows where it is found.",
+    headline: "Botanical ingredients, thoughtfully selected.",
+    note: "Ingredients vary by product.",
   },
   // Real Aura Derm hair-care range (label guide, COSMOS version). Prices and
   // net content are unconfirmed — the guide says 300 mL / 60 mL while newer
@@ -127,6 +185,7 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
+      image: null,
       shortDescription: "Sulfate-free daily shampoo for stronger, fuller-looking hair.",
     },
     {
@@ -136,6 +195,7 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
+      image: null,
       shortDescription: "Silicone-free conditioner that detangles, softens and strengthens.",
     },
     {
@@ -145,6 +205,7 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
+      image: null,
       shortDescription: "Lightweight leave-on scalp serum with a light peppermint cooling feel.",
     },
     {
@@ -154,34 +215,38 @@ export const site: Site = {
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
+      image: null,
       shortDescription: "Sulfate-free daily shampoo for oily or flaky scalps.",
     },
   ],
-  // Highlights drawn from the key ingredients in content/products.ts; foundIn
-  // must match those label lists so no product is implied to contain them all.
+  // The three botanicals shown on the homepage strip. foundIn must match the
+  // key-ingredient lists in content/products.ts (asserted in tests) so no
+  // product is implied to contain them all.
   ingredients: [
     {
       order: 1,
       word: "ALOE VERA",
       name: "Aloe Vera",
       benefit: "Soothes the scalp and softens hair.",
-      image: null,
+      media: {
+        id: "home-ingredient-aloe-vera",
+        subject: "Aloe vera leaves",
+        ratio: "3:2",
+        image: null,
+      },
       foundIn: ["hair-fall-defense-shampoo", "scalp-balance-daily-shampoo"],
     },
     {
       order: 2,
-      word: "RICE PROTEIN",
-      name: "Rice Protein",
-      benefit: "Helps strengthen and thicken the look of hair.",
-      image: null,
-      foundIn: ["hair-fall-defense-shampoo", "hair-fall-defense-conditioner"],
-    },
-    {
-      order: 3,
       word: "BATANA OIL",
       name: "Batana Oil",
       benefit: "Nourishes hair and scalp.",
-      image: null,
+      media: {
+        id: "home-ingredient-batana-oil",
+        subject: "Batana palm fruit and oil",
+        ratio: "3:2",
+        image: null,
+      },
       foundIn: [
         "hair-fall-defense-shampoo",
         "hair-fall-defense-conditioner",
@@ -189,35 +254,17 @@ export const site: Site = {
       ],
     },
     {
-      order: 4,
+      order: 3,
       word: "ROSEMARY",
       name: "Rosemary",
       benefit: "Part of a botanical scalp-care complex.",
-      image: null,
+      media: {
+        id: "home-ingredient-rosemary",
+        subject: "Fresh rosemary sprigs",
+        ratio: "3:2",
+        image: null,
+      },
       foundIn: ["hair-fall-defense-scalp-vitamin-serum", "scalp-balance-daily-shampoo"],
-    },
-    {
-      order: 5,
-      word: "NIACINAMIDE",
-      name: "Niacinamide",
-      benefit: "Vitamin B3 for scalp conditioning.",
-      image: null,
-      foundIn: ["hair-fall-defense-scalp-vitamin-serum", "scalp-balance-daily-shampoo"],
-    },
-  ],
-  // Folded into the brand statement (P3-P15) rather than a separate card row.
-  benefits: [
-    {
-      title: "Gentle daily cleansing",
-      body: "Two sulfate-free shampoos — one for hair fall due to breakage, one for oily or flaky scalps.",
-    },
-    {
-      title: "Silicone-free conditioning",
-      body: "A plant-based conditioner that detangles, softens and strengthens.",
-    },
-    {
-      title: "Leave-on scalp care",
-      body: "A lightweight, non-greasy serum with a light peppermint cooling feel.",
     },
   ],
   // Steps follow the label directions in content/products.ts.
@@ -252,6 +299,12 @@ export const site: Site = {
   routineIntro: {
     headline: "Three steps, scalp to strand.",
     body: "See each product page for full directions and cautions.",
+    media: {
+      id: "home-routine",
+      subject: "Hands massaging serum into the scalp",
+      ratio: "4:3",
+      image: null,
+    },
   },
   sustainability: null,
   givesBackHeadline: "",
