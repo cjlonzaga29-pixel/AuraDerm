@@ -87,12 +87,22 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
 
               <p className="font-sans text-base leading-relaxed text-sage-muted">{product.description}</p>
 
-              {product.size ? (
-                <dl className="flex justify-between gap-4 border-y border-hairline py-3 font-sans text-base">
-                  <dt className="text-sage-muted">Size</dt>
-                  <dd className="text-cream">{product.size}</dd>
-                </dl>
-              ) : null}
+              {/* Confirmed facts only: net content appears once the owner confirms it. */}
+              <dl
+                className="flex flex-col divide-y divide-hairline border-y border-hairline font-sans text-base"
+                data-testid="specifications"
+              >
+                <div className="flex justify-between gap-4 py-3">
+                  <dt className="text-sage-muted">Category</dt>
+                  <dd className="text-cream">{product.category}</dd>
+                </div>
+                {product.size ? (
+                  <div className="flex justify-between gap-4 py-3">
+                    <dt className="text-sage-muted">Size</dt>
+                    <dd className="text-cream">{product.size}</dd>
+                  </div>
+                ) : null}
+              </dl>
 
               {highlights.length > 0 ? (
                 <section aria-labelledby="highlights-heading" className="flex flex-col gap-3">
@@ -168,6 +178,13 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                       </AccordionContent>
                     </AccordionItem>
                   ) : null}
+                  {/* No reviews exist yet; none are invented. */}
+                  <AccordionItem value="reviews">
+                    <AccordionTrigger>Reviews</AccordionTrigger>
+                    <AccordionContent className="text-base">
+                      <p>No reviews yet.</p>
+                    </AccordionContent>
+                  </AccordionItem>
                 </Accordion>
               </div>
             </div>

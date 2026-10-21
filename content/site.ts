@@ -41,9 +41,21 @@ export type Product = {
   samplePrice: SamplePrice | null;
   shopifyHandle: string | null;
   shortDescription: string;
-  /** Front packshot (4:5, shown contained); null until an image is approved. */
-  image: MediaImage | null;
+  /**
+   * Gallery views in display order, front view first. List only views that
+   * were actually supplied — never repeat an image to fill the gallery.
+   */
+  images: ProductImage[];
 };
+
+/**
+ * Which side of the pack an image shows. "front" may be a styled scene as
+ * long as the front label faces the camera; "front-back" is a single combined
+ * image (often 16:9) showing both sides.
+ */
+export type ProductImageView = "front" | "back" | "styled" | "front-back";
+
+export type ProductImage = MediaImage & { view: ProductImageView };
 
 export type Ingredient = {
   order: number;
@@ -223,13 +235,16 @@ export const site: Site = {
       currency: null,
       samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
-      image: {
-        src: "/images/products/hair-fall-defense-shampoo-front.webp",
-        alt: "Illustrative packaging: white Hair Fall Defense Shampoo pump bottle with a gold collar on a limestone plinth",
-        width: 1122,
-        height: 1402,
-        illustrative: true,
-      },
+      images: [
+        {
+          view: "front",
+          src: "/images/products/hair-fall-defense-shampoo-front.webp",
+          alt: "Illustrative packaging: white Hair Fall Defense Shampoo pump bottle with a gold collar on a limestone plinth",
+          width: 1122,
+          height: 1402,
+          illustrative: true,
+        },
+      ],
       shortDescription: "Sulfate-free daily shampoo for stronger, fuller-looking hair.",
     },
     {
@@ -240,13 +255,16 @@ export const site: Site = {
       currency: null,
       samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
-      image: {
-        src: "/images/products/hair-fall-defense-conditioner-front.webp",
-        alt: "Illustrative packaging: white conditioner pump bottle with a gold collar on a limestone plinth",
-        width: 1122,
-        height: 1402,
-        illustrative: true,
-      },
+      images: [
+        {
+          view: "front",
+          src: "/images/products/hair-fall-defense-conditioner-front.webp",
+          alt: "Illustrative packaging: white conditioner pump bottle with a gold collar on a limestone plinth",
+          width: 1122,
+          height: 1402,
+          illustrative: true,
+        },
+      ],
       shortDescription: "Silicone-free conditioner that detangles, softens and strengthens.",
     },
     {
@@ -257,13 +275,16 @@ export const site: Site = {
       currency: null,
       samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
-      image: {
-        src: "/images/products/hair-fall-defense-scalp-vitamin-serum-front.webp",
-        alt: "Illustrative packaging: emerald-to-gold glass serum bottle with a gold cap on a limestone plinth",
-        width: 1122,
-        height: 1402,
-        illustrative: true,
-      },
+      images: [
+        {
+          view: "front",
+          src: "/images/products/hair-fall-defense-scalp-vitamin-serum-front.webp",
+          alt: "Illustrative packaging: emerald-to-gold glass serum bottle with a gold cap on a limestone plinth",
+          width: 1122,
+          height: 1402,
+          illustrative: true,
+        },
+      ],
       shortDescription: "Lightweight leave-on scalp serum with a light peppermint cooling feel.",
     },
     {
@@ -274,13 +295,16 @@ export const site: Site = {
       currency: null,
       samplePrice: SAMPLE_PRICE,
       shopifyHandle: null,
-      image: {
-        src: "/images/products/scalp-balance-daily-shampoo-front.webp",
-        alt: "Illustrative packaging: white Scalp Balance Shampoo pump bottle with a gold collar on a limestone plinth",
-        width: 1122,
-        height: 1402,
-        illustrative: true,
-      },
+      images: [
+        {
+          view: "front",
+          src: "/images/products/scalp-balance-daily-shampoo-front.webp",
+          alt: "Illustrative packaging: white Scalp Balance Shampoo pump bottle with a gold collar on a limestone plinth",
+          width: 1122,
+          height: 1402,
+          illustrative: true,
+        },
+      ],
       shortDescription: "Sulfate-free daily shampoo for oily or flaky scalps.",
     },
   ],

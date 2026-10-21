@@ -114,12 +114,12 @@ export function CartSheet() {
                 </span>
               </div>
 
-              {/* Shop preview: no checkout, payment or delivery service is
-                  connected, so there is no order to place. */}
-              <p id="checkout-unavailable" className="font-sans text-xs text-muted-foreground">
+              {/* Checkout runs in test mode only; the checkout page states whether
+                  it is enabled and never takes a real order at sample prices. */}
+              <p id="checkout-note" className="font-sans text-xs text-muted-foreground">
                 {hasSamplePrices
-                  ? "Sample pricing for testing. Checkout is unavailable."
-                  : "Shop preview — checkout is not connected yet."}
+                  ? "Sample prices for testing. Checkout is test-only: no real orders or payments."
+                  : "Checkout is test-only: no real orders or payments."}
               </p>
 
               <Separator className="bg-border" />
@@ -127,10 +127,10 @@ export function CartSheet() {
               <Button
                 variant="primary"
                 className="w-full justify-center"
-                disabled
-                aria-describedby="checkout-unavailable"
+                href="/checkout"
+                anchorProps={{ "aria-describedby": "checkout-note", onClick: closeCart }}
               >
-                Checkout unavailable
+                Go to test checkout
               </Button>
             </SheetFooter>
           </>

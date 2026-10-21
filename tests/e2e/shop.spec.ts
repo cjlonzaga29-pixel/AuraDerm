@@ -67,7 +67,10 @@ test.describe("shop", () => {
     const info = page.getByTestId("product-detail");
     const panel = info.getByTestId("purchase-panel");
     await expect(panel.getByTestId("price")).toHaveText(/^₱1,299\.00\s*Sample price$/);
-    await expect(panel.getByText("Sample pricing for testing. Checkout is unavailable.")).toBeVisible();
+    await expect(
+      panel.getByText("Sample price for testing only. Real orders and payments are not enabled."),
+    ).toBeVisible();
+    await expect(panel.getByRole("button", { name: "Buy now" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Add to bag" })).toHaveCount(1);
     await expect(page.getByRole("group", { name: "Quantity" })).toHaveCount(1);
     await expect(info.getByText("Price coming soon", { exact: true })).toHaveCount(0);
@@ -205,7 +208,7 @@ test.describe("shop", () => {
     expect(storage).toEqual({ cart: saved, unrelated: "keep-me" });
   });
 
-  test("sample-priced bag: add, quantity, second product, remove, empty, persist; no checkout", async ({
+  test("sample-priced bag: add, quantity, second product, remove, empty, persist; test checkout only", async ({
     page,
   }) => {
     await page.goto("/shop/hair-fall-defense-shampoo");
@@ -215,7 +218,9 @@ test.describe("shop", () => {
     await page.getByRole("button", { name: "Add to bag" }).click();
     let bag = page.getByRole("dialog", { name: "Your Bag" });
     await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱2,598.00");
-    await expect(bag.getByText("Sample pricing for testing. Checkout is unavailable.")).toBeVisible();
+    await expect(
+      bag.getByText("Sample prices for testing. Checkout is test-only: no real orders or payments."),
+    ).toBeVisible();
     await expect(bag).toContainText("Sample price");
     await page.keyboard.press("Escape");
     await expect(bag).toBeHidden();
@@ -225,8 +230,7 @@ test.describe("shop", () => {
     bag = page.getByRole("dialog", { name: "Your Bag" });
     await expect(bag.getByTestId("cart-subtotal")).toHaveText("₱3,897.00");
 
-    const checkout = bag.getByRole("button", { name: "Checkout unavailable" });
-    await expect(checkout).toBeDisabled();
+    await expect(bag.getByRole("link", { name: "Go to test checkout" })).toHaveAttribute("href", "/checkout");
     await expect(bag.getByRole("button", { name: /place order|pay|submit/i })).toHaveCount(0);
     await expect(bag.locator("form")).toHaveCount(0);
 
@@ -261,7 +265,7 @@ test.describe("shop", () => {
   });
 
   test("no horizontal overflow on shop pages", async ({ page }) => {
-    for (const path of ["/shop", "/shop/hair-fall-defense-scalp-vitamin-serum"]) {
+    for (const path of ["/shop", "/shop/hair-fall-defense-scalp-vitamin-serum", "/checkout"]) {
       await page.goto(path);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

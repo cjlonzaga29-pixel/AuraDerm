@@ -220,3 +220,16 @@ body {
     --radius: 0.375rem;
   }
 }
+
+/* Mobile sticky purchase bar (components/shop/PurchasePanel): while it shows,
+   the page gains matching bottom space so it never covers the footer or the
+   last content, and it steps aside whenever a dialog or the bag sheet is open. */
+@media (width < 64rem) {
+  body[data-sticky-purchase="on"] {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+body:has([role="dialog"][data-state="open"]) [data-sticky-purchase] {
+  display: none;
+}

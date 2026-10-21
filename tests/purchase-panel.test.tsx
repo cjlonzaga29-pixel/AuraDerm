@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PurchasePanel } from "@/components/shop/PurchasePanel";
+import { PurchasePanel, SAMPLE_PRICE_NOTE } from "@/components/shop/PurchasePanel";
 import { CartProvider } from "@/context/CartContext";
 import { getShopProduct, toShopProduct } from "@/lib/catalog";
 import { site } from "@/content/site";
 import type { ShopProduct } from "@/lib/catalog";
+
+// Static rendering has no App Router mounted.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const render = (product: ShopProduct) =>
   renderToStaticMarkup(
@@ -14,15 +17,18 @@ const render = (product: ShopProduct) =>
   );
 
 describe("PurchasePanel", () => {
-  it("offers quantity and Add to bag for a sample price, labelled with the checkout note", () => {
+  it("offers quantity, Add to bag and Buy now for a sample price, labelled as a test price", () => {
     const html = render(getShopProduct("hair-fall-defense-scalp-vitamin-serum")!);
     expect(html).toContain("₱1,299.00");
     expect(html).toContain("Sample price");
-    expect(html).toContain("Sample pricing for testing. Checkout is unavailable.");
+    expect(html).toContain(SAMPLE_PRICE_NOTE);
     expect(html).toContain("Add to bag");
+    expect(html).toContain("Buy now");
     expect(html).toContain('aria-label="Quantity"');
     expect(html).not.toContain("Price coming soon");
-    expect(html).not.toMatch(/checkout<\/button>|place order|pay now/i);
+    expect(html).not.toMatch(/place order|pay now/i);
+    // The sticky bar only appears once the main controls scroll away.
+    expect(html).not.toContain("sticky-purchase-bar");
   });
 
   it("keeps the unpriced fallback with no buy controls", () => {
@@ -30,6 +36,7 @@ describe("PurchasePanel", () => {
     expect(html).toContain("Price coming soon");
     expect(html).toContain("Purchasing will be available once pricing is confirmed.");
     expect(html).not.toContain("Add to bag");
+    expect(html).not.toContain("Buy now");
     expect(html).not.toContain('aria-label="Quantity"');
     expect(html).not.toContain("Sample price");
   });

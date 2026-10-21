@@ -69,12 +69,21 @@ describe("content model", () => {
     ];
     const ids = slots.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const image of [...slots.map((s) => s.image), ...site.products.map((p) => p.image)]) {
+    for (const image of [...slots.map((s) => s.image), ...site.products.flatMap((p) => p.images)]) {
       if (image === null) continue;
       expect(image.src).toMatch(/^\//);
       expect(image.alt.trim()).not.toBe("");
       expect(image.width).toBeGreaterThan(0);
       expect(image.height).toBeGreaterThan(0);
+    }
+  });
+
+  it("product galleries start with the front view and never repeat an image", () => {
+    for (const product of site.products) {
+      if (product.images.length === 0) continue;
+      expect(product.images[0].view).toBe("front");
+      const srcs = product.images.map((image) => image.src);
+      expect(new Set(srcs).size).toBe(srcs.length);
     }
   });
 

@@ -70,3 +70,6 @@ test-results/
 
 # supabase CLI local cache
 /supabase/.temp
+
+# Names-only template (no values)
+!.env.example

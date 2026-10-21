@@ -1,4 +1,4 @@
-import { site } from "@/content/site";
+import { site, type ProductImageView } from "@/content/site";
 import { getProductDetails, type KeyIngredient } from "@/content/products";
 import type { Product } from "@/types/store";
 
@@ -9,6 +9,8 @@ export type CatalogImage = {
   height?: number;
   /** Generated packaging mockup rather than product photography. */
   illustrative?: boolean;
+  /** Which side of the pack the image shows, when known. */
+  view?: ProductImageView;
 };
 
 export type ConceptVisual = "cleanse" | "prepare" | "hydrate" | "finish";
@@ -76,17 +78,18 @@ export function toShopProduct(entry: (typeof site.products)[number]): ShopProduc
       ? { kind: "sample", priceMinor: entry.samplePrice.priceMinor }
       : { kind: "unavailable" };
 
-  const images: ShopProduct["images"] = entry.image
-    ? [
-        {
-          src: entry.image.src,
-          alt: entry.image.alt,
-          width: entry.image.width,
-          height: entry.image.height,
-          illustrative: entry.image.illustrative,
-        },
-      ]
-    : [];
+  // Front view first; otherwise the supplied order is kept. Nothing is
+  // repeated to pad the gallery.
+  const images: ShopProduct["images"] = [...entry.images]
+    .sort((a, b) => Number(b.view === "front") - Number(a.view === "front"))
+    .map(({ src, alt, width, height, illustrative, view }) => ({
+      src,
+      alt,
+      width,
+      height,
+      illustrative,
+      view,
+    }));
 
   return {
     handle: entry.slug,
