@@ -1,29 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { findClaims } from "@/lib/claims";
-import { PRODUCTS } from "@/content/products";
+import { PRODUCT_DETAILS } from "@/content/products";
 
-describe("product catalog claims guard", () => {
-  for (const product of PRODUCTS) {
+describe("product details claims guard", () => {
+  it("flags banned hair-care claims", () => {
+    expect(findClaims("Regrows hair fast")).toEqual(["Regrows"]);
+    expect(findClaims("Stops hair loss")).toEqual(["Stops hair loss"]);
+    expect(findClaims("COSMOS certified organic")).toEqual(["certified organic", "COSMOS"]);
+  });
+
+  for (const product of PRODUCT_DETAILS) {
     describe(product.handle, () => {
-      it("title clears the claims guard", () => {
-        expect(findClaims(product.title)).toEqual([]);
-      });
-
-      it("subtitle clears the claims guard", () => {
+      it("subtitle and description clear the claims guard", () => {
         expect(findClaims(product.subtitle)).toEqual([]);
-      });
-
-      it("description clears the claims guard", () => {
         expect(findClaims(product.description)).toEqual([]);
       });
 
-      it("usage instructions clear the claims guard", () => {
-        expect(findClaims(product.usage)).toEqual([]);
+      it("key ingredients clear the claims guard", () => {
+        for (const { name, benefit } of product.keyIngredients) {
+          expect(findClaims(name)).toEqual([]);
+          expect(findClaims(benefit)).toEqual([]);
+        }
       });
 
-      it("badges clear the claims guard", () => {
-        for (const badge of product.badges ?? []) {
-          expect(findClaims(badge)).toEqual([]);
+      it("directions and cautions clear the claims guard", () => {
+        for (const line of [...product.directions, ...product.cautions]) {
+          expect(findClaims(line)).toEqual([]);
         }
       });
     });

@@ -108,11 +108,10 @@ export function CartSheet() {
                 <span className="font-medium">{formatMoney(subtotalMinor)}</span>
               </div>
 
-              {/* Shop preview: demo prices are illustrative and no checkout,
-                  payment or delivery service is connected, so there is no
-                  order to place. */}
+              {/* Shop preview: no checkout, payment or delivery service is
+                  connected, so there is no order to place. */}
               <p id="checkout-unavailable" className="font-sans text-xs text-muted-foreground">
-                Shop preview — prices are illustrative and checkout is not connected yet.
+                Shop preview — checkout is not connected yet.
               </p>
 
               <Separator className="bg-border" />

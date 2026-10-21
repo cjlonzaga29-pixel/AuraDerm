@@ -73,18 +73,20 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                 <PriceTag price={product.price} size="lg" />
               </div>
 
-              <dl className="border-y border-hairline py-4 font-sans text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-sage-muted">Size</dt>
-                  <dd className="text-cream">{product.size}</dd>
-                </div>
-              </dl>
+              {product.size ? (
+                <dl className="border-y border-hairline py-4 font-sans text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-sage-muted">Size</dt>
+                    <dd className="text-cream">{product.size}</dd>
+                  </div>
+                </dl>
+              ) : null}
 
               <PurchasePanel name={product.name} cartProduct={product.cartProduct} />
 
               <p className="font-sans text-xs leading-relaxed text-sage-muted">
-                Concept product — the description, ingredients and directions below are illustrative,
-                not a confirmed formulation. Checkout is not connected in this preview.
+                Price and net content are still to be confirmed. Checkout is not connected in this
+                preview.
               </p>
 
               <Accordion type="multiple" defaultValue={["description"]} className="border-t border-hairline">
@@ -92,25 +94,47 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                   <AccordionTrigger>Description</AccordionTrigger>
                   <AccordionContent>{product.description}</AccordionContent>
                 </AccordionItem>
-                {product.ingredients.length > 0 ? (
+                {product.keyIngredients.length > 0 ? (
                   <AccordionItem value="ingredients">
                     <AccordionTrigger>Key ingredients</AccordionTrigger>
                     <AccordionContent>
-                      <ul className="flex list-disc flex-col gap-1 pl-5">
-                        {product.ingredients.map((ingredient) => (
-                          <li key={ingredient}>{ingredient}</li>
+                      <ul className="flex flex-col gap-2">
+                        {product.keyIngredients.map((ingredient) => (
+                          <li key={ingredient.name}>
+                            <span className="text-cream">{ingredient.name}</span>
+                            {" — "}
+                            {ingredient.benefit}
+                          </li>
                         ))}
                       </ul>
                       <p className="mt-3 text-xs">
-                        Illustrative list, not a full INCI declaration.
+                        Key ingredients only — not the full ingredient list.
                       </p>
                     </AccordionContent>
                   </AccordionItem>
                 ) : null}
-                {product.usage ? (
+                {product.directions.length > 0 ? (
                   <AccordionItem value="directions">
                     <AccordionTrigger>Directions</AccordionTrigger>
-                    <AccordionContent>{product.usage}</AccordionContent>
+                    <AccordionContent>
+                      <ol className="flex list-decimal flex-col gap-1 pl-5">
+                        {product.directions.map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
+                    </AccordionContent>
+                  </AccordionItem>
+                ) : null}
+                {product.cautions.length > 0 ? (
+                  <AccordionItem value="caution">
+                    <AccordionTrigger>Caution</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="flex list-disc flex-col gap-1 pl-5">
+                        {product.cautions.map((caution) => (
+                          <li key={caution}>{caution}</li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
                   </AccordionItem>
                 ) : null}
               </Accordion>

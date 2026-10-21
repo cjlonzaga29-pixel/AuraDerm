@@ -11,7 +11,7 @@ type Props = {
 };
 
 // Thumbnails appear only when a product has more than one real image; with no
-// photography the labelled concept illustration stands in on its own.
+// photography the labelled placeholder artwork stands in on its own.
 export function ProductGallery({ name, concept, images }: Props) {
   const [active, setActive] = useState(0);
 

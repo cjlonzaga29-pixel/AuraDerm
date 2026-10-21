@@ -1,7 +1,8 @@
 export type Product = {
   slug: string;
   name: string;
-  size: string;
+  /** Net content; null until the owner confirms it. */
+  size: string | null;
   priceMinor: number | null;
   currency: "PHP" | "USD" | null;
   shopifyHandle: string | null;
@@ -88,8 +89,8 @@ export const site: Site = {
     subcopy:
       "A quieter moment for your skin — botanical-inspired textures and a simple routine designed around everyday care.",
     primaryCta: {
-      label: "Explore the collection",
-      href: "#collection",
+      label: "Shop now",
+      href: "/shop",
     },
     secondaryCta: {
       label: "Find your ritual",
@@ -103,40 +104,52 @@ export const site: Site = {
   },
   collectionIntro: {
     headline: "The collection",
-    body: "Three concept formulas, from the first cleanse to the last layer of the evening.",
-    label: "Concept · not for sale",
+    body: "Four hair and scalp formulas — two daily shampoos, a conditioner and a leave-on scalp serum.",
+    label: "Price coming soon",
   },
   ingredientsIntro: {
     headline: "A botanical palette",
     body: "Five familiar plants that inspire the textures and scents of the collection.",
   },
+  // Real Aura Derm hair-care range (label guide, COSMOS version). Prices and
+  // net content are unconfirmed — the guide says 300 mL / 60 mL while newer
+  // packaging references say 250 mL / 50 mL — so both stay null for now.
   products: [
     {
-      slug: "botanical-cleansing-elixir",
-      name: "Botanical Cleansing Elixir",
-      size: "120 ml / 4.0 fl. oz.",
+      slug: "hair-fall-defense-shampoo",
+      name: "Aura Derm Hair Fall Defense Shampoo",
+      size: null,
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      shortDescription: "Concept cleanser — illustrative, not a confirmed formulation.",
+      shortDescription: "Sulfate-free daily shampoo for stronger, fuller-looking hair.",
     },
     {
-      slug: "radiance-barrier-serum",
-      name: "Radiance Barrier Serum",
-      size: "30 ml / 1.0 fl. oz.",
+      slug: "hair-fall-defense-conditioner",
+      name: "Aura Derm Hair Fall Defense Conditioner",
+      size: null,
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      shortDescription: "Concept serum — illustrative, not a confirmed formulation.",
+      shortDescription: "Silicone-free conditioner that detangles, softens and strengthens.",
     },
     {
-      slug: "night-renewal-nectar",
-      name: "Night Renewal Nectar",
-      size: "50 ml / 1.7 fl. oz.",
+      slug: "hair-fall-defense-scalp-vitamin-serum",
+      name: "Aura Derm Hair Fall Defense Scalp Vitamin Serum",
+      size: null,
       priceMinor: null,
       currency: null,
       shopifyHandle: null,
-      shortDescription: "Concept evening elixir — illustrative, not a confirmed formulation.",
+      shortDescription: "Lightweight leave-on scalp serum with a light peppermint cooling feel.",
+    },
+    {
+      slug: "scalp-balance-daily-shampoo",
+      name: "Aura Derm Scalp Balance Daily Shampoo",
+      size: null,
+      priceMinor: null,
+      currency: null,
+      shopifyHandle: null,
+      shortDescription: "Sulfate-free daily shampoo for oily or flaky scalps.",
     },
   ],
   ingredients: [
@@ -177,6 +190,6 @@ export const site: Site = {
     subcopy: "Discover a botanical-inspired approach to your everyday routine.",
     cta: { label: "Visit the shop", href: "/shop" },
   },
-  previewNotice: "Design preview — products, ingredients and copy are illustrative.",
+  previewNotice: "Design preview — prices, sizes and product photography are not yet confirmed.",
   social: [],
 };

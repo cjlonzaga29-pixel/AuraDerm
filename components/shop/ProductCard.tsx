@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: ShopProduct }) {
           </Link>
         </h3>
         <p className="font-sans text-sm leading-relaxed text-sage-muted">{product.summary}</p>
-        <p className="font-sans text-xs text-sage-muted">{product.size}</p>
+        {product.size ? <p className="font-sans text-xs text-sage-muted">{product.size}</p> : null}
         <div className="mt-1 flex items-center justify-between gap-4">
           <PriceTag price={product.price} />
           <span

@@ -4,14 +4,14 @@ test.describe("home P1-P5", () => {
   // P3-P15: #actives (four concept badges) was consolidated into #collection,
   // and the routine dropped its AM/SPF REAPPLY/PM slot labels (the middle
   // label contradicted its "Layer" step) for plain numbered steps.
-  test("#collection lists 3 concept products, each labelled not for sale; #routine shows 3 ordered steps", async ({
+  test("#collection lists the 4 hair-care products, each labelled price coming soon; #routine shows 3 ordered steps", async ({
     page,
   }) => {
     await page.goto("/");
     const collection = page.locator("#collection");
     await expect(collection).toHaveCount(1);
-    await expect(collection.locator("li h3")).toHaveCount(3);
-    await expect(collection.getByText("Concept · not for sale")).toHaveCount(3);
+    await expect(collection.locator("li h3")).toHaveCount(4);
+    await expect(collection.getByText("Price coming soon")).toHaveCount(4);
     await expect(page.locator("#actives")).toHaveCount(0);
 
     const steps = page.locator("#routine ol li h3");

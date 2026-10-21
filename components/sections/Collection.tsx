@@ -3,9 +3,9 @@ import { DisplayHeading } from "@/components/ui/DisplayHeading";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { site } from "@/content/site";
 
-// The concept products as one grouped glass panel with hairline rows rather
-// than a card per item. Commerce is disabled, so there is no price or buy
-// action — each row carries the honest concept label instead.
+// The product range as one grouped glass panel with hairline rows rather
+// than a card per item. Prices are unconfirmed, so there is no price or buy
+// action — each row carries the honest availability label instead.
 export function Collection() {
   const { collectionIntro, products } = site;
 
@@ -26,7 +26,9 @@ export function Collection() {
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   <h3 className="font-sans text-lg font-normal text-cream">{product.name}</h3>
-                  <span className="font-sans text-sm text-sage-muted">{product.size}</span>
+                  {product.size ? (
+                    <span className="font-sans text-sm text-sage-muted">{product.size}</span>
+                  ) : null}
                 </div>
                 <p className="font-sans text-sm leading-relaxed text-sage-muted">
                   {product.shortDescription}

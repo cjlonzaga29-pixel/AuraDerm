@@ -9,11 +9,8 @@ export function PriceTag({ price, size = "sm" }: { price: PriceState; size?: "sm
   }
 
   return (
-    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-sans">
+    <p className="font-sans">
       <span className={`text-cream ${amountClass}`}>{formatMoney(price.priceMinor)}</span>
-      {price.kind === "illustrative" ? (
-        <span className="text-xs tracking-wide text-sage-muted">Illustrative price</span>
-      ) : null}
     </p>
   );
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Shop · AuraDerm Botanicals",
 };
 
-// The catalog has no categories (three concept products), so the collection
+// The catalog has no categories (four hair-care products), so the collection
 // is a plain grid without filter controls.
 export default function ShopPage() {
   const products = getShopProducts();
@@ -22,13 +22,13 @@ export default function ShopPage() {
           <header className="flex max-w-2xl flex-col gap-4">
             <DisplayHeading level="h1">Shop</DisplayHeading>
             <p className="font-sans text-base leading-relaxed text-cream">
-              The full AuraDerm collection, from the first cleanse to the last layer of the evening.
+              The Aura Derm hair and scalp range: two daily shampoos, a conditioner and a leave-on scalp serum.
             </p>
             <p
               data-testid="shop-preview-notice"
               className="w-fit rounded-full border border-hairline px-4 py-1.5 font-sans text-xs tracking-wide text-sage-muted"
             >
-              Shop preview · concept products, illustrative prices, checkout not connected
+              Shop preview · prices coming soon, checkout not connected
             </p>
           </header>
 

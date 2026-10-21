@@ -11,7 +11,11 @@ import {
 import type { CartItem, Product } from "@/types/store";
 import { addMoney, multiplyMoney } from "@/lib/money";
 
-const CART_STORAGE_KEY = "auraderm_cart_v1";
+// v1 held demo skincare items with fictional prices. Bumping the version drops
+// them instead of mapping them onto the real catalog; only the stale v1 key is
+// removed, other storage is left alone.
+const CART_STORAGE_KEY = "auraderm_cart_v2";
+const STALE_CART_KEYS = ["auraderm_cart_v1"];
 
 export interface CartContextValue {
   items: CartItem[];
@@ -32,6 +36,7 @@ export const CartContext = createContext<CartContextValue | undefined>(undefined
 function readStoredCart(): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
+    for (const key of STALE_CART_KEYS) window.localStorage.removeItem(key);
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);

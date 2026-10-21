@@ -10,6 +10,18 @@ export const BANNED_CLAIM_PATTERNS: RegExp[] = [
   /\beliminates? acne\b/i,
   /\breverses? aging\b/i,
   /\bdermatologist[-\s]approved\b/i,
+  // Hair-care label guide: no growth, hair-loss, antifungal or
+  // certification claims until (and unless) they are substantiated.
+  /\bre-?grows?\b/i,
+  /\bhair grower\b/i,
+  /\bhair growth\b/i,
+  /\bstops? hair loss\b/i,
+  /\bantifungal\b/i,
+  /\banti-dandruff\b/i,
+  /\bcertified (natural|organic)\b/i,
+  /\bCOSMOS\b/,
+  /\bEcocert\b/i,
+  /\bFDA[-\s]approved\b/i,
 ];
 
 export function findClaims(text: string): string[] {

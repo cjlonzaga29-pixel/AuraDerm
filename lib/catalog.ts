@@ -1,23 +1,25 @@
 import { site } from "@/content/site";
-import { PRODUCTS } from "@/content/products";
+import { getProductDetails, type KeyIngredient } from "@/content/products";
 import type { Product } from "@/types/store";
 
-export type ConceptVisual = "cleanse" | "hydrate" | "finish";
+export type ConceptVisual = "cleanse" | "prepare" | "hydrate" | "finish";
 
 export type PriceState =
   | { kind: "confirmed"; priceMinor: number }
-  | { kind: "illustrative"; priceMinor: number }
   | { kind: "unavailable" };
 
 export type ShopProduct = {
   handle: string;
   name: string;
-  size: string;
+  /** Net content; null while unconfirmed. */
+  size: string | null;
   summary: string;
   description: string;
-  ingredients: string[];
-  usage: string | null;
+  keyIngredients: KeyIngredient[];
+  directions: string[];
+  cautions: string[];
   images: { src: string; alt: string }[];
+  /** Placeholder artwork used until product photography exists. */
   concept: ConceptVisual;
   price: PriceState;
   /** Store record handed to the cart; null when the product cannot be bought. */
@@ -25,40 +27,53 @@ export type ShopProduct = {
 };
 
 const CONCEPTS: Record<string, ConceptVisual> = {
-  "botanical-cleansing-elixir": "cleanse",
-  "radiance-barrier-serum": "hydrate",
-  "night-renewal-nectar": "finish",
+  "hair-fall-defense-shampoo": "cleanse",
+  "hair-fall-defense-conditioner": "hydrate",
+  "hair-fall-defense-scalp-vitamin-serum": "finish",
+  "scalp-balance-daily-shampoo": "prepare",
 };
 
-// Bridges the two catalogs: content/site.ts is the marketing source of truth
-// (order, names, sizes, confirmed prices — all null today), content/products.ts
-// is the demo store record (copy, ingredients and placeholder prices). A
-// confirmed marketing price wins; otherwise a demo price is surfaced only as
-// illustrative, and a missing price stays missing rather than becoming zero.
+// Bridges the two content sources: content/site.ts is the marketing source of
+// truth (order, names, sizes, prices — all null today) and content/products.ts
+// holds the label-guide copy. Only a confirmed price makes a product
+// purchasable; a missing price stays missing rather than becoming zero.
 export function toShopProduct(entry: (typeof site.products)[number]): ShopProduct {
-  const store = PRODUCTS.find((p) => p.handle === entry.slug);
+  const details = getProductDetails(entry.slug);
 
-  let price: PriceState = { kind: "unavailable" };
-  if (entry.priceMinor !== null && Number.isInteger(entry.priceMinor)) {
-    price = { kind: "confirmed", priceMinor: entry.priceMinor };
-  } else if (store && Number.isInteger(store.priceMinor) && store.priceMinor > 0) {
-    price = { kind: "illustrative", priceMinor: store.priceMinor };
-  }
+  const price: PriceState =
+    entry.priceMinor !== null && Number.isInteger(entry.priceMinor) && entry.priceMinor > 0
+      ? { kind: "confirmed", priceMinor: entry.priceMinor }
+      : { kind: "unavailable" };
+
+  const images: ShopProduct["images"] = [];
 
   return {
     handle: entry.slug,
     name: entry.name,
     size: entry.size,
-    summary: store?.subtitle ?? entry.shortDescription,
-    description: store?.description ?? entry.shortDescription,
-    ingredients: store?.ingredients ?? [],
-    usage: store?.usage ?? null,
-    images: store?.images ?? [],
+    summary: details?.subtitle ?? entry.shortDescription,
+    description: details?.description ?? entry.shortDescription,
+    keyIngredients: details?.keyIngredients ?? [],
+    directions: details?.directions ?? [],
+    cautions: details?.cautions ?? [],
+    images,
     concept: CONCEPTS[entry.slug] ?? "hydrate",
     price,
     cartProduct:
-      store && price.kind !== "unavailable"
-        ? { ...store, title: entry.name, volume: entry.size, priceMinor: price.priceMinor }
+      details && price.kind === "confirmed"
+        ? {
+            id: `prod_${entry.slug}`,
+            handle: entry.slug,
+            title: entry.name,
+            subtitle: details.subtitle,
+            description: details.description,
+            priceMinor: price.priceMinor,
+            volume: entry.size ?? "",
+            images,
+            inStock: true,
+            ingredients: details.keyIngredients.map((i) => i.name),
+            usage: details.directions.join(" "),
+          }
         : null,
   };
 }
