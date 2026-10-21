@@ -101,6 +101,28 @@ test.describe("shop", () => {
     expect(storage).toEqual({ v1: null, unrelated: "keep-me" });
   });
 
+  test("a saved v2 cart is restored, not overwritten by the empty first render", async ({ page }) => {
+    // Fixture only: no live product is purchasable while prices are unconfirmed.
+    const saved = JSON.stringify([
+      {
+        productId: "fixture_item",
+        handle: "hair-fall-defense-shampoo",
+        title: "Fixture Cart Item",
+        priceMinor: 100,
+        quantity: 1,
+        volume: "",
+        image: "",
+      },
+    ]);
+    await page.goto("/");
+    await page.evaluate((value) => localStorage.setItem("auraderm_cart_v2", value), saved);
+    await page.goto("/shop");
+    await page.getByTestId("bag-button").click();
+    await expect(page.getByRole("dialog", { name: "Your Bag" })).toContainText("Fixture Cart Item");
+    await page.reload();
+    expect(await page.evaluate(() => localStorage.getItem("auraderm_cart_v2"))).toBe(saved);
+  });
+
   test("unknown and obsolete product handles return 404", async ({ request }) => {
     for (const path of ["/shop/not-a-real-product", "/shop/radiance-barrier-serum"]) {
       const response = await request.get(path);

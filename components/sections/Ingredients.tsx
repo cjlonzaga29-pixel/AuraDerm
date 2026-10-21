@@ -1,13 +1,15 @@
+import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { site } from "@/content/site";
 import { INGREDIENT_ILLUSTRATIONS } from "@/components/illustrations";
 
-// The one wide panel on the page: five botanicals need the width. Items are
+// The one wide panel on the page: five ingredient highlights need the width,
+// each linking to the products whose label lists it. Items are
 // plain columns divided by whitespace — no nested inset cards.
 export function Ingredients() {
-  const { ingredientsIntro, ingredients } = site;
+  const { ingredientsIntro, ingredients, products } = site;
 
   return (
     <section id="ingredients" className="py-24 lg:py-36">
@@ -33,6 +35,23 @@ export function Ingredients() {
                     <h3 className="font-sans text-base font-medium text-cream">{ingredient.name}</h3>
                     <p className="font-sans text-sm leading-relaxed text-sage-muted">
                       {ingredient.benefit}
+                    </p>
+                    <p className="font-sans text-xs leading-relaxed text-sage-muted">
+                      Found in{" "}
+                      {ingredient.foundIn.map((slug, i) => {
+                        const product = products.find((p) => p.slug === slug);
+                        return (
+                          <span key={slug}>
+                            {i > 0 ? ", " : null}
+                            <Link
+                              href={`/shop/${slug}`}
+                              className="text-cream underline underline-offset-4 hover:text-gold"
+                            >
+                              {product?.name.replace(/^Aura Derm /, "") ?? slug}
+                            </Link>
+                          </span>
+                        );
+                      })}
                     </p>
                   </div>
                 </li>

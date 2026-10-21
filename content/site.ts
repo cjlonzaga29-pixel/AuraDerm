@@ -15,6 +15,8 @@ export type Ingredient = {
   name: string;
   benefit: string;
   image: string | null;
+  /** Slugs of the products whose label lists this ingredient. */
+  foundIn: string[];
 };
 
 export type Benefit = {
@@ -22,9 +24,12 @@ export type Benefit = {
   body: string;
 };
 
+/** Routine copy; a `{ slug }` segment renders as a link to that product. */
+export type RoutineSegment = string | { slug: string; label: string };
+
 export type RoutineStep = {
   title: string;
-  body: string;
+  body: RoutineSegment[];
 };
 
 export type SustainabilityItem = {
@@ -84,23 +89,23 @@ export const site: Site = {
   brand: "AuraDerm Botanicals",
   commerce: false,
   hero: {
-    headline: "Return to your ritual.",
-    accentWord: "ritual.",
+    headline: "Rooted in nature. Made for your hair.",
+    accentWord: "hair.",
     subcopy:
-      "A quieter moment for your skin — botanical-inspired textures and a simple routine designed around everyday care.",
+      "Explore daily cleansing, conditioning and scalp care for softer, stronger, fuller-looking hair.",
     primaryCta: {
       label: "Shop now",
       href: "/shop",
     },
     secondaryCta: {
-      label: "Find your ritual",
+      label: "Explore the routine",
       href: "#routine",
     },
   },
   statement: {
-    headline: "Rooted in nature,\nmade for your everyday.",
-    accentWord: "nature,",
-    subcopy: "Thoughtful textures. Simple steps. A little space to slow down.",
+    headline: "Care from scalp to strand.",
+    accentWord: "strand.",
+    subcopy: "A thoughtful routine of cleansing, conditioning and leave-on scalp care.",
   },
   collectionIntro: {
     headline: "The collection",
@@ -108,8 +113,8 @@ export const site: Site = {
     label: "Price coming soon",
   },
   ingredientsIntro: {
-    headline: "A botanical palette",
-    body: "Five familiar plants that inspire the textures and scents of the collection.",
+    headline: "Key ingredients",
+    body: "Highlights from across the range. Ingredients vary by product — each one shows where it is found.",
   },
   // Real Aura Derm hair-care range (label guide, COSMOS version). Prices and
   // net content are unconfirmed — the guide says 300 mL / 60 mL while newer
@@ -152,42 +157,107 @@ export const site: Site = {
       shortDescription: "Sulfate-free daily shampoo for oily or flaky scalps.",
     },
   ],
+  // Highlights drawn from the key ingredients in content/products.ts; foundIn
+  // must match those label lists so no product is implied to contain them all.
   ingredients: [
-    { order: 1, word: "GREEN TEA", name: "Green Tea", benefit: "A fresh botanical note.", image: null },
-    { order: 2, word: "ALOE", name: "Aloe", benefit: "A familiar face in everyday skincare.", image: null },
-    { order: 3, word: "OAT", name: "Oat", benefit: "A soft, comforting inspiration.", image: null },
-    { order: 4, word: "CHAMOMILE", name: "Chamomile", benefit: "A gentle floral touch.", image: null },
-    { order: 5, word: "ROSE", name: "Rose", benefit: "A classic botanical finish.", image: null },
+    {
+      order: 1,
+      word: "ALOE VERA",
+      name: "Aloe Vera",
+      benefit: "Soothes the scalp and softens hair.",
+      image: null,
+      foundIn: ["hair-fall-defense-shampoo", "scalp-balance-daily-shampoo"],
+    },
+    {
+      order: 2,
+      word: "RICE PROTEIN",
+      name: "Rice Protein",
+      benefit: "Helps strengthen and thicken the look of hair.",
+      image: null,
+      foundIn: ["hair-fall-defense-shampoo", "hair-fall-defense-conditioner"],
+    },
+    {
+      order: 3,
+      word: "BATANA OIL",
+      name: "Batana Oil",
+      benefit: "Nourishes hair and scalp.",
+      image: null,
+      foundIn: [
+        "hair-fall-defense-shampoo",
+        "hair-fall-defense-conditioner",
+        "scalp-balance-daily-shampoo",
+      ],
+    },
+    {
+      order: 4,
+      word: "ROSEMARY",
+      name: "Rosemary",
+      benefit: "Part of a botanical scalp-care complex.",
+      image: null,
+      foundIn: ["hair-fall-defense-scalp-vitamin-serum", "scalp-balance-daily-shampoo"],
+    },
+    {
+      order: 5,
+      word: "NIACINAMIDE",
+      name: "Niacinamide",
+      benefit: "Vitamin B3 for scalp conditioning.",
+      image: null,
+      foundIn: ["hair-fall-defense-scalp-vitamin-serum", "scalp-balance-daily-shampoo"],
+    },
   ],
   // Folded into the brand statement (P3-P15) rather than a separate card row.
   benefits: [
     {
-      title: "Less, but thoughtful",
-      body: "A focused collection that keeps your daily ritual simple.",
+      title: "Gentle daily cleansing",
+      body: "Two sulfate-free shampoos — one for hair fall due to breakage, one for oily or flaky scalps.",
     },
     {
-      title: "Textures to enjoy",
-      body: "Imagine lightweight layers and a comfortable finish.",
+      title: "Silicone-free conditioning",
+      body: "A plant-based conditioner that detangles, softens and strengthens.",
     },
     {
-      title: "Your moment of calm",
-      body: "Turn everyday skincare into a small pause in your day.",
+      title: "Leave-on scalp care",
+      body: "A lightweight, non-greasy serum with a light peppermint cooling feel.",
     },
   ],
+  // Steps follow the label directions in content/products.ts.
   routine: [
-    { title: "Cleanse", body: "Begin with a gentle cleanse." },
-    { title: "Layer", body: "Apply your preferred skincare layers." },
-    { title: "Complete", body: "Finish your routine; use sun protection during the day." },
+    {
+      title: "Cleanse",
+      body: [
+        "Choose ",
+        { slug: "hair-fall-defense-shampoo", label: "Hair Fall Defense Shampoo" },
+        " or ",
+        { slug: "scalp-balance-daily-shampoo", label: "Scalp Balance Daily Shampoo" },
+        ". Massage into wet hair and scalp to a lather, then rinse well.",
+      ],
+    },
+    {
+      title: "Condition",
+      body: [
+        "Follow with ",
+        { slug: "hair-fall-defense-conditioner", label: "Hair Fall Defense Conditioner" },
+        "; leave for 2–3 minutes and rinse.",
+      ],
+    },
+    {
+      title: "Scalp care",
+      body: [
+        "Apply ",
+        { slug: "hair-fall-defense-scalp-vitamin-serum", label: "Scalp Vitamin Serum" },
+        " to a clean scalp and massage gently. Leave on; use once or twice daily.",
+      ],
+    },
   ],
   routineIntro: {
-    headline: "Three steps, one simple ritual.",
-    body: "An illustrative routine designed around everyday care.",
+    headline: "Three steps, scalp to strand.",
+    body: "See each product page for full directions and cautions.",
   },
   sustainability: null,
   givesBackHeadline: "",
   closing: {
     headline: "Make space for yourself.",
-    subcopy: "Discover a botanical-inspired approach to your everyday routine.",
+    subcopy: "Explore the full hair and scalp care collection.",
     cta: { label: "Visit the shop", href: "/shop" },
   },
   previewNotice: "Design preview — prices, sizes and product photography are not yet confirmed.",

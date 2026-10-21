@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import type { CartItem, Product } from "@/types/store";
@@ -34,9 +35,7 @@ export interface CartContextValue {
 export const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 function readStoredCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
   try {
-    for (const key of STALE_CART_KEYS) window.localStorage.removeItem(key);
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
@@ -46,25 +45,57 @@ function readStoredCart(): CartItem[] {
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+// The cart lives in a small external store read through useSyncExternalStore:
+// the server and the hydration render both see the empty server snapshot, then
+// React re-renders with the stored cart — no setState-in-effect sync step.
+// Storage is only written on a cart change, which starts from the restored
+// cart, so an empty initial render can never overwrite a saved cart.
+const EMPTY_CART: CartItem[] = [];
+let cartSnapshot: CartItem[] | null = null;
+const cartListeners = new Set<() => void>();
 
-  // Cart starts empty on both server and first client render to avoid a
-  // hydration mismatch, then syncs from localStorage once mounted.
+function getCartSnapshot(): CartItem[] {
+  cartSnapshot ??= readStoredCart();
+  return cartSnapshot;
+}
+
+function getServerCartSnapshot(): CartItem[] {
+  return EMPTY_CART;
+}
+
+function subscribeToCart(listener: () => void) {
+  cartListeners.add(listener);
+  return () => {
+    cartListeners.delete(listener);
+  };
+}
+
+function updateCart(update: (prev: CartItem[]) => CartItem[]) {
+  const next = update(getCartSnapshot());
+  if (next === cartSnapshot) return;
+  cartSnapshot = next;
+  try {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Storage full or blocked: keep the in-memory cart for this session.
+  }
+  for (const listener of cartListeners) listener();
+}
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const items = useSyncExternalStore(subscribeToCart, getCartSnapshot, getServerCartSnapshot);
+  const [isOpen, setIsOpen] = useState(false);
+
   useEffect(() => {
-    setItems(readStoredCart());
-    setHydrated(true);
+    try {
+      for (const key of STALE_CART_KEYS) window.localStorage.removeItem(key);
+    } catch {
+      // Storage unavailable: nothing to clean up.
+    }
   }, []);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  }, [items, hydrated]);
-
   const addItem = useCallback((product: Product, quantity: number = 1) => {
-    setItems((prev) => {
+    updateCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
         return prev.map((item) =>
@@ -87,11 +118,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((item) => item.productId !== productId));
+    updateCart((prev) => prev.filter((item) => item.productId !== productId));
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    setItems((prev) => {
+    updateCart((prev) => {
       if (quantity <= 0) {
         return prev.filter((item) => item.productId !== productId);
       }
@@ -101,7 +132,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => updateCart(() => []), []);
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
   const toggleCart = useCallback(() => setIsOpen((prev) => !prev), []);

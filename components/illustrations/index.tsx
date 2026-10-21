@@ -29,21 +29,6 @@ function Roundel({
   );
 }
 
-export function GreenTeaIllustration({ title, className }: IllustrationProps) {
-  return (
-    <Roundel title={title} className={className}>
-      <path
-        d="M36 50C36 50 22 42 22 29C22 21 29 16 36 16C43 16 50 21 50 29C50 42 36 50 36 50Z"
-        fill="none"
-        stroke="var(--gold)"
-        strokeWidth="2"
-      />
-      <path d="M36 16V50" stroke="var(--gold)" strokeWidth="1.5" strokeOpacity="0.7" />
-      <path d="M36 26C32 28 29 31 28 36" stroke="var(--cream)" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
-    </Roundel>
-  );
-}
-
 export function AloeIllustration({ title, className }: IllustrationProps) {
   return (
     <Roundel title={title} className={className}>
@@ -55,68 +40,71 @@ export function AloeIllustration({ title, className }: IllustrationProps) {
   );
 }
 
-export function OatIllustration({ title, className }: IllustrationProps) {
+export function RiceProteinIllustration({ title, className }: IllustrationProps) {
   return (
     <Roundel title={title} className={className}>
-      <path d="M36 54V18" stroke="var(--gold)" strokeWidth="1.5" strokeOpacity="0.7" />
-      {[20, 27, 34, 41].map((y) => (
+      <path d="M36 56C36 44 38 30 44 16" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeOpacity="0.7" strokeLinecap="round" />
+      {[
+        [40, 20, 25],
+        [38, 28, 20],
+        [37, 36, 15],
+        [36, 44, 10],
+      ].map(([x, y, angle]) => (
         <g key={y}>
-          <ellipse cx="30" cy={y} rx="5.5" ry="3.5" transform={`rotate(-20 30 ${y})`} fill="var(--cream)" fillOpacity="0.85" />
-          <ellipse cx="42" cy={y + 3} rx="5.5" ry="3.5" transform={`rotate(20 42 ${y + 3})`} fill="var(--gold)" fillOpacity="0.8" />
+          <ellipse cx={x - 5} cy={y} rx="2.6" ry="5" transform={`rotate(${angle - 35} ${x - 5} ${y})`} fill="var(--cream)" fillOpacity="0.85" />
+          <ellipse cx={x + 5} cy={y + 2} rx="2.6" ry="5" transform={`rotate(${angle + 35} ${x + 5} ${y + 2})`} fill="var(--gold)" fillOpacity="0.8" />
         </g>
       ))}
     </Roundel>
   );
 }
 
-export function ChamomileIllustration({ title, className }: IllustrationProps) {
-  const petals = Array.from({ length: 8 });
+export function BatanaOilIllustration({ title, className }: IllustrationProps) {
   return (
     <Roundel title={title} className={className}>
-      <g transform="translate(36 34)">
-        {petals.map((_, i) => {
-          const angle = (360 / petals.length) * i;
-          return (
-            <ellipse
-              key={i}
-              cx="0"
-              cy="-13"
-              rx="4"
-              ry="9"
-              fill="var(--cream)"
-              fillOpacity="0.85"
-              transform={`rotate(${angle})`}
-            />
-          );
-        })}
-        <circle r="6.5" fill="var(--gold)" />
-      </g>
+      <path d="M36 15C36 15 24 30 24 39C24 46 29.5 51 36 51C42.5 51 48 46 48 39C48 30 36 15 36 15Z" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M30 40C30 44 32.5 46 35 46.5" fill="none" stroke="var(--cream)" strokeWidth="1.5" strokeOpacity="0.75" strokeLinecap="round" />
+      <ellipse cx="36" cy="58" rx="8" ry="2" fill="var(--gold)" fillOpacity="0.5" />
     </Roundel>
   );
 }
 
-export function RoseIllustration({ title, className }: IllustrationProps) {
+export function RosemaryIllustration({ title, className }: IllustrationProps) {
   return (
     <Roundel title={title} className={className}>
-      <g transform="translate(36 34)">
-        <circle r="12" fill="none" stroke="var(--gold)" strokeWidth="1.5" />
-        <circle r="8" fill="none" stroke="var(--cream)" strokeOpacity="0.8" strokeWidth="1.5" />
-        <circle r="4" fill="var(--gold)" />
-      </g>
-      <path d="M36 46V58" stroke="var(--gold)" strokeWidth="1.5" strokeOpacity="0.6" strokeLinecap="round" />
+      <path d="M36 56V16" stroke="var(--gold)" strokeWidth="1.5" strokeOpacity="0.8" strokeLinecap="round" />
+      {[20, 26, 32, 38, 44, 50].map((y) => (
+        <g key={y} strokeLinecap="round" strokeWidth="2">
+          <path d={`M36 ${y}L28 ${y - 4}`} stroke="var(--cream)" strokeOpacity="0.8" />
+          <path d={`M36 ${y + 2}L44 ${y - 2}`} stroke="var(--gold)" />
+        </g>
+      ))}
     </Roundel>
   );
 }
 
+export function NiacinamideIllustration({ title, className }: IllustrationProps) {
+  return (
+    <Roundel title={title} className={className}>
+      <path d="M36 22L48 29V43L36 50L24 43V29Z" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M36 27L44 31.5V40.5" fill="none" stroke="var(--cream)" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
+      <path d="M48 29L55 25" stroke="var(--gold)" strokeWidth="1.5" strokeOpacity="0.7" strokeLinecap="round" />
+      <circle cx="56.5" cy="24" r="2.5" fill="var(--cream)" fillOpacity="0.85" />
+      <circle cx="36" cy="18" r="2.5" fill="var(--gold)" />
+    </Roundel>
+  );
+}
+
+// Keyed by Ingredient.word in content/site.ts.
 export const INGREDIENT_ILLUSTRATIONS: Record<
   string,
   (props: IllustrationProps) => ReactElement
 > = {
-  "GREEN TEA": GreenTeaIllustration,
-  ALOE: AloeIllustration,
-  OAT: OatIllustration,
-  CHAMOMILE: ChamomileIllustration,
-  ROSE: RoseIllustration,
+  "ALOE VERA": AloeIllustration,
+  "RICE PROTEIN": RiceProteinIllustration,
+  "BATANA OIL": BatanaOilIllustration,
+  ROSEMARY: RosemaryIllustration,
+  NIACINAMIDE: NiacinamideIllustration,
 };
 
 /** Distinct full-bleed concept visuals for the four ritual steps. */

@@ -5,7 +5,7 @@ import { site } from "@/content/site";
 const NAV_LINKS = [
   { label: "Collection", href: "/#collection" },
   { label: "Ingredients", href: "/#ingredients" },
-  { label: "Ritual", href: "/#routine" },
+  { label: "Routine", href: "/#routine" },
   { label: "Shop", href: "/shop" },
   { label: "Our story", href: "/about" },
 ];

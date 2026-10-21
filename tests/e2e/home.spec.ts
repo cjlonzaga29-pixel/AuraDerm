@@ -17,8 +17,46 @@ test.describe("home P1-P5", () => {
     const steps = page.locator("#routine ol li h3");
     await expect(steps).toHaveCount(3);
     await expect(steps.nth(0)).toHaveText("Cleanse");
-    await expect(steps.nth(1)).toHaveText("Layer");
-    await expect(steps.nth(2)).toHaveText("Complete");
+    await expect(steps.nth(1)).toHaveText("Condition");
+    await expect(steps.nth(2)).toHaveText("Scalp care");
+  });
+
+  test("hero introduces the hair-care range; CTAs go to /shop and #routine", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("h1")).toHaveText("Rooted in nature. Made for your hair.");
+    const hero = page.locator("main section").first();
+    await expect(hero.getByRole("link", { name: "Shop now" })).toHaveAttribute("href", "/shop");
+    await hero.getByRole("link", { name: "Explore the routine" }).click();
+    await expect(page).toHaveURL(/#routine$/);
+    await expect(page.locator("#routine")).toBeInViewport();
+  });
+
+  test("routine and ingredient links point at the right product pages", async ({ page }) => {
+    await page.goto("/");
+    const routine = page.locator("#routine");
+    const expected: [string, string][] = [
+      ["Hair Fall Defense Shampoo", "/shop/hair-fall-defense-shampoo"],
+      ["Scalp Balance Daily Shampoo", "/shop/scalp-balance-daily-shampoo"],
+      ["Hair Fall Defense Conditioner", "/shop/hair-fall-defense-conditioner"],
+      ["Scalp Vitamin Serum", "/shop/hair-fall-defense-scalp-vitamin-serum"],
+    ];
+    for (const [name, href] of expected) {
+      await expect(routine.getByRole("link", { name, exact: true })).toHaveAttribute("href", href);
+    }
+
+    const ingredients = page.locator("#ingredients");
+    await expect(ingredients).toContainText("Ingredients vary by product");
+    const rosemary = ingredients.locator("li", { hasText: "Rosemary" });
+    await expect(rosemary.getByRole("link")).toHaveCount(2);
+    await rosemary.getByRole("link", { name: "Hair Fall Defense Scalp Vitamin Serum" }).click();
+    await expect(page).toHaveURL(/\/shop\/hair-fall-defense-scalp-vitamin-serum$/);
+  });
+
+  test("no leftover skincare routine or botanicals on the homepage", async ({ page }) => {
+    await page.goto("/");
+    const main = page.locator("main");
+    await expect(main).not.toContainText(/skincare|\bskin\b|sun protection|SPF|\blayer/i);
+    await expect(main).not.toContainText(/chamomile|\brose\b|\boat\b/i);
   });
 
   test("commerce disabled: no prices or add-to-cart actions on the homepage", async ({ page }) => {

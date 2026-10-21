@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { DisplayHeading } from "@/components/ui/DisplayHeading";
 import { site } from "@/content/site";
 
-// Three numbered steps set straight on the footage with a feathered scrim —
+// Three numbered steps (each naming and linking its product) set straight on the footage with a feathered scrim —
 // typographic, so it reads differently from the two glass panels above.
 export function Routine() {
   const { routine, routineIntro } = site;
@@ -24,7 +25,21 @@ export function Routine() {
                 </span>
                 <div className="flex flex-col gap-1">
                   <h3 className="font-sans text-base font-medium text-cream">{step.title}</h3>
-                  <p className="font-sans text-sm leading-relaxed text-sage-muted">{step.body}</p>
+                  <p className="font-sans text-sm leading-relaxed text-sage-muted">
+                    {step.body.map((segment, i) =>
+                      typeof segment === "string" ? (
+                        segment
+                      ) : (
+                        <Link
+                          key={i}
+                          href={`/shop/${segment.slug}`}
+                          className="text-cream underline underline-offset-4 hover:text-gold"
+                        >
+                          {segment.label}
+                        </Link>
+                      ),
+                    )}
+                  </p>
                 </div>
               </li>
             ))}

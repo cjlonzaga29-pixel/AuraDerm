@@ -12,7 +12,7 @@ import { useCart } from "@/hooks/useCart";
 const NAV_LINKS = [
   { label: "Collection", href: "#collection" },
   { label: "Ingredients", href: "#ingredients" },
-  { label: "Ritual", href: "#routine" },
+  { label: "Routine", href: "#routine" },
 ];
 
 const SHOP_LINK = { label: "Shop", href: "/shop" };
