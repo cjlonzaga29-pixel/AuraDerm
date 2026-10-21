@@ -11,7 +11,7 @@ export function PriceTag({ price, size = "sm" }: { price: PriceState; size?: "sm
 
   return (
     <p className="flex flex-wrap items-baseline gap-x-2 font-sans" data-testid="price">
-      <span className={`text-cream ${size === "lg" ? "text-2xl" : "text-base"}`}>
+      <span className={`text-cream ${size === "lg" ? "text-3xl font-medium tracking-tight" : "text-base"}`}>
         {formatMoney(price.priceMinor)}
       </span>
       {price.kind === "sample" ? (

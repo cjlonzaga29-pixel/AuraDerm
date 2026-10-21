@@ -84,21 +84,30 @@ test.describe("shop", () => {
     await expect(info.getByRole("group", { name: /images$/ })).toHaveCount(0);
     await expect(page.getByTestId("highlights").getByRole("listitem")).toHaveCount(3);
 
-    await page.getByRole("button", { name: "Key ingredients" }).click();
+    // Every details section is open: no accordion to click through.
+    const details = page.getByTestId("product-details");
+    for (const title of ["Overview", "Key ingredients", "How to use", "Cautions", "Specifications", "Reviews"]) {
+      await expect(details.getByRole("heading", { level: 2, name: title })).toBeVisible();
+      await expect(details.getByRole("navigation", { name: "Product details" }).getByRole("link", { name: title })).toHaveAttribute("href", /^#/);
+    }
     const ingredients = page.getByRole("region", { name: "Key ingredients" });
     await expect(ingredients.getByText("Caffeine", { exact: true })).toBeVisible();
     await expect(page.getByText("Key ingredients only — not the full ingredient list.")).toBeVisible();
-    await page.getByRole("button", { name: "How to use" }).click();
     await expect(page.getByText("Massage gently for 1–2 minutes. Do not rinse.")).toBeVisible();
-    await page.getByRole("button", { name: "Cautions" }).click();
     await expect(page.getByText("For external use only. For adults.")).toBeVisible();
     await expect(page.getByText(/patch test before first use/)).toBeVisible();
+    await expect(page.getByRole("region", { name: "Reviews" })).toContainText("No reviews yet.");
+    // The description and each ingredient benefit appear exactly once.
+    const product = await page.getByTestId("product-detail").locator("..").innerText();
+    expect(product.split("Refreshes and energizes the scalp").length - 1).toBe(1);
+    await expect(page.getByText(/nourishes and refreshes the scalp/i)).toHaveCount(1);
+    // No invented commerce signals and no unconfirmed size.
+    await expect(page.locator("main")).not.toContainText(/rating|★|sold|in stock|% off|free shipping|\b\d+\s?m[lL]\b/);
 
     const related = page.locator("section[aria-labelledby='related-heading']");
     await expect(related.getByTestId("product-card")).toHaveCount(3);
     await related.getByRole("link", { name: "Scalp Balance Daily Shampoo" }).click();
     await expect(page).toHaveURL(/\/shop\/scalp-balance-daily-shampoo$/);
-    await page.getByRole("button", { name: "Key ingredients" }).click();
     await expect(
       page.getByRole("region", { name: "Key ingredients" }).getByText("Zinc PCA", { exact: true }),
     ).toBeVisible();

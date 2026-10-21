@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 import type { CatalogImage, ProductCategory } from "@/lib/catalog";
 
@@ -11,6 +12,8 @@ type Props = {
   /** Eager-load images that are visible on first paint. */
   priority?: boolean;
   className?: string;
+  /** Extra props for the <img> (ref, pointer handlers) used by the gallery. */
+  imageProps?: Omit<ComponentProps<"img">, "src" | "alt" | "width" | "height">;
 };
 
 const LINE = {
@@ -76,6 +79,7 @@ export function ProductVisual({
   fit = "contain",
   priority = false,
   className,
+  imageProps,
 }: Props) {
   if (image) {
     return (
@@ -85,16 +89,17 @@ export function ProductVisual({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          {...imageProps}
           src={image.src}
           alt={image.alt}
           width={image.width}
           height={image.height}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
-          className={cn("size-full", fit === "contain" ? "object-contain" : "object-cover")}
+          className={cn("size-full", fit === "contain" ? "object-contain" : "object-cover", imageProps?.className)}
         />
         {image.illustrative ? (
-          <figcaption className="absolute bottom-3 left-3 rounded-full border border-glass-border bg-forest-deep/85 px-2.5 py-1 font-sans text-xs text-cream">
+          <figcaption className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-glass-border bg-forest-deep/85 px-2.5 py-1 font-sans text-xs text-cream">
             Illustrative packaging
           </figcaption>
         ) : null}

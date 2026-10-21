@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Leaf } from "lucide-react";
 import { Nav } from "@/components/site/Nav";
 import { Container } from "@/components/ui/Container";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { PurchasePanel } from "@/components/shop/PurchasePanel";
 import { Separator } from "@/components/ui/separator";
@@ -29,13 +24,51 @@ export async function generateMetadata(props: PageProps<"/shop/[handle]">): Prom
   return { title: product ? `${product.name} · AuraDerm Botanicals` : "Not found" };
 }
 
+// One titled block of the details area; the id doubles as the anchor for the
+// section links.
+function DetailSection({
+  id,
+  title,
+  className,
+  children,
+}: {
+  id: string;
+  title: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      id={id}
+      aria-labelledby={`${id}-heading`}
+      className={`flex scroll-mt-28 flex-col gap-4 rounded-card border border-hairline bg-forest-panel p-6 sm:p-8 ${className ?? ""}`}
+    >
+      <h2 id={`${id}-heading`} className="font-heading text-2xl leading-tight font-medium text-cream">
+        {title}
+      </h2>
+      <div className="font-sans text-base leading-relaxed text-sage-muted">{children}</div>
+    </section>
+  );
+}
+
 export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
   const { handle } = await props.params;
   const product = getShopProduct(handle);
   if (!product) notFound();
 
   const related = getRelatedProducts(product.handle);
+  // Names only up top; each ingredient's benefit is given once, below.
   const highlights = product.keyIngredients.slice(0, 3);
+
+  // Only sections with approved copy appear, in reading order.
+  const sections = [
+    { id: "overview", title: "Overview", show: true },
+    { id: "ingredients", title: "Key ingredients", show: product.keyIngredients.length > 0 },
+    { id: "how-to-use", title: "How to use", show: product.directions.length > 0 },
+    { id: "cautions", title: "Cautions", show: product.cautions.length > 0 },
+    { id: "specifications", title: "Specifications", show: true },
+    { id: "reviews", title: "Reviews", show: true },
+  ].filter((section) => section.show);
 
   return (
     <>
@@ -60,21 +93,29 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
             </ol>
           </nav>
 
-          <div data-testid="product-detail" className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[11fr_9fr] lg:gap-8">
-            <div className="lg:sticky lg:top-28">
+          {/* Purchase area. data-magnifier-bounds: the hover preview may
+              cover the right column, never spill past the container. */}
+          <div
+            data-testid="product-detail"
+            data-magnifier-bounds
+            className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] lg:gap-12"
+          >
+            {/* The width cap sits on the wrapper so the overlaid controls
+                stay on the image at tablet widths. */}
+            <div className={product.images.length > 0 ? "mx-auto w-full sm:max-w-md lg:max-w-none" : "w-full"}>
               <ProductGallery
                 name={product.name}
                 category={product.category}
                 images={product.images}
                 className={
                   product.images.length > 0
-                    ? "mx-auto aspect-[4/5] w-full sm:max-w-md lg:max-w-none"
+                    ? "aspect-[4/5] w-full bg-linen"
                     : "aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]"
                 }
               />
             </div>
 
-            <div className="flex min-w-0 flex-col gap-7 rounded-card border border-hairline bg-forest-panel p-6 sm:p-8 lg:p-10">
+            <div className="flex min-w-0 flex-col gap-6 lg:pt-2">
               <div className="flex flex-col gap-3">
                 <p className="font-sans text-xs uppercase tracking-[0.2em] text-gold">
                   {BRAND_LABEL} · {product.category}
@@ -82,111 +123,127 @@ export default async function ProductPage(props: PageProps<"/shop/[handle]">) {
                 <h1 className="font-heading text-[2rem] leading-[1.08] font-medium tracking-[-0.015em] text-balance text-cream sm:text-[2.5rem] lg:text-[2.75rem]">
                   {product.displayName}
                 </h1>
-                <p className="font-sans text-lg leading-snug text-cream">{product.summary}</p>
+                <p className="font-sans text-lg leading-snug text-sage-muted">{product.summary}</p>
               </div>
 
-              <p className="font-sans text-base leading-relaxed text-sage-muted">{product.description}</p>
+              <Separator className="bg-hairline" />
 
-              {/* Confirmed facts only: net content appears once the owner confirms it. */}
-              <dl
-                className="flex flex-col divide-y divide-hairline border-y border-hairline font-sans text-base"
-                data-testid="specifications"
-              >
-                <div className="flex justify-between gap-4 py-3">
-                  <dt className="text-sage-muted">Category</dt>
-                  <dd className="text-cream">{product.category}</dd>
-                </div>
-                {product.size ? (
-                  <div className="flex justify-between gap-4 py-3">
-                    <dt className="text-sage-muted">Size</dt>
-                    <dd className="text-cream">{product.size}</dd>
+              <PurchasePanel name={product.name} price={product.price} cartProduct={product.cartProduct}>
+                {highlights.length > 0 ? (
+                  // Below lg the buy controls come first, nearer the fold.
+                  <div className="flex flex-col gap-3 border-y border-hairline py-5 max-lg:order-last">
+                    <h2 className="font-sans text-xs uppercase tracking-[0.2em] text-sage-muted">
+                      Key ingredients include
+                    </h2>
+                    <ul className="flex flex-col gap-2" data-testid="highlights">
+                      {highlights.map((item) => (
+                        <li key={item.name} className="flex items-center gap-3 font-sans text-base text-cream">
+                          <Leaf className="size-4 shrink-0 text-gold" aria-hidden="true" />
+                          {item.name}
+                        </li>
+                      ))}
+                    </ul>
+                    <a
+                      href="#ingredients"
+                      className="self-start rounded-sm font-sans text-sm text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      All key ingredients and what they do
+                    </a>
                   </div>
                 ) : null}
-              </dl>
+              </PurchasePanel>
+            </div>
+          </div>
 
-              {highlights.length > 0 ? (
-                <section aria-labelledby="highlights-heading" className="flex flex-col gap-3">
-                  <h2
-                    id="highlights-heading"
-                    className="font-sans text-xs uppercase tracking-[0.2em] text-sage-muted"
-                  >
-                    Highlights
-                  </h2>
-                  <ul className="flex flex-col gap-3" data-testid="highlights">
-                    {highlights.map((item) => (
-                      <li key={item.name} className="flex gap-3 font-sans text-base leading-relaxed">
-                        <Leaf className="mt-1 size-4 shrink-0 text-gold" aria-hidden="true" />
-                        <span>
-                          <span className="font-medium text-cream">{item.name}</span>
-                          <span className="text-sage-muted"> — {item.benefit}</span>
-                        </span>
+          {/* Details: every section open and scannable; each piece of copy
+              appears once. */}
+          <div className="flex flex-col gap-6 pt-6 lg:pt-10" data-testid="product-details">
+            <nav aria-label="Product details" className="border-y border-hairline">
+              <ul className="flex flex-wrap gap-x-6 gap-y-1 py-3 font-sans text-sm">
+                {sections.map((section) => (
+                  <li key={section.id}>
+                    <a
+                      href={`#${section.id}`}
+                      className="inline-flex min-h-11 items-center rounded-sm text-cream transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {section.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <DetailSection id="overview" title="Overview" className="lg:col-span-2">
+                <p className="max-w-3xl text-lg text-cream">{product.description}</p>
+              </DetailSection>
+
+              {product.keyIngredients.length > 0 ? (
+                <DetailSection id="ingredients" title="Key ingredients">
+                  <ul className="flex flex-col divide-y divide-hairline">
+                    {product.keyIngredients.map((ingredient) => (
+                      <li key={ingredient.name} className="flex flex-col gap-0.5 py-3 first:pt-0">
+                        <span className="text-cream">{ingredient.name}</span>
+                        <span>{ingredient.benefit}</span>
                       </li>
                     ))}
                   </ul>
-                </section>
+                  <p className="mt-3 text-sm">Key ingredients only — not the full ingredient list.</p>
+                </DetailSection>
               ) : null}
 
-              <PurchasePanel
-                name={product.name}
-                price={product.price}
-                cartProduct={product.cartProduct}
-              />
+              {product.directions.length > 0 ? (
+                <DetailSection id="how-to-use" title="How to use">
+                  <ol className="flex flex-col gap-3">
+                    {product.directions.map((step, i) => (
+                      <li key={step} className="flex gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/60 text-sm text-gold"
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="pt-0.5 text-cream">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </DetailSection>
+              ) : null}
 
-              <div>
-                <Separator className="bg-hairline" />
-                <Accordion type="multiple">
-                  {product.keyIngredients.length > 0 ? (
-                    <AccordionItem value="ingredients">
-                      <AccordionTrigger>Key ingredients</AccordionTrigger>
-                      <AccordionContent className="text-base">
-                        <ul className="flex flex-col gap-2">
-                          {product.keyIngredients.map((ingredient) => (
-                            <li key={ingredient.name}>
-                              <span className="text-cream">{ingredient.name}</span>
-                              {" — "}
-                              {ingredient.benefit}
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="mt-3 text-sm">
-                          Key ingredients only — not the full ingredient list.
-                        </p>
-                      </AccordionContent>
-                    </AccordionItem>
+              {product.cautions.length > 0 ? (
+                <DetailSection id="cautions" title="Cautions">
+                  <ul className="flex list-disc flex-col gap-1.5 pl-5">
+                    {product.cautions.map((caution) => (
+                      <li key={caution}>{caution}</li>
+                    ))}
+                  </ul>
+                </DetailSection>
+              ) : null}
+
+              {/* Confirmed facts only: net content appears once the owner confirms it. */}
+              <DetailSection id="specifications" title="Specifications">
+                <dl className="flex flex-col divide-y divide-hairline" data-testid="specifications">
+                  <div className="flex justify-between gap-4 py-3 first:pt-0">
+                    <dt>Brand</dt>
+                    <dd className="text-cream">{BRAND_LABEL}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 py-3">
+                    <dt>Category</dt>
+                    <dd className="text-cream">{product.category}</dd>
+                  </div>
+                  {product.size ? (
+                    <div className="flex justify-between gap-4 py-3">
+                      <dt>Size</dt>
+                      <dd className="text-cream">{product.size}</dd>
+                    </div>
                   ) : null}
-                  {product.directions.length > 0 ? (
-                    <AccordionItem value="directions">
-                      <AccordionTrigger>How to use</AccordionTrigger>
-                      <AccordionContent className="text-base">
-                        <ol className="flex list-decimal flex-col gap-1.5 pl-5">
-                          {product.directions.map((step) => (
-                            <li key={step}>{step}</li>
-                          ))}
-                        </ol>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ) : null}
-                  {product.cautions.length > 0 ? (
-                    <AccordionItem value="caution">
-                      <AccordionTrigger>Cautions</AccordionTrigger>
-                      <AccordionContent className="text-base">
-                        <ul className="flex list-disc flex-col gap-1.5 pl-5">
-                          {product.cautions.map((caution) => (
-                            <li key={caution}>{caution}</li>
-                          ))}
-                        </ul>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ) : null}
-                  {/* No reviews exist yet; none are invented. */}
-                  <AccordionItem value="reviews">
-                    <AccordionTrigger>Reviews</AccordionTrigger>
-                    <AccordionContent className="text-base">
-                      <p>No reviews yet.</p>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
+                </dl>
+              </DetailSection>
+
+              {/* No reviews exist yet; none are invented. */}
+              <DetailSection id="reviews" title="Reviews" className="lg:col-span-2">
+                <p>No reviews yet.</p>
+              </DetailSection>
             </div>
           </div>
 

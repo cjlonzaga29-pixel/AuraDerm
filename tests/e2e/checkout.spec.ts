@@ -144,7 +144,7 @@ test.describe("mobile sticky purchase bar", () => {
       return;
     }
 
-    await page.getByRole("button", { name: "Reviews" }).scrollIntoViewIfNeeded();
+    await page.getByRole("heading", { name: "Reviews" }).scrollIntoViewIfNeeded();
     await page.mouse.wheel(0, 600);
     await expect(bar).toBeVisible();
     expect(await page.evaluate(() => document.body.dataset.stickyPurchase)).toBe("on");

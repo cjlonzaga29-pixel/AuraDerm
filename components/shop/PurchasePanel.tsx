@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,15 +19,18 @@ export const SAMPLE_PRICE_NOTE =
 // render, only a single availability note, and addItem is never reachable.
 // Buy now takes only this product and quantity to checkout and leaves the bag
 // untouched. Below lg a sticky bar repeats Add to bag only once these
-// controls have scrolled out of view above.
+// controls have scrolled out of view above. `children` (e.g. highlights)
+// sit between the price and the controls.
 export function PurchasePanel({
   name,
   price,
   cartProduct,
+  children,
 }: {
   name: string;
   price: PriceState;
   cartProduct: Product | null;
+  children?: ReactNode;
 }) {
   const { addItem, openCart } = useCart();
   const router = useRouter();
@@ -37,18 +40,21 @@ export function PurchasePanel({
 
   useEffect(() => {
     const node = controlsRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
-    // Hidden until the controls have scrolled up past the header: before the
-    // reader reaches them, or while they are on screen, the bar would only
-    // duplicate them.
-    const observer = new IntersectionObserver(
-      ([entry]) => setControlsVisible(entry.isIntersecting || entry.boundingClientRect.top > 0),
-      {
-        rootMargin: "-64px 0px 0px 0px",
-      },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
+    if (!node) return;
+    // Hidden until the controls have scrolled up past the 64px header: before
+    // the reader reaches them, or while they are on screen, the bar would only
+    // duplicate them. Measured on scroll rather than with an
+    // IntersectionObserver, which stays silent when a jump (anchor link,
+    // restored scroll) carries controls that started below the fold straight
+    // past the top without ever intersecting.
+    const update = () => setControlsVisible(node.getBoundingClientRect().bottom > 64);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, [cartProduct]);
 
   const showStickyBar = cartProduct !== null && !controlsVisible;
@@ -65,15 +71,18 @@ export function PurchasePanel({
 
   if (cartProduct === null || price.kind === "unavailable") {
     return (
-      <div
-        data-testid="availability"
-        className="flex flex-col gap-1.5 rounded-card border border-hairline bg-glass-inset p-5 font-sans"
-      >
-        <p className="text-base text-cream">Price coming soon</p>
-        <p className="text-base leading-relaxed text-sage-muted">
-          Purchasing will be available once pricing is confirmed.
-        </p>
-      </div>
+      <>
+        {children}
+        <div
+          data-testid="availability"
+          className="flex flex-col gap-1.5 rounded-card border border-hairline bg-glass-inset p-5 font-sans"
+        >
+          <p className="text-base text-cream">Price coming soon</p>
+          <p className="text-base leading-relaxed text-sage-muted">
+            Purchasing will be available once pricing is confirmed.
+          </p>
+        </div>
+      </>
     );
   }
 
@@ -88,8 +97,10 @@ export function PurchasePanel({
   };
 
   return (
-    <div className="flex flex-col gap-4" data-testid="purchase-panel">
+    <div className="flex flex-col gap-5" data-testid="purchase-panel">
       <PriceTag price={price} size="lg" />
+
+      {children}
 
       <div ref={controlsRef} className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
