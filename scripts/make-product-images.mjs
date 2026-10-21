@@ -3,10 +3,11 @@
 // PRODUCT_IMAGES); filenames are not trusted for identity. Each supplied
 // mockup is a styled front view (front label to camera) — no back or combined
 // front/back views have been supplied, so each product has one gallery image
-// (view: "front" in content/site.ts). Images keep their
+// (view: "front" in content/site.ts), except the scalp serum, whose eight-image
+// Follivance gallery (FOLLIVANCE below) is numbered by the owner. Images keep their
 // native size and proportions — no crop, resize, redraw or background removal —
 // and are only re-encoded to WebP. Source files are left unchanged.
-import { mkdirSync, statSync } from "node:fs";
+import { mkdirSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -40,4 +41,33 @@ for (const { source, out } of PRODUCT_IMAGES) {
     .webp({ quality: 86, effort: 6, smartSubsample: true })
     .toFile(target);
   console.log(`${out}  ${info.width}x${info.height}  ${(statSync(target).size / 1024).toFixed(1)} KB`);
+}
+
+// The serum gallery: public/source/product/follivance/"Image N <subject>.png",
+// N = 1 (main image) to 8. Sorted numerically so "Image 10" could never land
+// before "Image 2"; a missing, repeated or unnumbered file stops the build
+// rather than being guessed at.
+const FOLLIVANCE_DIR = path.join(SRC_DIR, "follivance");
+const FOLLIVANCE_COUNT = 8;
+const numbered = readdirSync(FOLLIVANCE_DIR)
+  .filter((file) => file.toLowerCase().endsWith(".png"))
+  .map((file) => ({ file, n: Number(/^Image (\d+)\b/.exec(file)?.[1] ?? NaN) }));
+const unnumbered = numbered.filter(({ n }) => !Number.isInteger(n));
+if (unnumbered.length > 0) {
+  throw new Error(`Unnumbered Follivance images: ${unnumbered.map(({ file }) => file).join(", ")}`);
+}
+numbered.sort((a, b) => a.n - b.n);
+const found = numbered.map(({ n }) => n).join(",");
+const expected = Array.from({ length: FOLLIVANCE_COUNT }, (_, i) => i + 1).join(",");
+if (found !== expected) {
+  throw new Error(`Follivance images must be numbered ${expected}; found ${found}`);
+}
+
+for (const { file, n } of numbered) {
+  const out = `follivance-hair-density-serum-${String(n).padStart(2, "0")}.webp`;
+  const target = path.join(OUT_DIR, out);
+  const info = await sharp(path.join(FOLLIVANCE_DIR, file))
+    .webp({ quality: 86, effort: 6, smartSubsample: true })
+    .toFile(target);
+  console.log(`${file} -> ${out}  ${info.width}x${info.height}  ${(statSync(target).size / 1024).toFixed(1)} KB`);
 }

@@ -77,11 +77,13 @@ test.describe("shop", () => {
     const gallery = info.getByTestId("product-image").first();
     await expect(gallery.locator("img")).toHaveAttribute(
       "src",
-      "/images/products/hair-fall-defense-scalp-vitamin-serum-front.webp",
+      "/images/products/follivance-hair-density-serum-01.webp",
     );
     await expect(gallery.getByText("Illustrative packaging")).toBeVisible();
-    // One image only, so no thumbnail controls.
-    await expect(info.getByRole("group", { name: /images$/ })).toHaveCount(0);
+    // The eight-image Follivance gallery, main image selected.
+    const thumbs = info.getByRole("group", { name: /images$/ }).getByRole("button");
+    await expect(thumbs).toHaveCount(8);
+    await expect(thumbs.first()).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("highlights").getByRole("listitem")).toHaveCount(3);
 
     // Folder tabs: Overview first and alone; each tab replaces the panel.
@@ -354,7 +356,9 @@ test.describe("shop", () => {
         const img = images.nth(i);
         await img.scrollIntoViewIfNeeded();
         await expect(img).toHaveJSProperty("complete", true);
-        expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(1122);
+        // Packshots are 1122 px wide; the serum's square Follivance artwork 1254.
+        const [src, naturalWidth] = await img.evaluate((el: HTMLImageElement) => [el.src, el.naturalWidth] as const);
+        expect(naturalWidth, src).toBe(src.includes("/follivance-") ? 1254 : 1122);
         await expect(img).toHaveCSS("object-fit", "contain");
       }
     }
@@ -362,7 +366,9 @@ test.describe("shop", () => {
       await page.goto(`/shop/${handle}`);
       await expect(page.getByTestId("product-detail").locator("img").first()).toHaveAttribute(
         "src",
-        `/images/products/${handle}-front.webp`,
+        handle === "hair-fall-defense-scalp-vitamin-serum"
+          ? "/images/products/follivance-hair-density-serum-01.webp"
+          : `/images/products/${handle}-front.webp`,
       );
     }
     const width = await page.evaluate(() => document.documentElement.scrollWidth);

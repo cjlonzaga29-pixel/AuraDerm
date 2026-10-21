@@ -188,6 +188,18 @@ test.describe("hover magnifier (desktop)", () => {
     await expect(dialog).toBeHidden();
     await expect(enlarge).toBeFocused();
 
+    // Changing image under a resting pointer drops the stale preview; the
+    // next move rebuilds it from the new image.
+    await page.mouse.move(q.x + q.width / 2, q.y + q.height / 2);
+    await expect(preview.locator("img")).toHaveAttribute("src", /follivance-hair-density-serum-01\.webp$/);
+    await page.getByRole("button", { name: "Next image" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(img).toHaveAttribute("src", /follivance-hair-density-serum-02\.webp$/);
+    await expect(preview).toHaveCount(0);
+    await page.mouse.move(q.x + q.width / 2 + 4, q.y + q.height / 2 + 4);
+    await expect(preview.locator("img")).toHaveAttribute("src", /follivance-hair-density-serum-02\.webp$/);
+    await page.mouse.move(0, 0);
+
     // Purchase controls stay clickable straight after a hover.
     await page.mouse.move(q.x + q.width / 2, q.y + q.height / 2);
     await expect(preview).toBeVisible();
@@ -237,6 +249,50 @@ test.describe("touch (phone)", () => {
     const dialog = page.getByRole("dialog", { name: /Hair Fall Defense Shampoo/ });
     await expect(dialog).toBeVisible();
     await expect(page.getByTestId("magnifier-preview")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await context.close();
+  });
+
+  test("Follivance serum: swiping steps through the gallery without enlarging", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+      baseURL,
+    });
+    const page = await context.newPage();
+    await page.goto(`/shop/${PRODUCTS[3]}`);
+    const img = image(page);
+    await expect(img).toHaveJSProperty("complete", true);
+    const b = await box(img);
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+
+    const cdp = await context.newCDPSession(page);
+    const touch = (type: "touchStart" | "touchMove" | "touchEnd", x: number, y: number) =>
+      cdp.send("Input.dispatchTouchEvent", {
+        type,
+        touchPoints: type === "touchEnd" ? [] : [{ x, y }],
+      });
+    const swipe = async (dx: number) => {
+      await touch("touchStart", cx, cy);
+      for (let i = 1; i <= 8; i++) await touch("touchMove", cx + (dx * i) / 8, cy);
+      await page.waitForTimeout(300);
+      await touch("touchEnd", cx + dx, cy);
+      await page.waitForTimeout(700);
+    };
+    await swipe(-96);
+    await expect(img).toHaveAttribute("src", /follivance-hair-density-serum-02\.webp$/);
+    await swipe(96);
+    await expect(img).toHaveAttribute("src", /follivance-hair-density-serum-01\.webp$/);
+    await swipe(96);
+    await expect(img).toHaveAttribute("src", /follivance-hair-density-serum-08\.webp$/);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    await page.touchscreen.tap(cx, cy);
+    const dialog = page.getByRole("dialog", { name: /Scalp Vitamin Serum — Image 8 of 8/ });
+    await expect(dialog).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await context.close();

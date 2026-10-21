@@ -9,7 +9,7 @@ const SHAMPOO = "hair-fall-defense-shampoo";
 
 test.describe("product gallery", () => {
   test("single image: no gallery navigation; enlarge dialog keeps the native ratio and returns focus", async ({ page }) => {
-    await page.goto(`/shop/${SERUM}`);
+    await page.goto(`/shop/${SHAMPOO}`);
     const gallery = page.getByTestId("product-gallery");
     await expect(gallery.getByRole("button", { name: "Previous image" })).toHaveCount(0);
     await expect(gallery.getByRole("button", { name: "Next image" })).toHaveCount(0);
@@ -18,10 +18,10 @@ test.describe("product gallery", () => {
     const enlarge = gallery.getByRole("button", { name: /^Enlarge image/ });
     await enlarge.focus();
     await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog", { name: /Scalp Vitamin Serum/ });
+    const dialog = page.getByRole("dialog", { name: /Hair Fall Defense Shampoo/ });
     await expect(dialog).toBeVisible();
     const img = dialog.locator("img");
-    await expect(img).toHaveAttribute("src", `/images/products/${SERUM}-front.webp`);
+    await expect(img).toHaveAttribute("src", `/images/products/${SHAMPOO}-front.webp`);
     await expect(img).toHaveCSS("object-fit", "contain");
     await expect(dialog.getByText("Illustrative packaging", { exact: true })).toBeVisible();
     const box = (await img.boundingBox())!;
@@ -33,6 +33,67 @@ test.describe("product gallery", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(enlarge).toBeFocused();
+  });
+
+  test("Follivance serum: eight images in order, thumbnails, previous/next and keyboard dialog", async ({ page }) => {
+    const srcs = Array.from(
+      { length: 8 },
+      (_, i) => `/images/products/follivance-hair-density-serum-0${i + 1}.webp`,
+    );
+    await page.goto(`/shop/${SERUM}`);
+    const gallery = page.getByTestId("product-gallery");
+    const main = gallery.getByTestId("product-image").locator("img");
+    await expect(main).toHaveAttribute("src", srcs[0]);
+    await expect(main).toHaveCSS("object-fit", "contain");
+
+    const thumbs = gallery.getByRole("group", { name: /images$/ }).getByRole("button");
+    await expect(thumbs).toHaveCount(8);
+    const thumbImgs = thumbs.locator("img");
+    expect(await thumbImgs.evaluateAll((els) => els.map((el) => el.getAttribute("src")))).toEqual(srcs);
+    // Every view loads (no 404), at its native square size.
+    for (const img of await thumbImgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect(img).toHaveJSProperty("complete", true);
+      expect(await img.evaluate((el: HTMLImageElement) => [el.naturalWidth, el.naturalHeight])).toEqual([1254, 1254]);
+    }
+
+    // Thumbnails select their own image and show the selection.
+    for (const i of [2, 7, 0]) {
+      await thumbs.nth(i).click();
+      await expect(main).toHaveAttribute("src", srcs[i]);
+      await expect(thumbs.nth(i)).toHaveAttribute("aria-pressed", "true");
+      await expect(gallery.locator('[aria-pressed="true"]')).toHaveCount(1);
+    }
+
+    // Previous/next wrap around the eight views.
+    await gallery.getByRole("button", { name: "Previous image" }).click();
+    await expect(main).toHaveAttribute("src", srcs[7]);
+    await gallery.getByRole("button", { name: "Next image" }).click();
+    await expect(main).toHaveAttribute("src", srcs[0]);
+    await gallery.getByRole("button", { name: "Next image" }).click();
+    await expect(main).toHaveAttribute("src", srcs[1]);
+
+    // Dialog: arrow keys step through the views; Escape returns focus.
+    const enlarge = gallery.getByRole("button", { name: /^Enlarge image/ });
+    await enlarge.focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog", { name: /Scalp Vitamin Serum/ });
+    await expect(dialog).toBeVisible();
+    const zoomed = dialog.locator("img");
+    await expect(zoomed).toHaveAttribute("src", srcs[1]);
+    await expect(dialog.getByText("Styled · Image 2 of 8", { exact: true })).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(zoomed).toHaveAttribute("src", srcs[2]);
+    await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("ArrowLeft");
+    await expect(zoomed).toHaveAttribute("src", srcs[0]);
+    await expect(zoomed).toHaveCSS("object-fit", "contain");
+    const box = (await zoomed.boundingBox())!;
+    expect(Math.abs(box.width / box.height - 1)).toBeLessThan(0.02);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(enlarge).toBeFocused();
+    await expect(main).toHaveAttribute("src", srcs[0]);
   });
 });
 

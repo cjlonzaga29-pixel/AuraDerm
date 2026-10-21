@@ -134,17 +134,35 @@ describe("shop catalog adapter", () => {
     ]);
   });
 
-  it("shows each product's own front packshot, labelled as illustrative packaging", () => {
+  it("shows each product's own images, every one labelled as illustrative packaging", () => {
     for (const product of getShopProducts()) {
+      for (const image of product.images) {
+        expect(existsSync(path.join(process.cwd(), "public", image.src))).toBe(true);
+        expect(image.illustrative).toBe(true);
+        expect(image.alt).toMatch(/^Illustrative packaging: /);
+        expect(findClaims(image.alt)).toEqual([]);
+      }
+      if (product.handle === "hair-fall-defense-scalp-vitamin-serum") continue;
       expect(product.images).toHaveLength(1);
       const [front] = product.images;
       expect(front.src).toBe(`/images/products/${product.handle}-front.webp`);
-      expect(existsSync(path.join(process.cwd(), "public", front.src))).toBe(true);
-      expect(front.illustrative).toBe(true);
-      expect(front.alt).toMatch(/^Illustrative packaging: /);
-      expect(findClaims(front.alt)).toEqual([]);
       expect([front.width, front.height]).toEqual([1122, 1402]);
     }
+  });
+
+  it("gives the serum the eight Follivance images in order, image 1 first everywhere", () => {
+    const serum = getShopProduct("hair-fall-defense-scalp-vitamin-serum")!;
+    const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/follivance-hair-density-serum-0${i + 1}.webp`);
+    expect(serum.images.map((image) => image.src)).toEqual(srcs);
+    expect(serum.images.map((image) => image.view)).toEqual(["front", ...Array(7).fill("styled")]);
+    for (const image of serum.images) expect([image.width, image.height]).toEqual([1254, 1254]);
+    // Cards and the related row read images[0]; the bag reads cartProduct.
+    expect(serum.cartProduct!.images[0].src).toBe(srcs[0]);
+    expect(getRelatedProducts("hair-fall-defense-shampoo").find((p) => p.handle === serum.handle)!.images[0].src).toBe(
+      srcs[0],
+    );
+    // The name is unchanged.
+    expect(serum.name).toBe("Aura Derm Hair Fall Defense Scalp Vitamin Serum");
   });
 
   it("returns undefined for unknown and obsolete handles and excludes self from related", () => {
