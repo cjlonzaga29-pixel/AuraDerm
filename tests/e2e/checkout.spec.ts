@@ -10,12 +10,25 @@ const SCALP_BALANCE = "scalp-balance-daily-shampoo";
 const CONDITIONER = "hair-fall-defense-conditioner";
 
 test.describe("product gallery", () => {
-  test("single image: no gallery navigation; enlarge dialog keeps the native ratio and returns focus", async ({ page }) => {
+  test("Hair Fall Defense Conditioner: eight images in order, image 1 main; enlarge dialog keeps the square ratio and returns focus", async ({ page }) => {
+    const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/${CONDITIONER}-0${i + 1}.webp`);
     await page.goto(`/shop/${CONDITIONER}`);
     const gallery = page.getByTestId("product-gallery");
-    await expect(gallery.getByRole("button", { name: "Previous image" })).toHaveCount(0);
-    await expect(gallery.getByRole("button", { name: "Next image" })).toHaveCount(0);
-    await expect(gallery.getByRole("group", { name: /images$/ })).toHaveCount(0);
+    const main = gallery.getByTestId("product-image").locator("img");
+    await expect(main).toHaveAttribute("src", srcs[0]);
+    const thumbs = gallery.getByRole("group", { name: /images$/ }).getByRole("button");
+    const thumbImgs = thumbs.locator("img");
+    expect(await thumbImgs.evaluateAll((els) => els.map((el) => el.getAttribute("src")))).toEqual(srcs);
+    for (const img of await thumbImgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect(img).toHaveJSProperty("complete", true);
+      expect(await img.evaluate((el: HTMLImageElement) => [el.naturalWidth, el.naturalHeight])).toEqual([1254, 1254]);
+    }
+    for (const i of [4, 7, 0]) {
+      await thumbs.nth(i).click();
+      await expect(main).toHaveAttribute("src", srcs[i]);
+      await expect(thumbs.nth(i)).toHaveAttribute("aria-pressed", "true");
+    }
 
     const enlarge = gallery.getByRole("button", { name: /^Enlarge image/ });
     await enlarge.focus();
@@ -23,11 +36,11 @@ test.describe("product gallery", () => {
     const dialog = page.getByRole("dialog", { name: /Hair Fall Defense Conditioner/ });
     await expect(dialog).toBeVisible();
     const img = dialog.locator("img");
-    await expect(img).toHaveAttribute("src", `/images/products/${CONDITIONER}-front.webp`);
+    await expect(img).toHaveAttribute("src", srcs[0]);
     await expect(img).toHaveCSS("object-fit", "contain");
     await expect(dialog.getByText("Illustrative packaging", { exact: true })).toHaveCount(0);
     const box = (await img.boundingBox())!;
-    expect(Math.abs(box.width / box.height - 1122 / 1402)).toBeLessThan(0.02);
+    expect(Math.abs(box.width / box.height - 1)).toBeLessThan(0.02);
     const viewport = page.viewportSize()!;
     expect(box.height).toBeLessThanOrEqual(viewport.height);
     expect(box.width).toBeLessThanOrEqual(viewport.width);

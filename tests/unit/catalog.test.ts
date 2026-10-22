@@ -142,16 +142,9 @@ describe("shop catalog adapter", () => {
         expect(image.alt).toMatch(/^Illustrative packaging: /);
         expect(findClaims(image.alt)).toEqual([]);
       }
-      if (
-        ["hair-fall-defense-scalp-vitamin-serum", "hair-fall-defense-shampoo", "scalp-balance-daily-shampoo"].includes(
-          product.handle,
-        )
-      )
-        continue;
-      expect(product.images).toHaveLength(1);
-      const [front] = product.images;
-      expect(front.src).toBe(`/images/products/${product.handle}-front.webp`);
-      expect([front.width, front.height]).toEqual([1122, 1402]);
+      // Every product now has its own owner-numbered eight-image gallery.
+      expect(product.images).toHaveLength(8);
+      expect(product.images[0].view).toBe("front");
     }
   });
 
@@ -198,6 +191,21 @@ describe("shop catalog adapter", () => {
     expect(shampoo.name).toBe("Aura Derm Scalp Balance Daily Shampoo");
     expect(shampoo.size).toBeNull();
     expect(JSON.stringify(shampoo)).not.toMatch(/Piroctone/i);
+  });
+
+  it("gives the Hair Fall Defense Conditioner its eight images in order, image 1 first everywhere", () => {
+    const conditioner = getShopProduct("hair-fall-defense-conditioner")!;
+    const srcs = Array.from({ length: 8 }, (_, i) => `/images/products/hair-fall-defense-conditioner-0${i + 1}.webp`);
+    expect(conditioner.images.map((image) => image.src)).toEqual(srcs);
+    expect(conditioner.images.map((image) => image.view)).toEqual(["front", ...Array(7).fill("styled")]);
+    for (const image of conditioner.images) expect([image.width, image.height]).toEqual([1254, 1254]);
+    expect(conditioner.cartProduct!.images[0].src).toBe(srcs[0]);
+    expect(getRelatedProducts("hair-fall-defense-shampoo").find((p) => p.handle === conditioner.handle)!.images[0].src).toBe(
+      srcs[0],
+    );
+    // The artwork's "Nourish + Strength" label name and 250 mL are not catalog fact.
+    expect(conditioner.name).toBe("Aura Derm Hair Fall Defense Conditioner");
+    expect(conditioner.size).toBeNull();
   });
 
   it("returns undefined for unknown and obsolete handles and excludes self from related", () => {

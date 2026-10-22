@@ -4,8 +4,7 @@ import { ProductGallery } from "@/components/shop/ProductGallery";
 import type { CatalogImage } from "@/lib/catalog";
 
 // Static render checks of the gallery's structure. Interaction (thumbnails,
-// swipe, keyboard, focus return) is covered in tests/e2e/checkout.spec.ts for
-// the single-image products that exist today.
+// swipe, keyboard, focus return) is covered in tests/e2e/checkout.spec.ts.
 const front: CatalogImage = { src: "/front.webp", alt: "Front of the bottle", width: 1122, height: 1402, view: "front", illustrative: true };
 const back: CatalogImage = { src: "/back.webp", alt: "Back label", width: 1122, height: 1402, view: "back" };
 const both: CatalogImage = { src: "/both.webp", alt: "Front and back", width: 1920, height: 1080, view: "front-back" };
