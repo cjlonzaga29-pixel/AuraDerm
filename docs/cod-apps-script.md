@@ -101,6 +101,13 @@ The request body is JSON:
   `stale_request`, `invalid_request`, `mode_not_allowed`, `busy`,
   `not_configured` and `server_error`. Errors never include order details.
 
+A payload of `{"action":"lookup","orderId":"AD-T-…"}`, signed the same way,
+writes nothing. It answers
+`{"ok":true,"orderId":…,"result":"lookup","rows":[{"row":N,"digest":"<sha256>","staffFilled":bool}]}`.
+Use it to confirm that exactly one row holds an order, and that a replay
+left that row unchanged (same digest). The reply contains no customer
+details. The server never treats a lookup reply as a delivery.
+
 Apps Script always answers HTTP 200, via a redirect to
 `script.googleusercontent.com`. The server therefore:
 

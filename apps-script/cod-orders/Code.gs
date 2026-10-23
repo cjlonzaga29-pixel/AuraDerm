@@ -14,6 +14,11 @@
  * and signature travel in the body, and the payload is signed exactly as the
  * serialized text that was sent.
  *
+ * A payload of { "action": "lookup", "orderId": "AD-T-…" } (signed the same
+ * way) writes nothing: it reports the rows holding that order ID and a SHA-256
+ * digest of each row, so an operator can confirm exactly one row exists and
+ * that a replay left it unchanged, without reading any customer details.
+ *
  * Script Properties (Project Settings → Script properties):
  *   COD_SIGNING_SECRET  required; the same value as the server's
  *                       COD_SHEET_SIGNING_SECRET (at least 32 characters).
@@ -100,6 +105,12 @@ function doPost(e) {
     }
 
     var payload = parseJson_(payloadText);
+    if (payload && payload.action === "lookup") {
+      if (typeof payload.orderId !== "string" || !TEST_ORDER_ID.test(payload.orderId)) {
+        return reply_({ ok: false, error: "invalid_request" });
+      }
+      return reply_(lookup_(payload.orderId));
+    }
     var check = validatePayload_(payload);
     if (!check.ok) return reply_({ ok: false, error: check.error });
     orderId = payload.orderId;
@@ -142,6 +153,32 @@ function appendOnce_(payload) {
     range.setValues([buildRow_(payload).map(literal_)]);
     SpreadsheetApp.flush();
     return { ok: true, orderId: payload.orderId, result: "created", row: row };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function lookup_(orderId) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(COD.LOCK_WAIT_MS)) return { ok: false, error: "busy" };
+  try {
+    var sheet = ordersSheet_();
+    var last = sheet.getLastRow();
+    var matches =
+      last < 2
+        ? []
+        : sheet.getRange(2, 1, last - 1, 1).createTextFinder(orderId).matchCase(true).matchEntireCell(true).findAll();
+    var rows = matches.map(function (m) {
+      var values = sheet.getRange(m.getRow(), 1, 1, COD.COLUMNS.length).getDisplayValues()[0];
+      return {
+        row: m.getRow(),
+        digest: sha256Hex_(JSON.stringify(values)),
+        staffFilled: values.slice(COD.WRITTEN_COLUMNS).some(function (v) {
+          return v !== "";
+        }),
+      };
+    });
+    return { ok: true, orderId: orderId, result: "lookup", rows: rows };
   } finally {
     lock.releaseLock();
   }
@@ -272,7 +309,14 @@ function cents_(money) {
 }
 
 function hmacHex_(message, secret) {
-  var bytes = Utilities.computeHmacSha256Signature(message, secret, Utilities.Charset.UTF_8);
+  return hex_(Utilities.computeHmacSha256Signature(message, secret, Utilities.Charset.UTF_8));
+}
+
+function sha256Hex_(text) {
+  return hex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8));
+}
+
+function hex_(bytes) {
   var hex = "";
   for (var n = 0; n < bytes.length; n++) {
     var b = bytes[n] & 0xff;

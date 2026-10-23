@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createOrder, getOrderStatus, processSheetOutbox, type CheckoutDeps } from "@/lib/server/checkout";
 import { resolveCheckoutConfig } from "@/lib/server/config";
@@ -64,18 +64,26 @@ class FakeRange {
     });
     return this;
   }
+  getDisplayValues() {
+    return Array.from({ length: this.rows }, (_, i) =>
+      Array.from({ length: this.cols }, (_, j) => this.sheet.cells[this.row - 1 + i]?.[this.col - 1 + j] ?? ""),
+    );
+  }
   createTextFinder(text: string) {
     const sheet = this.sheet;
     const { row, rows, col } = this;
+    const all = () => {
+      const found: { getRow: () => number }[] = [];
+      for (let r = row; r < row + rows; r++) {
+        if (sheet.cells[r - 1]?.[col - 1] === text) found.push({ getRow: () => r });
+      }
+      return found;
+    };
     const finder = {
       matchCase: () => finder,
       matchEntireCell: () => finder,
-      findNext: () => {
-        for (let r = row; r < row + rows; r++) {
-          if (sheet.cells[r - 1]?.[col - 1] === text) return { getRow: () => r };
-        }
-        return null;
-      },
+      findNext: () => all()[0] ?? null,
+      findAll: all,
     };
     return finder;
   }
@@ -123,6 +131,9 @@ function loadReceiver(options: { secret?: string | null; tab?: string } = {}) {
     },
     Utilities: {
       Charset: { UTF_8: "UTF-8" },
+      DigestAlgorithm: { SHA_256: "SHA_256" },
+      computeDigest: (_algorithm: string, value: string) =>
+        Array.from(createHash("sha256").update(Buffer.from(value, "utf8")).digest(), (b) => (b > 127 ? b - 256 : b)),
       // Java-style signed bytes, as Apps Script returns them.
       computeHmacSha256Signature: (value: string, key: string) =>
         Array.from(createHmac("sha256", Buffer.from(key, "utf8")).update(Buffer.from(value, "utf8")).digest(), (b) =>
@@ -314,6 +325,27 @@ describe("Apps Script receiver", () => {
     expect(post(broken, signed(PAYLOAD))).toEqual({ ok: false, error: "server_error" });
     expect(broken.errors.join(" ")).not.toMatch(/Fictitious|0917|example\.invalid|HYPERLINK/);
     expect(broken.lock.held).toBe(false);
+  });
+
+  it("signed lookup reports rows and digests without writing, and a replay leaves the row unchanged", async () => {
+    const lookup = () => post(google, signed({ action: "lookup", orderId: PAYLOAD.orderId }));
+    expect(lookup()).toEqual({ ok: true, orderId: PAYLOAD.orderId, result: "lookup", rows: [] });
+    await client.deliver(PAYLOAD);
+    const before = lookup();
+    expect(before.rows).toEqual([{ row: 2, digest: expect.stringMatching(/^[0-9a-f]{64}$/), staffFilled: false }]);
+    google.tab()!.cells[1][22] = "Staff note";
+    const noted = lookup();
+    expect(noted.rows[0].staffFilled).toBe(true);
+    expect(noted.rows[0].digest).not.toBe(before.rows[0].digest);
+    expect((await client.deliver(PAYLOAD)).result).toBe("duplicate");
+    expect(lookup().rows).toEqual(noted.rows);
+    expect(JSON.stringify(noted)).not.toMatch(/Fictitious|0917|example\.invalid|Staff note/);
+    expect(google.tab()!.cells).toHaveLength(2);
+
+    expect(post(google, { ...signed({ action: "lookup", orderId: PAYLOAD.orderId }), sig: "0".repeat(64) })).toEqual({ ok: false, error: "unauthorized" });
+    expect(post(google, signed({ action: "lookup", orderId: "x" }))).toEqual({ ok: false, error: "invalid_request" });
+    // A lookup result is never accepted as a delivery acknowledgement.
+    expect(post(google, signed({ action: "lookup", orderId: "AD-L-7K3M9Q2X" }))).toEqual({ ok: false, error: "invalid_request" });
   });
 
   it("uses the configured tab name", async () => {
