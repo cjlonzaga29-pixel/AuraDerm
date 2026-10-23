@@ -1,16 +1,25 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// In CI the workflow builds once, then Playwright starts its own server on an
+// explicit port from that build and never reuses a server it did not start.
+// Locally it builds and starts, or reuses a server already on the port.
+const ci = Boolean(process.env.CI);
+const port = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  reporter: "list",
+  forbidOnly: ci,
+  reporter: ci ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
+    trace: ci ? "retain-on-failure" : "off",
   },
   webServer: {
-    command: "npm run build && npm run start",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    command: ci ? `npx next start -p ${port}` : `npm run build && npx next start -p ${port}`,
+    url: baseURL,
+    reuseExistingServer: !ci,
     timeout: 180_000,
   },
   projects: [

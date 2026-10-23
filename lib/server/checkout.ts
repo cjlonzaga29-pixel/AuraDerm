@@ -12,7 +12,7 @@ import {
   verifyWebhookSignature,
   type PayMongoClient,
 } from "@/lib/server/paymongo";
-import { buildSheetRow, SHEET_COLUMNS, type SheetsClient } from "@/lib/server/sheets";
+import { buildCodPayload, type SheetsClient } from "@/lib/server/sheets";
 
 // Checkout orchestration. Every price is recomputed from the server catalog;
 // an order is written durably before any payment session exists; only a
@@ -304,6 +304,9 @@ export async function getOrderStatus(
       subtotalMinor: order.subtotalMinor,
       shippingMinor: order.shippingMinor,
       currency: order.currency,
+      // COD only: whether the store's order sheet has acknowledged the order.
+      // The order is recorded either way; this never reflects payment.
+      storeNotified: order.paymentMethod === "cod" ? order.sheetSyncStatus === "synced" : null,
     },
   };
 }
@@ -372,6 +375,10 @@ export async function handlePayMongoWebhook(
 
 export type SheetSyncSummary = { claimed: number; synced: number; failed: number; skipped?: string };
 
+// Delivers queued COD orders to the Apps Script receiver. A job is completed
+// only on a matching acknowledgement ("created" or "duplicate": the receiver
+// never writes a second row for an order ID); anything else leaves it failed
+// and queued with backoff. The order itself is never touched by a failure.
 export async function processSheetOutbox(deps: CheckoutDeps, limit = 10): Promise<SheetSyncSummary> {
   const { config, repo, sheets, log } = deps;
   if (!repo) return { claimed: 0, synced: 0, failed: 0, skipped: "database_not_configured" };
@@ -379,29 +386,11 @@ export async function processSheetOutbox(deps: CheckoutDeps, limit = 10): Promis
 
   const jobs = await repo.claimSheetJobs(limit);
   const summary: SheetSyncSummary = { claimed: jobs.length, synced: 0, failed: 0 };
-  const known = new Map<string, Set<string>>();
 
   for (const job of jobs) {
-    const tab = job.order.mode === "test" ? config.sheets.testTab : config.sheets.liveTab;
     try {
-      if (!tab) throw new Error("no sheet tab configured for live orders");
-      let ids = known.get(tab);
-      if (!ids) {
-        const column = await sheets.readOrderIds(tab);
-        ids = new Set(column);
-        if (column.length === 0) {
-          await sheets.appendRows(tab, [[...SHEET_COLUMNS]]);
-          ids.add(SHEET_COLUMNS[0]);
-        }
-        known.set(tab, ids);
-      }
-      if (ids.has(job.order.reference)) {
-        await repo.completeSheetJob(job.jobId, "already present");
-      } else {
-        const range = await sheets.appendRows(tab, [buildSheetRow(job)]);
-        ids.add(job.order.reference);
-        await repo.completeSheetJob(job.jobId, range);
-      }
+      const ack = await sheets.deliver(buildCodPayload(job));
+      await repo.completeSheetJob(job.jobId, ack.row === null ? ack.result : `${ack.result}: row ${ack.row}`);
       summary.synced += 1;
     } catch (error) {
       summary.failed += 1;

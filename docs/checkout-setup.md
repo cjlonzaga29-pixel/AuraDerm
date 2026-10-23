@@ -2,7 +2,8 @@
 
 The storefront has a test-only checkout: server-priced orders stored in
 Supabase, PayMongo **sandbox** Hosted Checkout for online payment, and cash on
-delivery (COD) orders copied to a private Google Sheet. It is **off** until it
+delivery (COD) orders copied to the owner's private Google Sheet through a
+signed Apps Script web app (see `docs/cod-apps-script.md`). It is **off** until it
 is configured. Live payment and live COD are not implemented: sample prices
 are still active, and delivery pricing and store policies are not confirmed.
 
@@ -27,9 +28,12 @@ are still active, and delivery pricing and store policies are not confirmed.
   deduplicated by event id. The success redirect alone never marks an order
   paid.
 - COD: the order is recorded as `cod_pending` / `awaiting_confirmation`
-  (unpaid). The same transaction queues a Sheets sync job. If the sheet is
-  unreachable or not configured, the order stays in the database and the job
-  is retried with backoff.
+  (unpaid). The same transaction queues a sheet sync job. The server delivers
+  it as a signed request to the owner's Apps Script, and completes the job
+  only on a JSON acknowledgement for the same order ID. If the sheet is
+  unreachable or not configured, the order stays in the database, the job is
+  retried with backoff, and the status page says the store's order list has
+  not been updated yet.
 - The bag empties only after a COD order is durably recorded, or after an
   online order from the bag is confirmed paid. Buy now never changes the bag.
 - No delivery pricing rule exists. Test orders are recorded with
@@ -53,12 +57,9 @@ same names.
 | `PAYMONGO_SECRET_KEY` | **Test** secret key `sk_test_…`. Any other key disables online payment, and there is no fallback. |
 | `PAYMONGO_WEBHOOK_SECRET` | Secret returned when the test webhook is created. |
 | `PAYMONGO_PAYMENT_METHOD_TYPES` | Optional comma list. Default: `qrph,card,gcash,paymaya`. Use only methods enabled on the account. |
-| `GOOGLE_SHEETS_SPREADSHEET_ID` | ID of the owner's chosen sheet (from its URL). |
-| `GOOGLE_SHEETS_TEST_TAB` | Tab for test orders. Default: `Test orders`. |
-| `GOOGLE_SHEETS_LIVE_TAB` | Leave unset; live orders do not exist yet. |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Service account client email. |
-| `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Service account private key (PEM; `\n` escapes are accepted). |
-| `CRON_SECRET` | Bearer secret for `/api/internal/sheet-sync`, the retry endpoint. |
+| `COD_SHEET_APPS_SCRIPT_URL` | The owner's Apps Script web app URL, ending in `/exec`. `/dev` is refused. |
+| `COD_SHEET_SIGNING_SECRET` | Shared HMAC secret, at least 32 characters. It must match the script's `COD_SIGNING_SECRET` property. |
+| `CRON_SECRET` | Bearer secret for `/api/internal/sheet-sync`, the retry endpoint. Vercel Cron sends it automatically. |
 
 ## 1. Supabase migration (project `brrydhnpwkfejehksdkn` only)
 
@@ -94,29 +95,22 @@ is HMAC-SHA256 of `"{t}.{raw body}"` with the webhook secret, compared to
 
 ## 3. Google Sheet (COD orders)
 
-1. The owner chooses the sheet and keeps it private. Do not create or pick a
-   different one.
-2. Create a Google Cloud service account with the Google Sheets API enabled,
-   and create a JSON key for it. Put the email and private key into the
-   variables above.
-3. Share the sheet with the service account email as **Editor**. Share it
-   with nobody else beyond the owner.
-4. Add a tab named `Test orders`, or set `GOOGLE_SHEETS_TEST_TAB`. If the tab
-   is empty, the first sync writes the header row:
-   `order_id, created_at, mode, customer_name, phone, email, delivery_address, items, currency, subtotal, shipping, total, payment_method, payment_status, fulfillment_status`.
-5. Values are written with `valueInputOption=RAW`, so customer text such as
-   `=HYPERLINK(...)` is stored as literal text, not as a formula. Before
-   appending, the sync looks up the order reference in column A, so retries
-   do not normally duplicate rows.
-6. Retry queued syncs by sending `GET` or `POST` to
-   `/api/internal/sheet-sync` with `Authorization: Bearer <CRON_SECRET>`. You
-   can do this from a Vercel Cron job or by hand. Syncs are also attempted
-   right after each COD order.
+Follow `docs/cod-apps-script.md`: bind the script in
+`apps-script/cod-orders/` to the owner's private sheet, set its
+`COD_SIGNING_SECRET` script property, deploy it as a web app (execute as the
+owner, access "Anyone"), and set `COD_SHEET_APPS_SCRIPT_URL`,
+`COD_SHEET_SIGNING_SECRET` and `CRON_SECRET` in Vercel. The sheet itself stays
+private.
+
+Retries: each new COD order triggers a background delivery attempt for every
+queued job. `vercel.json` also registers a daily Vercel Cron call to the retry
+endpoint, which is once a day on the Hobby plan. You can also call
+`/api/internal/sheet-sync` by hand with `Authorization: Bearer <CRON_SECRET>`.
 
 ## Test-mode operation
 
 - References look like `AD-T-XXXXXXXX`. `T` marks test orders, and test rows
-  show `TEST` in the sheet.
+  show `TEST` in the sheet. The Apps Script receiver accepts test orders only.
 - Test orders are never counted as sales (see below).
 - To switch checkout off, unset `CHECKOUT_MODE` or set it to anything other
   than `test`.
@@ -137,6 +131,7 @@ Test orders never count.
   policies.
 - PayMongo account activation and live keys, plus a code change to support
   live mode. This build refuses live keys.
-- A live tab or sheet decision for COD, and an owner process for confirming
-  COD orders.
+- A live tab or sheet decision for COD, code changes so the Apps Script and
+  the server accept live orders, and an owner process for confirming COD
+  orders.
 - A security review of the live configuration.

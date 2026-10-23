@@ -15,6 +15,7 @@ type Status = {
   fulfillmentStatus: string;
   totalMinor: number;
   shippingMinor: number | null;
+  storeNotified: boolean | null;
 };
 
 type State =
@@ -114,6 +115,9 @@ export function OrderResult({
     heading = test ? "Test order recorded" : "Order recorded";
     detail =
       "Cash on delivery: unpaid and awaiting confirmation." +
+      (status.storeNotified
+        ? " The store has received your order details."
+        : " Your order is saved, but the store’s order list has not been updated yet. You don’t need to order again.") +
       (test ? " This is a test order and will not be delivered." : "");
   } else if (status.paymentStatus === "paid") {
     heading = test ? "Test payment confirmed" : "Payment confirmed";
@@ -131,7 +135,12 @@ export function OrderResult({
   }
 
   return (
-    <div className={panel} data-testid="order-result" data-payment-status={status.paymentStatus}>
+    <div
+      className={panel}
+      data-testid="order-result"
+      data-payment-status={status.paymentStatus}
+      data-store-notified={status.storeNotified === null ? undefined : String(status.storeNotified)}
+    >
       <h2 className="font-heading text-2xl font-medium text-cream" role="status">
         {heading}
       </h2>
@@ -147,7 +156,8 @@ export function OrderResult({
         </div>
       </dl>
       <div className="flex flex-wrap gap-3">
-        {status.paymentMethod === "online" && status.paymentStatus === "awaiting_payment" && !cancelled ? (
+        {(status.paymentMethod === "online" && status.paymentStatus === "awaiting_payment" && !cancelled) ||
+        (status.paymentMethod === "cod" && !status.storeNotified) ? (
           <Button variant="quiet" size="cta" onClick={() => void load()}>
             Check again
           </Button>

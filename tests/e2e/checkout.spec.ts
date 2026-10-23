@@ -228,7 +228,7 @@ test.describe("test checkout without configuration", () => {
     await expect(page.getByText("Unavailable while checkout is off.")).toHaveCount(2);
     await expect(page.getByTestId("place-test-order")).toBeDisabled();
     await expect(page.getByTestId("place-test-order")).toHaveText("Checkout unavailable");
-    await expect(page.locator("main")).not.toContainText(/SUPABASE|PAYMONGO|GOOGLE_|sk_test/);
+    await expect(page.locator("main")).not.toContainText(/SUPABASE|PAYMONGO|GOOGLE_|COD_SHEET|script\.google|sk_test/);
 
     // Checkout chrome: its own header and compact footer, no marketing nav.
     await expect(page.locator("header")).toHaveCount(1);
@@ -275,6 +275,44 @@ test.describe("test checkout without configuration", () => {
     // Unconfigured here, so the status service is unavailable; never a success state.
     await expect(page.getByText(/not available|temporarily unavailable|could not find/)).toBeVisible();
     await expect(page.locator("main")).not.toContainText(/confirmed|recorded/i);
+  });
+});
+
+test.describe("COD order result (status API mocked in the browser)", () => {
+  test("says when the store's order list has not been updated yet, and when it has", async ({ page }) => {
+    let storeNotified = false;
+    await page.route("**/api/checkout/status?*", (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          reference: "AD-T-ABCDEFGH",
+          mode: "test",
+          paymentMethod: "cod",
+          paymentStatus: "cod_pending",
+          fulfillmentStatus: "awaiting_confirmation",
+          totalMinor: 259800,
+          subtotalMinor: 259800,
+          shippingMinor: null,
+          currency: "PHP",
+          storeNotified,
+        },
+      }),
+    );
+    await page.goto("/checkout/result?ref=AD-T-ABCDEFGH&token=t");
+    const result = page.getByTestId("order-result");
+    await expect(result).toHaveAttribute("data-store-notified", "false");
+    await expect(result.getByRole("status")).toHaveText("Test order recorded");
+    await expect(result).toContainText("unpaid and awaiting confirmation");
+    await expect(result).toContainText("has not been updated yet. You don’t need to order again.");
+    await expect(result).toContainText("Total (before delivery)");
+    await expect(result).not.toContainText(/Payment confirmed|\bFree\b/);
+
+    storeNotified = true;
+    await result.getByRole("button", { name: "Check again" }).click();
+    await expect(result).toHaveAttribute("data-store-notified", "true");
+    await expect(result).toContainText("The store has received your order details.");
+    await expect(result.getByRole("button", { name: "Check again" })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
   });
 });
 
