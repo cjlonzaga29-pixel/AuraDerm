@@ -22,10 +22,16 @@ jobs:
   verify:
     name: verify
     runs-on: ubuntu-24.04
+    # Chromium and its system libraries come preinstalled in the Playwright
+    # image, so CI never waits on apt mirrors. Keep the tag equal to the
+    # @playwright/test version in package-lock.json (checked below).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
     timeout-minutes: 30
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       PLAYWRIGHT_PORT: "3100"
+      PLAYWRIGHT_IMAGE_VERSION: "1.63.0"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,8 +45,23 @@ jobs:
       - name: Install dependencies (lockfile)
         run: npm ci --no-audit --no-fund
 
-      - name: Install ffmpeg/ffprobe (media tests)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Check Playwright image matches the lockfile
+        run: |
+          installed=$(node -p "require('@playwright/test/package.json').version")
+          if [ "$installed" != "$PLAYWRIGHT_IMAGE_VERSION" ]; then
+            echo "::error::@playwright/test is $installed but the CI image is v$PLAYWRIGHT_IMAGE_VERSION; update the container tag."
+            exit 1
+          fi
+
+      # The media test needs ffprobe only. A pinned npm package (integrity-checked
+      # by npm) avoids slow apt mirrors.
+      - name: Install ffprobe (media tests)
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/ffprobe" ffprobe-static@3.1.0
+          bin="$RUNNER_TEMP/ffprobe/node_modules/ffprobe-static/bin/linux/x64"
+          chmod +x "$bin/ffprobe"
+          echo "$bin" >> "$GITHUB_PATH"
+          "$bin/ffprobe" -version | head -1
 
       - name: Generate Next.js route types
         run: npx next typegen
@@ -56,20 +77,6 @@ jobs:
 
       - name: Production build
         run: npm run build
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Playwright Chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
-
-      - name: Install Playwright system dependencies
-        run: npx playwright install-deps chromium
 
       # Serves the build above on PLAYWRIGHT_PORT; no rebuild, no reused server.
       - name: End-to-end tests

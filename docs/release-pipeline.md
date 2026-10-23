@@ -10,15 +10,21 @@ task branch → pull request → CI "verify" → auto-merge (owner PRs) → main
 CI runs on every pull request into `main` and every push to `main`. It has
 one job, **`verify`**:
 
+The job runs in the official `mcr.microsoft.com/playwright:v1.63.0-noble`
+image, which already has Chromium and its system libraries, so CI never
+installs packages through apt. A step fails the job if `@playwright/test`
+no longer matches the image tag.
+
 1. `npm ci` from the committed `package-lock.json`, with the npm cache
-2. ffmpeg/ffprobe, for the media resolution test
+2. `ffprobe` from the pinned `ffprobe-static@3.1.0` npm package, for the
+   media resolution test
 3. `next typegen` (route types for `PageProps`), then `npm run typecheck`
 4. `npm run lint`
 5. `npm test` (Vitest; Google, Supabase and PayMongo are mocked)
 6. `npm run build`, once
-7. Playwright (Chromium, cached, with its system dependencies), against
-   `next start` on port 3100 serving that same build. Playwright starts this
-   server itself and never reuses one it did not start.
+7. Playwright, against `next start` on port 3100 serving that same build.
+   Playwright starts this server itself and never reuses one it did not
+   start.
 
 A new push to a pull request cancels that pull request's older run. Runs on
 `main` always finish. CI uses no secrets: checkout is unconfigured there, so
