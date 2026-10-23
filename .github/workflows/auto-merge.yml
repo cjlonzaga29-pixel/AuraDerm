@@ -1,0 +1,50 @@
+# Requests auto-merge for the owner's own pull requests into main. GitHub then
+# merges only after main's required checks pass. This never approves reviews,
+# never bypasses checks, and never touches fork or other contributors' PRs.
+#
+# Metadata only: no checkout, no PR code, scripts or artifacts. Every value
+# from the event reaches the shell through env, never inline.
+name: Auto-merge
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+
+jobs:
+  enable:
+    name: enable auto-merge
+    if: >-
+      github.event.pull_request.user.login == 'cjlonzaga29-pixel' &&
+      github.event.pull_request.author_association == 'OWNER' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      # Without a required check on main, "auto-merge" would merge at once.
+      - name: Confirm main requires the CI check
+        run: |
+          required=$(gh api "repos/$REPO/rules/branches/main" \
+            --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context] | index("verify") != null')
+          if [ "$required" != "true" ]; then
+            echo "::error::main has no ruleset requiring the 'verify' check; not enabling auto-merge."
+            exit 1
+          fi
+
+      - name: Request auto-merge (squash) for the tested head
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash --match-head-commit "$HEAD_SHA"

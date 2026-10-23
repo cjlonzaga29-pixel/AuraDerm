@@ -9,7 +9,7 @@ import {
 } from "@/lib/server/checkout";
 import { resolveCheckoutConfig } from "@/lib/server/config";
 import { PayMongoError, signPayload, type CheckoutSession, type PayMongoClient } from "@/lib/server/paymongo";
-import { GoogleSheetsClient, type SheetsClient } from "@/lib/server/sheets";
+import { SheetsError, type CodSheetPayload, type SheetsClient } from "@/lib/server/sheets";
 import { MemoryOrderRepository } from "../support/memory-repo";
 
 // Mocked adapter tests: an in-memory repository, a fake PayMongo and a fake
@@ -23,9 +23,8 @@ const ENV = {
   SUPABASE_SERVICE_ROLE_KEY: "service-role-test",
   PAYMONGO_SECRET_KEY: "sk_test_fake",
   PAYMONGO_WEBHOOK_SECRET: WEBHOOK_SECRET,
-  GOOGLE_SHEETS_SPREADSHEET_ID: "sheet",
-  GOOGLE_SERVICE_ACCOUNT_EMAIL: "bot@example.iam.gserviceaccount.com",
-  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "unused-by-fake",
+  COD_SHEET_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbTestDeploymentId0123456789/exec",
+  COD_SHEET_SIGNING_SECRET: "test-signing-secret-0123456789abcdef",
 };
 
 class FakePayMongo implements PayMongoClient {
@@ -63,21 +62,19 @@ class FakePayMongo implements PayMongoClient {
   }
 }
 
+// Stands in for the Apps Script receiver: one row per order ID.
 class FakeSheets implements SheetsClient {
-  rows = new Map<string, string[][]>();
-  failAppends = 0;
-  async readOrderIds(tab: string) {
-    return (this.rows.get(tab) ?? []).map((r) => r[0]);
-  }
-  async appendRows(tab: string, rows: string[][]) {
-    if (this.failAppends > 0) {
-      this.failAppends -= 1;
-      throw new Error("Google Sheets HTTP 503");
+  rows: CodSheetPayload[] = [];
+  failDeliveries = 0;
+  async deliver(payload: CodSheetPayload) {
+    if (this.failDeliveries > 0) {
+      this.failDeliveries -= 1;
+      throw new SheetsError("Apps Script timed out");
     }
-    const existing = this.rows.get(tab) ?? [];
-    existing.push(...rows);
-    this.rows.set(tab, existing);
-    return `'${tab}'!A${existing.length}:O${existing.length}`;
+    const existing = this.rows.findIndex((r) => r.orderId === payload.orderId);
+    if (existing >= 0) return { orderId: payload.orderId, result: "duplicate" as const, row: existing + 2 };
+    this.rows.push(payload);
+    return { orderId: payload.orderId, result: "created" as const, row: this.rows.length + 1 };
   }
 }
 
@@ -316,68 +313,66 @@ describe("payment confirmation", () => {
 });
 
 describe("COD → Google Sheets outbox", () => {
-  it("keeps the order when the sheet fails, retries, and writes exactly one row to the test tab", async () => {
+  it("keeps the order when the sheet fails, retries, and delivers exactly one row", async () => {
     const placed = await createOrder(order(), ctx, deps);
     const reference = String(placed.body.reference);
-    sheets.failAppends = 2; // header append fails, then succeeds on retry
+    sheets.failDeliveries = 2;
 
     const first = await processSheetOutbox(deps);
     expect(first).toMatchObject({ claimed: 1, synced: 0, failed: 1 });
     expect(repo.byReference(reference)!.sheetSyncStatus).toBe("failed");
     expect(repo.byReference(reference)!.paymentStatus).toBe("cod_pending");
+    expect(repo.jobs[0].error).toBe("Apps Script timed out");
+    const pending = await getOrderStatus({ reference, token: String(placed.body.token) }, deps);
+    expect(pending.body).toMatchObject({ paymentStatus: "cod_pending", storeNotified: false });
 
-    sheets.failAppends = 1;
     expect(await processSheetOutbox(deps)).toMatchObject({ failed: 1 });
-
     expect(await processSheetOutbox(deps)).toMatchObject({ synced: 1, failed: 0 });
     expect(await processSheetOutbox(deps)).toMatchObject({ claimed: 0 });
-    const rows = sheets.rows.get("Test orders")!;
-    expect(rows[0][0]).toBe("order_id");
-    expect(rows.filter((r) => r[0] === reference)).toHaveLength(1);
-    const row = rows.find((r) => r[0] === reference)!;
-    expect(row[2]).toBe("TEST");
-    expect(row[10]).toBe("not configured");
-    expect(row[11]).toBe("2598.00");
-    expect(row[13]).toBe("cod_pending");
-    expect(row[6]).toContain('=HYPERLINK("http://evil")'); // stored as-is; RAW input keeps it literal
+    expect(sheets.rows).toHaveLength(1);
+    expect(repo.jobs[0].range).toBe("created: row 2");
     expect(repo.byReference(reference)!.sheetSyncStatus).toBe("synced");
+    const notified = await getOrderStatus({ reference, token: String(placed.body.token) }, deps);
+    expect(notified.body).toMatchObject({ paymentStatus: "cod_pending", storeNotified: true });
   });
 
-  it("does not add a second row when the order is already in the sheet", async () => {
+  it("sends server totals and fields only, with unknown delivery left unknown", async () => {
+    await createOrder(order({ lines: [{ handle: "hair-fall-defense-shampoo", quantity: 2 }, { handle: "scalp-balance-daily-shampoo", quantity: 1 }], expectedSubtotalMinor: 389700 }), ctx, deps);
+    await processSheetOutbox(deps);
+    const [row] = sheets.rows;
+    expect(row).toMatchObject({
+      mode: "test",
+      orderStatus: "awaiting_confirmation",
+      paymentMethod: "cod",
+      paymentStatus: "cod_pending",
+      customer: { name: "Maria Santos", mobile: "09171234567", email: "maria@example.com" },
+      totalQuantity: 3,
+      currency: "PHP",
+      subtotal: "3897.00",
+      deliveryFee: null,
+      total: "3897.00",
+    });
+    expect(row.items).toEqual([
+      { name: expect.any(String), quantity: 2, unitPrice: "1299.00", lineTotal: "2598.00" },
+      { name: expect.any(String), quantity: 1, unitPrice: "1299.00", lineTotal: "1299.00" },
+    ]);
+    expect(row.address.street).toBe('=HYPERLINK("http://evil")');
+    expect(Object.keys(row)).not.toContain("clientFingerprint");
+    expect(JSON.stringify(row)).not.toMatch(/fingerprint|access_token|idempotency|request_hash/i);
+  });
+
+  it("an acknowledged duplicate completes the job without a second row", async () => {
     const placed = await createOrder(order(), ctx, deps);
-    sheets.rows.set("Test orders", [["order_id"], [String(placed.body.reference)]]);
+    sheets.rows.push({ orderId: String(placed.body.reference) } as CodSheetPayload);
     expect(await processSheetOutbox(deps)).toMatchObject({ synced: 1 });
-    expect(sheets.rows.get("Test orders")).toHaveLength(2);
+    expect(sheets.rows).toHaveLength(1);
+    expect(repo.jobs[0].range).toBe("duplicate: row 2");
   });
 
   it("leaves jobs queued when the sheet is not configured", async () => {
-    const noSheet = { ...deps, config: resolveCheckoutConfig({ ...ENV, GOOGLE_SHEETS_SPREADSHEET_ID: "" }), sheets: null };
+    const noSheet = { ...deps, config: resolveCheckoutConfig({ ...ENV, COD_SHEET_APPS_SCRIPT_URL: "" }), sheets: null };
     await createOrder(order(), ctx, noSheet);
     expect(await processSheetOutbox(noSheet)).toMatchObject({ skipped: "sheet_not_configured" });
     expect(repo.jobs[0].status).toBe("pending");
-  });
-});
-
-describe("Google Sheets client (mocked fetch)", () => {
-  it("appends with valueInputOption=RAW so customer text is never a formula", async () => {
-    const { generateKeyPairSync } = await import("node:crypto");
-    const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
-    const calls: [string, RequestInit][] = [];
-    const fetchImpl = (async (url: string, init: RequestInit) => {
-      calls.push([url, init]);
-      if (url.includes("oauth2")) return Response.json({ access_token: "tok", expires_in: 3600 });
-      return Response.json({ updates: { updatedRange: "'Test orders'!A2:O2" } });
-    }) as unknown as typeof fetch;
-    const client = new GoogleSheetsClient(
-      { spreadsheetId: "abc", testTab: "Test orders", liveTab: null, clientEmail: "bot@x", privateKey: privateKey.export({ type: "pkcs8", format: "pem" }).toString() },
-      fetchImpl,
-    );
-    const range = await client.appendRows("Test orders", [["=1+1"]]);
-    expect(range).toBe("'Test orders'!A2:O2");
-    const [url, init] = calls[1];
-    expect(url).toContain("valueInputOption=RAW");
-    expect(decodeURIComponent(url)).toContain("'Test orders'!A:O");
-    expect(JSON.parse(String(init.body)).values).toEqual([["=1+1"]]);
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer tok");
   });
 });

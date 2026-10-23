@@ -2,7 +2,7 @@ import "server-only";
 import { resolveCheckoutConfig } from "@/lib/server/config";
 import { SupabaseOrderRepository } from "@/lib/server/repository";
 import { HttpPayMongoClient } from "@/lib/server/paymongo";
-import { GoogleSheetsClient } from "@/lib/server/sheets";
+import { AppsScriptSheetsClient } from "@/lib/server/sheets";
 import type { CheckoutDeps } from "@/lib/server/checkout";
 
 // Builds real adapters from environment configuration. Anything not
@@ -13,7 +13,7 @@ export function checkoutDeps(): CheckoutDeps {
     config,
     repo: config.supabase ? new SupabaseOrderRepository(config.supabase) : null,
     paymongo: config.paymongo ? new HttpPayMongoClient(config.paymongo) : null,
-    sheets: config.sheets ? new GoogleSheetsClient(config.sheets) : null,
+    sheets: config.sheets ? new AppsScriptSheetsClient(config.sheets) : null,
     log: (message) => console.warn(message),
   };
 }

@@ -16,13 +16,8 @@ export type Env = Record<string, string | undefined>;
 
 export type SupabaseConfig = { url: string; serviceRoleKey: string };
 export type PayMongoConfig = { secretKey: string; webhookSecret: string | null; paymentMethodTypes: string[] };
-export type SheetsConfig = {
-  spreadsheetId: string;
-  testTab: string;
-  liveTab: string | null;
-  clientEmail: string;
-  privateKey: string;
-};
+/** COD order log: the owner's Apps Script web app (its /exec URL) and the shared signing secret. */
+export type SheetsConfig = { endpoint: string; signingSecret: string };
 
 export type CheckoutConfig = {
   /** "test" only when explicitly enabled and the order store is reachable. */
@@ -89,23 +84,42 @@ export function readPayMongoConfig(env: Env, issues: string[]): PayMongoConfig |
   };
 }
 
+export const MIN_SIGNING_SECRET_LENGTH = 32;
+
+// Deployed web apps only: https://script.google.com/macros/s/<id>/exec, or the
+// Workspace form /a/macros/<domain>/s/<id>/exec. The /dev URL only works for
+// the script's editors when signed in, so it is refused.
+const APPS_SCRIPT_EXEC = /^\/(?:a\/macros\/[A-Za-z0-9.-]+|macros)\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+
 export function readSheetsConfig(env: Env, issues: string[]): SheetsConfig | null {
-  const spreadsheetId = env.GOOGLE_SHEETS_SPREADSHEET_ID?.trim();
-  const clientEmail = env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
-  const privateKey = env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n").trim();
-  if (!spreadsheetId || !clientEmail || !privateKey) {
+  const url = env.COD_SHEET_APPS_SCRIPT_URL?.trim();
+  const signingSecret = env.COD_SHEET_SIGNING_SECRET?.trim();
+  if (!url || !signingSecret) {
     issues.push(
-      "The order sheet is not configured (GOOGLE_SHEETS_SPREADSHEET_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY); cash-on-delivery orders are kept in the database until it is.",
+      "The order sheet is not configured (COD_SHEET_APPS_SCRIPT_URL, COD_SHEET_SIGNING_SECRET); cash-on-delivery orders are kept in the database until it is.",
     );
     return null;
   }
-  return {
-    spreadsheetId,
-    clientEmail,
-    privateKey,
-    testTab: env.GOOGLE_SHEETS_TEST_TAB?.trim() || "Test orders",
-    liveTab: env.GOOGLE_SHEETS_LIVE_TAB?.trim() || null,
-  };
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    issues.push("COD_SHEET_APPS_SCRIPT_URL is not a valid URL.");
+    return null;
+  }
+  if (parsed.protocol !== "https:" || parsed.host !== "script.google.com" || parsed.search || parsed.hash) {
+    issues.push("COD_SHEET_APPS_SCRIPT_URL must be a https://script.google.com web app URL with no query string.");
+    return null;
+  }
+  if (!APPS_SCRIPT_EXEC.test(parsed.pathname)) {
+    issues.push("COD_SHEET_APPS_SCRIPT_URL must be the deployed web app URL ending in /exec (not /dev).");
+    return null;
+  }
+  if (signingSecret.length < MIN_SIGNING_SECRET_LENGTH) {
+    issues.push(`COD_SHEET_SIGNING_SECRET must be at least ${MIN_SIGNING_SECRET_LENGTH} characters.`);
+    return null;
+  }
+  return { endpoint: parsed.toString(), signingSecret };
 }
 
 export function resolveCheckoutConfig(env: Env = process.env): CheckoutConfig {

@@ -131,9 +131,9 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Google Sheets</strong> (cash-on-delivery orders) receives a copy of each
-            cash-on-delivery order — reference, date, name, mobile number, email, delivery address,
-            items, totals and status — in a private spreadsheet controlled by the store owner, so the
-            order can be confirmed and delivered.{" "}
+            cash-on-delivery order — reference, date, name, mobile number, email, delivery address and
+            notes, items, totals and status — through a Google Apps Script run by the store owner, in a
+            private spreadsheet the owner controls, so the order can be confirmed and delivered.{" "}
             {checkoutOn && config.sheets
               ? "In use for test orders."
               : "Not in use on this website at present; any cash-on-delivery order stays in the order database."}
